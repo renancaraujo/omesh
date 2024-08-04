@@ -20,7 +20,7 @@ This package brings this to Flutter apps.
 
 ## Are you using O'Mesh? Let me know
 
-If there is a chance of you using O'Mesh, do it 😉. f you do, I would love to see it in action. Let me know where and how you are using it via my socials: [Twitter](https://twitter.com/reNotANumber) and [LinkedIn](https://www.linkedin.com/in/renancaraujo/).
+If there is a chance of you using O'Mesh, do it 😉. If you do, I would love to see it in action. Let me know where and how you are using it via my socials: [Twitter](https://twitter.com/reNotANumber) and [LinkedIn](https://www.linkedin.com/in/renancaraujo/).
 
 ## Docs and resources 📚
 
