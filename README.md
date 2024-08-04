@@ -12,4 +12,4 @@ How to run mesh gradients:
 
 |Platforms|Technology|Links|
 |--|--|--|
-|Android, iOS, Web, macOS, Linux, Windows, ...| Flutter | [pub.dev](https://pub.dev/packages/mesh), [code repository](https://github.com/renancaraujo/omesh/tree/main/packages/mesh) |
+|Android, iOS, Web, macOS, Linux, Windows, ...| Flutter | [pub.dev](https://pub.dev/packages/mesh), [code repository](https://github.com/renancaraujo/omesh/tree/main/flutter/mesh) |
