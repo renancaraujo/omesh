@@ -409,7 +409,7 @@ It may be caused by an issue with the Impeller rendering engine. Learn the possi
 
 This may be caused by too many triangles in your mesh
 
-The number of triangles in a mesh can be descriobed by (width-1) _ (height-1) _ (tessellation ^ 2) \* 2.
+The number of triangles in a mesh can be descriobed by `(width-1) * (height-1) * (tessellationFactor ^ 2) * 2`.
 
 The default tessellation factor is 12, consider lowering that value for small sized containers or for
 meshes with too many vertices. See below the visual impacts of a change in the tessellation factor.
