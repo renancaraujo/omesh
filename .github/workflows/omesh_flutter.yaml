@@ -18,7 +18,7 @@ jobs:
   semantic_pull_request:
     defaults:
       run:
-        working-directory: "packages/mesh"
+        working-directory: "flutter/mesh"
     runs-on: ubuntu-latest
     steps:
       - name: Semantic pull request
@@ -35,7 +35,7 @@ jobs:
   build:
     defaults:
       run:
-        working-directory: "packages/mesh"
+        working-directory: "flutter/mesh"
     runs-on: ubuntu-latest
     steps:
       - name: checkout
