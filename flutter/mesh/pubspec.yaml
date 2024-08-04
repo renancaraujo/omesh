@@ -8,7 +8,7 @@ documentation: https://github.com/renancaraujo/omesh/tree/main/flutter/mesh
 topics: [mesh-gradients, flutter, shaders, ui, gradient]
 screenshots:
   - description: 'This screenshot shows a usage example of the dependabot_gen CLI tool.'
-    path: doc/assets/preview.png
+    path: https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/preview.png
 
 environment:
   sdk: ">=3.4.0 <4.0.0"

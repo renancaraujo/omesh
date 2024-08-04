@@ -9,7 +9,7 @@ updates:
         patterns:
           - "*"
   - package-ecosystem: pub
-    directory: /packages/mesh/example
+    directory: /flutter/mesh/example
     schedule:
       interval: monthly
     groups:
@@ -17,7 +17,7 @@ updates:
         patterns:
           - "*"
   - package-ecosystem: pub
-    directory: /packages/mesh
+    directory: /flutter/mesh
     schedule:
       interval: monthly
     groups:

@@ -5,7 +5,7 @@
 
 ⚡ Fast and highly customizable vector animated Mesh Gradients for Flutter applications.
 
-<img src="doc/assets/preview.png" width="500">
+<img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/preview.png" width="500">
 
 ---
 
@@ -53,7 +53,7 @@ A simple usage of a 3x3 mesh with colors in each vertex
 
 Result:
 
-<img src="doc/assets/basic_example.png" width="500">
+<img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/basic_example.png" width="500">
 
 Code:
 
@@ -94,7 +94,7 @@ More advanced example with different colors in each vertex, bezier vertices and 
 
 Result:
 
-<img src="doc/assets/advanced_example.png" width="500">
+<img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/advanced_example.png" width="500">
 
 Code:
 
@@ -187,8 +187,8 @@ In this example the mesh will distort after a button click.
 Result:
 
 <p float="left">
-    <img src="doc/assets/intrinsic_example_1.png" width="300"> 
-    <img src="doc/assets/intrinsic_example_2.png" width="300">
+    <img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/intrinsic_example_1.png" width="300"> 
+    <img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/intrinsic_example_2.png" width="300">
 </p>
 
 Code:
@@ -265,10 +265,10 @@ An example to illustrate animation from an animation controller.
 Result (animation frames):
 
 <p float="left">
-    <img src="doc/assets/animation_example_1.png" width="150"> 
-    <img src="doc/assets/animation_example_2.png" width="150"> 
-    <img src="doc/assets/animation_example_3.png" width="150"> 
-    <img src="doc/assets/animation_example_4.png" width="150"> 
+    <img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/animation_example_1.png" width="150"> 
+    <img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/animation_example_2.png" width="150"> 
+    <img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/animation_example_3.png" width="150"> 
+    <img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/animation_example_4.png" width="150"> 
 </p>
 
 Code:
@@ -377,7 +377,7 @@ class _MyWidgetState extends State<MyWidget> with SingleTickerProviderStateMixin
 When running on the [Impeller Rendering Engine](https://docs.flutter.dev/perf/impeller) (which is default for Flutter on iOS),
 one might see some line-ish artifacts:
 
-<img src="doc/assets/impeller.png" width="250">
+<img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/impeller.png" width="250">
 
 This is caused by a [very specific issue](https://github.com/flutter/flutter/issues/151355) that has been already fixed in the flutter `main` channel but can still be observed on
 Flutter stable version 3.22.
@@ -401,7 +401,7 @@ Known situations where O'Mesh doesn't seem to behave the way it is supposed to.
 
 If you see lines like this:
 
-<img src="doc/assets/impeller.png" width="200">
+<img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/impeller.png" width="200">
 
 It may be caused by an issue with the Impeller rendering engine. Learn the possible workarounds [here](#about-impeller).
 
@@ -426,8 +426,8 @@ animation.
 See below the differences between different tessellation factors (3 and 30):
 
 <p float="left">
-    <img src="doc/assets/tess_1.png" width="200"> 
-    <img src="doc/assets/tess_2.png" width="200">
+    <img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/tess_1.png" width="200"> 
+    <img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/tess_2.png" width="200">
 </p>
 
 ### Issues with color space xyY
@@ -436,8 +436,8 @@ When using the xyY colorspace you may face issues when setting at least one of t
 to complete black. Like on the second image below:
 
 <p float="left">
-    <img src="doc/assets/xyy_issue1.png" width="200"> 
-    <img src="doc/assets/xyy_issue2.png" width="200">
+    <img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/xyy_issue1.png" width="200"> 
+    <img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/xyy_issue2.png" width="200">
 </p>
 
 This is expected behavior, as the xyY color space relies on illumination to interpolate colors, black cannot be interpolated.
