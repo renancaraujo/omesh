@@ -1,0 +1,30 @@
+name: mesh
+description: Fast and highly customizable vector animated Mesh Gradients for Flutter applications. Using Shaders and vertices.
+version: 0.2.0
+repository: https://github.com/renancaraujo/omesh
+issue_tracker: https://github.com/renancaraujo/omesh/issues
+homepage: https://github.com/renancaraujo/omesh
+documentation: https://github.com/renancaraujo/omesh
+topics: [mesh-gradients, flutter, shaders, ui, gradient]
+screenshots:
+  - description: 'This screenshot shows a usage example of the dependabot_gen CLI tool.'
+    path: doc/assets/preview.png
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+  flutter: ">=3.22.0"
+
+dependencies:
+  cached_value: ^1.0.0
+  flutter:
+    sdk: flutter
+  flutter_shaders: ^0.1.2
+  vector_math: ^2.1.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  mocktail: ^1.0.0
+flutter:
+  shaders:
+    - shaders/omesh.frag

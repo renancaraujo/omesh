@@ -1,0 +1,17 @@
+name: Continuous Integration
+description: Changes to the CI configuration files and scripts.
+title: "ci: "
+labels: ["ci"]
+body:
+  - type: textarea
+    attributes:
+      label: "CI Description"
+      description: "PDescribe what changes need to be done to the ci/cd system and why."
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: "Additional context"
+      description: "Add any other context about the problem here."
+    validations:
+      required: false

@@ -1,0 +1,26 @@
+version: 2
+updates: 
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+  - package-ecosystem: pub
+    directory: /packages/mesh/example
+    schedule:
+      interval: monthly
+    groups:
+      packages-mesh-example-pub:
+        patterns:
+          - "*"
+  - package-ecosystem: pub
+    directory: /packages/mesh
+    schedule:
+      interval: monthly
+    groups:
+      packages-mesh-pub:
+        patterns:
+          - "*"

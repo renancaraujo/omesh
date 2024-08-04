@@ -1,0 +1,17 @@
+name: Performance Update
+description: "A code change that improves performance."
+title: "perf: "
+labels: ["performance"]
+body:
+  - type: textarea
+    attributes:
+      label: "Description"
+      description: "Clearly describe what code needs to be changed and what the performance impact is going to be. Bonus point's if you can tie this directly to user experience."
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: "Additional context"
+      description: "Add any other context about the problem here."
+    validations:
+      required: false

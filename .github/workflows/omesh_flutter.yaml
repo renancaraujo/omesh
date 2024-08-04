@@ -1,0 +1,54 @@
+name: ci
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches:
+      - main
+  pull_request_target:
+    types:
+      - opened
+      - edited
+      - synchronize
+
+jobs:
+  semantic_pull_request:
+    defaults:
+      run:
+        working-directory: "packages/mesh"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Semantic pull request
+        if: github.event_name == 'pull_request'
+        uses: amannn/action-semantic-pull-request@v5.5.3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          validateSingleCommit: false
+          ignoreLabels: |
+            bot
+            ignore-semantic-pull-request
+          wip: false
+  build:
+    defaults:
+      run:
+        working-directory: "packages/mesh"
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: setup flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+          cache-key: flutter-:os:-:channel:-:version:-:arch:-:hash:-${{ hashFiles('**/pubspec.lock') }}
+      - name: formatting
+        run: dart format --set-exit-if-changed lib test
+      - name: analyze
+        run: flutter analyze lib test
+      - name: test
+        run: flutter test

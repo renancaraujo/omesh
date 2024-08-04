@@ -1,0 +1,17 @@
+name: Chore
+description: Other changes that don't modify src or test files
+title: "chore: "
+labels: ["chore"]
+body:
+  - type: textarea
+    attributes:
+      label: "Description"
+      description: "Clearly describe what change is needed and why. If this changes code then please use another issue type."
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: "Additional context"
+      description: "Add any other context about the problem here."
+    validations:
+      required: false
