@@ -22,12 +22,22 @@ This package brings this capability to Flutter apps.
 
 If there is a chance of you using O'Mesh, do it 😉. If you do, I would love to see it in action. Let me know where and how you are using it via my socials: [Twitter](https://twitter.com/reNotANumber) and [LinkedIn](https://www.linkedin.com/in/renancaraujo/).
 
+## Design your mesh gradient
+
+Designing with code is fun, but with a design tool everything gets easier.
+
+Try the [O'Mesh Flutter playground](https://omesh-playground.renan.gg) and generate flutter code from designs.
+
+<img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/playground.jpeg" width="500">
+
+
 ## Documentation and resources 📚
 
 The best resources to get the most out of O'Mesh:
 
 - [API Docs](https://pub.dev/documentation/mesh/latest/) on pub.dev;
 - [My Twitter](https://twitter.com/reNotANumber) where I post some examples;
+- [Live example app](https://omesh-flutter.renan.gg/);
 - More to come.
 
 ## Getting Started 🚀
@@ -46,7 +56,7 @@ import 'package:mesh/mesh.dart';
 
 # Usage examples 📖
 
-You can see all the examples below live in the example app.
+You can see all the examples below live in the [example app](https://omesh-flutter.renan.gg/)).
 
 ### 1. Basic example
 
