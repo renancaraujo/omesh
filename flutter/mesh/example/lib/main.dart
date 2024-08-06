@@ -7,6 +7,7 @@ import 'package:example/examples/instrinsic_animation.dart';
 import 'package:flutter/material.dart';
 import 'package:mix/mix.dart';
 import 'package:syntax_highlight/syntax_highlight.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 void main() {
   runApp(
@@ -214,16 +215,43 @@ class ExampleView extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Box(
-                style: Style(
-                  $box.padding(20, 10, 0),
-                  $text.style(
-                    color: Colors.white.withOpacity(0.7),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w300,
+              Row(
+                children: [
+                  Box(
+                    style: Style(
+                      $box.padding(20, 10, 0),
+                      $text.style(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w300,
+                      ),
+                    ),
+                    child: const StyledText("O'Mesh Flutter examples"),
                   ),
-                ),
-                child: const StyledText("O'Mesh Flutter example"),
+                  const SizedBox(width: 10),
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: PressableBox(
+                      style: Style(
+                        $box.padding(20, 10, 0),
+                        $text.style(
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w300,
+                        ),
+                        $on.hover(
+                          $text.style.color.white(),
+                        ),
+                      ),
+                      onPress: () async {
+                        await launchUrl(
+                          Uri.parse('https://github.com/renancaraujo/omesh'),
+                        );
+                      },
+                      child: const StyledText('Open in Github'),
+                    ),
+                  ),
+                ],
               ),
               Box(
                 style: Style(
