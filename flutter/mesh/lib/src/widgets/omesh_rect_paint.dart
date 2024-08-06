@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:cached_value/cached_value.dart';
 import 'package:flutter/rendering.dart'
     show BlendMode, Canvas, Color, Paint, Rect;
@@ -10,9 +12,10 @@ import 'package:mesh/mesh.dart';
 /// Useful to render mesh gradients outside of widget contexts, such as
 /// custom paints, flame engine components, and render objects.
 class OMeshRectPaint {
-  /// Creates a new [OMeshRectPaint] with the given [shader], [meshRect],
+  /// Creates a new [OMeshRectPaint] with the given [shaderProvider]
+  /// and [meshRect],
   OMeshRectPaint({
-    required this.shader,
+    required this.shaderProvider,
     required OMeshRect meshRect,
     required int tessellation,
     required DebugMode? debugMode,
@@ -21,8 +24,8 @@ class OMeshRectPaint {
         _tessellation = tessellation,
         _meshRect = meshRect;
 
-  /// The shader used for color interpolation.
-  final FragmentShader shader;
+  /// The shader provider instance associated with this paint.
+  final OMeshShaderProvider shaderProvider;
 
   /// Enable compatibility mode for impeller runtime.
   /// See [OMeshGradient.impellerCompatibilityMode] for more information.
@@ -154,11 +157,6 @@ class OMeshRectPaint {
       );
     }
 
-    canvas.saveLayer(
-      rect,
-      Paint(),
-    );
-
     // some shorthan helpers
     final mw = meshRect.width;
     final mh = meshRect.height;
@@ -180,8 +178,15 @@ class OMeshRectPaint {
       rect: rect,
     );
 
+    canvas.saveLayer(
+      rect,
+      Paint(),
+    );
+
     // Draw each patch one at a time.
-    for (final patch in patches.reversed) {
+    for (final tuple in patches.reversed.indexed) {
+      final (patchIndex, patch) = tuple;
+
       // tl
       final index00 = patch[0].onGrid(mw, mh);
       // tr
@@ -206,7 +211,7 @@ class OMeshRectPaint {
       });
 
       final paintShader = Paint()
-        ..shader = (shader
+        ..shader = (shaderProvider.getShaderFor(patchIndex)
           ..setFloatUniforms(
             (s) => s
               ..setSize(rect.size)
@@ -236,7 +241,6 @@ class OMeshRectPaint {
         paintShader,
       );
     }
-
     canvas.restore();
   }
 }

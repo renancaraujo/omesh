@@ -14,21 +14,21 @@ classes to render Free-Form mesh gradients.
 
 ## What? 🤨
 
-A free form mesh gradient means that the gradient is not limited to a linear or radial shape, but can be defined by a custom mesh of points. Each point in the mesh can have its own color and position. This gives developers the flexibility to create unique and complex visual effects in their Flutter applications. They can be used to enhance the visual appeal of UI elements and backgrounds.
+A free-form mesh gradient means that the gradient is not limited to a linear or radial shape but can be defined by a custom mesh of points. Each point in the mesh can have its own color and position. This gives developers the flexibility to create unique and complex visual effects in their Flutter applications. They can be used to enhance the visual appeal of UI elements and backgrounds.
 
-This package brings this to Flutter apps.
+This package brings this capability to Flutter apps.
 
-## Are you using O'Mesh? Let me know
+## Are you using O'Mesh? Let me know.
 
 If there is a chance of you using O'Mesh, do it 😉. If you do, I would love to see it in action. Let me know where and how you are using it via my socials: [Twitter](https://twitter.com/reNotANumber) and [LinkedIn](https://www.linkedin.com/in/renancaraujo/).
 
-## Docs and resources 📚
+## Documentation and resources 📚
 
-Best resources to get the best out of O'Mesh:
+The best resources to get the most out of O'Mesh:
 
 - [API Docs](https://pub.dev/documentation/mesh/latest/) on pub.dev;
 - [My Twitter](https://twitter.com/reNotANumber) where I post some examples;
-- More to come;
+- More to come.
 
 ## Getting Started 🚀
 
@@ -37,7 +37,8 @@ On your Flutter App project, install the package via the following command:
 ```sh
 flutter pub add mesh
 ```
-Most user-facing APIs are under the following import:
+
+Most user-facing APIs are found under the following import:
 
 ```dart
 import 'package:mesh/mesh.dart';
@@ -409,7 +410,7 @@ It may be caused by an issue with the Impeller rendering engine. Learn the possi
 
 This may be caused by too many triangles in your mesh
 
-The number of triangles in a mesh can be descriobed by `(width-1) * (height-1) * (tessellationFactor ^ 2) * 2`.
+The number of triangles in a mesh can be described by `(width-1) * (height-1) * (tessellationFactor ^ 2) * 2`.
 
 The default tessellation factor is 12, consider lowering that value for small sized containers or for
 meshes with too many vertices. See below the visual impacts of a change in the tessellation factor.
@@ -450,15 +451,15 @@ In other words:
 
 ---
 
-Still have issues, feel free to report in the issues tab on [Github](https://github.com/renancaraujo/omesh).
+If you still have issues, feel free to report them in the Issues tab on [Github](https://github.com/renancaraujo/omesh).
 
 ---
 
 ## Thanks
 
-This work wouldn't be possible if not by some special people
+This work wouldn't be possible without some special people:
 
-- Luke Pighetti for nerdsniping me about this a year ago
+- Luke Pighetti for nerd-sniping me about this a year ago
 - Lots of mathematicians behind the theories that sustain this package
 - The Dart and Flutter folks at Google
 - My Mom that gave birth to me

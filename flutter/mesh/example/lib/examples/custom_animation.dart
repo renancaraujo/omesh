@@ -121,6 +121,13 @@ class _CustomAnimationState extends State<CustomAnimation>
     });
 
   @override
+  void dispose() {
+    super.dispose();
+
+    controller.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: 500,
