@@ -12,7 +12,7 @@ import 'package:mesh/mesh.dart';
 /// Useful to render mesh gradients outside of widget contexts, such as
 /// custom paints, flame engine components, and render objects.
 class OMeshRectPaint {
-  /// Creates a new [OMeshRectPaint] with the given [shaderProvider] 
+  /// Creates a new [OMeshRectPaint] with the given [shaderProvider]
   /// and [meshRect],
   OMeshRectPaint({
     required this.shaderProvider,
@@ -178,6 +178,11 @@ class OMeshRectPaint {
       rect: rect,
     );
 
+    canvas.saveLayer(
+      rect,
+      Paint(),
+    );
+
     // Draw each patch one at a time.
     for (final tuple in patches.reversed.indexed) {
       final (patchIndex, patch) = tuple;
@@ -236,6 +241,7 @@ class OMeshRectPaint {
         paintShader,
       );
     }
+    canvas.restore();
   }
 }
 
