@@ -70,6 +70,7 @@ class OMeshGradient extends StatelessWidget {
     this.tessellation,
     this.size,
     this.impellerCompatibilityMode,
+    this.addRepaintBoundary,
   });
 
   /// The mesh that will be rendered.
@@ -99,17 +100,33 @@ class OMeshGradient extends StatelessWidget {
   /// artifacts if any of the vertices has transparent/semitransparent colors.
   final bool? impellerCompatibilityMode;
 
+  /// Whether to add a [RepaintBoundary] around the mesh widget
+  /// to avoid repainting the whole widget tree when the mesh changes.
+  ///
+  /// Read more about [RepaintBoundary](https://api.flutter.dev/flutter/widgets/RepaintBoundary-class.html)
+  ///
+  /// Default is true
+  final bool? addRepaintBoundary;
+
   @override
   Widget build(BuildContext context) {
     return _ShaderPreloader(
-      (context, shaderProvider) => _OMeshGradient(
-        shaderProvider: shaderProvider,
-        mesh: mesh,
-        debugMode: debugMode,
-        tessellation: tessellation ?? 12,
-        size: size,
-        impellerCompatibilityMode: impellerCompatibilityMode ?? false,
-      ),
+      (context, shaderProvider) {
+        Widget child = _OMeshGradient(
+          shaderProvider: shaderProvider,
+          mesh: mesh,
+          debugMode: debugMode,
+          tessellation: tessellation ?? 12,
+          size: size,
+          impellerCompatibilityMode: impellerCompatibilityMode ?? false,
+        );
+
+        if (addRepaintBoundary ?? true) {
+          child = RepaintBoundary(child: child);
+        }
+
+        return child;
+      },
     );
   }
 }
@@ -239,6 +256,7 @@ class AnimatedOMeshGradient extends StatelessWidget {
             debugMode: debugMode,
             tessellation: tessellation,
             impellerCompatibilityMode: impellerCompatibilityMode,
+            addRepaintBoundary: false,
           );
         },
       ),
