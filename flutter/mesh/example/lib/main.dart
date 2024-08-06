@@ -69,7 +69,7 @@ class Main extends StatefulWidget {
 }
 
 class _MainState extends State<Main> {
-  Example exampleScreen = Example.values.first;
+  Example exampleScreen = Example.intrinsicAnimation;
 
   @override
   Widget build(BuildContext context) {

@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_shaders/flutter_shaders.dart';
 import 'package:mesh/mesh.dart';
@@ -100,10 +102,9 @@ class OMeshGradient extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ShaderBuilder(
-      assetKey: 'packages/mesh/shaders/omesh.frag',
-      (context, shader, _) => _OMeshGradient(
-        shader: shader,
+    return _ShaderPreloader(
+      (context, shaderProvider) => _OMeshGradient(
+        shaderProvider: shaderProvider,
         mesh: mesh,
         debugMode: debugMode,
         tessellation: tessellation ?? 12,
@@ -246,17 +247,100 @@ class AnimatedOMeshGradient extends StatelessWidget {
   }
 }
 
+class OMeshShaderProvider {
+  OMeshShaderProvider._(this._program);
+
+  static Future<OMeshShaderProvider> load() async {
+    return OMeshShaderProvider._(await _loadProgram());
+  }
+
+  static FragmentProgram? _programCache;
+
+  static Future<FragmentProgram> _loadProgram() async {
+    final p = _programCache;
+    if (p != null) {
+      return p;
+    }
+
+    try {
+      final program =
+          await FragmentProgram.fromAsset('packages/mesh/shaders/omesh.frag');
+      _programCache = program;
+      return program;
+    } catch (error, stackTrace) {
+      FlutterError.reportError(
+        FlutterErrorDetails(exception: error, stack: stackTrace),
+      );
+      rethrow;
+    }
+  }
+
+  FragmentProgram _program;
+
+  final Map<int, FragmentShader> _shaders = {};
+
+  FragmentShader getShaderFor(int index) {
+    return _shaders[index] =
+        _shaders[index] ?? _program.fragmentShader();
+  }
+
+  void dispose() {
+    for (final shader in _shaders.values) {
+      shader.dispose();
+    }
+  }
+}
+
+class _ShaderPreloader extends StatefulWidget {
+  const _ShaderPreloader(this.builder);
+
+  final Widget Function(BuildContext, OMeshShaderProvider) builder;
+
+  @override
+  State<_ShaderPreloader> createState() => _ShaderPreloaderState();
+}
+
+class _ShaderPreloaderState extends State<_ShaderPreloader> {
+  OMeshShaderProvider? shaderProvider;
+
+  @override
+  void initState() {
+    super.initState();
+    OMeshShaderProvider.load().then((provider) {
+      if (mounted) {
+        setState(() {
+          shaderProvider = provider;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    shaderProvider?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (shaderProvider == null) {
+      return const SizedBox.shrink();
+    }
+    return widget.builder(context, shaderProvider!);
+  }
+}
+
 class _OMeshGradient extends StatefulWidget {
   const _OMeshGradient({
     required this.mesh,
     required this.tessellation,
     required this.debugMode,
-    required this.shader,
+    required this.shaderProvider,
     required this.impellerCompatibilityMode,
     this.size,
   });
 
-  final FragmentShader shader;
+  final OMeshShaderProvider shaderProvider;
   final OMeshRect mesh;
   final int tessellation;
   final DebugMode? debugMode;
@@ -269,7 +353,7 @@ class _OMeshGradient extends StatefulWidget {
 
 class _OMeshGradientState extends State<_OMeshGradient> {
   late final draw = OMeshRectPaint(
-    shader: widget.shader,
+    shaderProvider: widget.shaderProvider,
     meshRect: widget.mesh,
     debugMode: widget.debugMode,
     tessellation: widget.tessellation,
