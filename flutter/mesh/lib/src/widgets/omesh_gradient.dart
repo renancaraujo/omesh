@@ -1,7 +1,6 @@
 import 'dart:ui';
 
 import 'package:flutter/widgets.dart';
-import 'package:flutter_shaders/flutter_shaders.dart';
 import 'package:mesh/mesh.dart';
 
 /// A [Widget] that renders a multi-color gradient over a
@@ -247,9 +246,24 @@ class AnimatedOMeshGradient extends StatelessWidget {
   }
 }
 
+/// A class responsible for loading and caching the fragment shader
+/// responsible for interpolation the colors of the mesh.
+///
+/// This class is used internally by the [OMeshGradient]
+/// and [AnimatedOMeshGradient] and should be used directly only
+/// if you want to render a mesn on canvas  directly (eg. by using
+/// [OMeshRectPaint]).
+/// 
+/// Should be loaded via [OMeshShaderProvider.load] and disposed
+/// when no longer needed.
+/// 
+/// Avoid sharing instances of this class between different
+/// mesh gradient areas.
 class OMeshShaderProvider {
   OMeshShaderProvider._(this._program);
 
+  /// Loads the shader provider. It will resolve after
+  /// the [FragmentProgram] is loaded.
   static Future<OMeshShaderProvider> load() async {
     return OMeshShaderProvider._(await _loadProgram());
   }
@@ -275,15 +289,17 @@ class OMeshShaderProvider {
     }
   }
 
-  FragmentProgram _program;
+  final FragmentProgram _program;
 
   final Map<int, FragmentShader> _shaders = {};
 
+  /// Returns the shader for the given patch index.
   FragmentShader getShaderFor(int index) {
-    return _shaders[index] =
-        _shaders[index] ?? _program.fragmentShader();
+    return _shaders[index] = _shaders[index] ?? _program.fragmentShader();
   }
 
+
+  /// Disposes the shader provider and all the shaders.
   void dispose() {
     for (final shader in _shaders.values) {
       shader.dispose();

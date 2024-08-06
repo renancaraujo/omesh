@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:cached_value/cached_value.dart';
 import 'package:flutter/rendering.dart'
-    show BlendMode, Canvas, Color, Paint, Rect, ValueGetter;
+    show BlendMode, Canvas, Color, Paint, Rect;
 import 'package:flutter_shaders/flutter_shaders.dart';
 import 'package:mesh/internal_stuff.dart';
 import 'package:mesh/mesh.dart';
@@ -12,7 +12,8 @@ import 'package:mesh/mesh.dart';
 /// Useful to render mesh gradients outside of widget contexts, such as
 /// custom paints, flame engine components, and render objects.
 class OMeshRectPaint {
-  /// Creates a new [OMeshRectPaint] with the given [shaderProvider], [meshRect],
+  /// Creates a new [OMeshRectPaint] with the given [shaderProvider] 
+  /// and [meshRect],
   OMeshRectPaint({
     required this.shaderProvider,
     required OMeshRect meshRect,
@@ -23,7 +24,7 @@ class OMeshRectPaint {
         _tessellation = tessellation,
         _meshRect = meshRect;
 
-
+  /// The shader provider instance associated with this paint.
   final OMeshShaderProvider shaderProvider;
 
   /// Enable compatibility mode for impeller runtime.
@@ -156,7 +157,6 @@ class OMeshRectPaint {
       );
     }
 
-
     // some shorthan helpers
     final mw = meshRect.width;
     final mh = meshRect.height;
@@ -177,8 +177,6 @@ class OMeshRectPaint {
       normalizedVertices: textureVertices,
       rect: rect,
     );
-
-    
 
     // Draw each patch one at a time.
     for (final tuple in patches.reversed.indexed) {
@@ -232,17 +230,12 @@ class OMeshRectPaint {
         impellerCompatibilityMode: impellerCompatibilityMode,
       );
 
-      
-
       canvas.drawVertices(
         vertices,
         BlendMode.srcOver,
         paintShader,
       );
-      
     }
-
-
   }
 }
 
