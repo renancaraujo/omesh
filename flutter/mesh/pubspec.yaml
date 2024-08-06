@@ -1,6 +1,6 @@
 name: mesh
 description: Fast and highly customizable vector animated Mesh Gradients for Flutter applications. Using Shaders and vertices.
-version: 0.2.1
+version: 0.3.0
 repository: https://github.com/renancaraujo/omesh/tree/main/flutter/mesh
 issue_tracker: https://github.com/renancaraujo/omesh/issues
 homepage: https://github.com/renancaraujo/omesh
