@@ -215,8 +215,10 @@ class OMeshRectPaint {
           ..setFloatUniforms(
             (s) => s
               ..setSize(rect.size)
-              ..setVector(textureVertices[index00])
-              ..setVector(textureVertices[index11])
+              ..setFloats(
+                  [textureVertices[index00].dx, textureVertices[index00].dy])
+              ..setFloats(
+                  [textureVertices[index11].dx, textureVertices[index11].dy])
               ..setColorsWide(colors)
               ..setBools(biases)
               ..setColorSpace(meshRect.colorSpace)

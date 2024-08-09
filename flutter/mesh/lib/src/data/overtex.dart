@@ -1,7 +1,10 @@
+import 'dart:math';
+
 import 'package:flutter/rendering.dart' show Offset;
 import 'package:mesh/mesh.dart';
 import 'package:mesh/src/utils.dart';
-import 'package:vector_math/vector_math.dart' as vm;
+// import 'package:vector_math/vector_math.dart' as vm;
+import 'dart:ui' as ui;
 
 /// A vertex with bezier control points.
 ///
@@ -26,10 +29,12 @@ import 'package:vector_math/vector_math.dart' as vm;
 /// via the following extensions:
 /// - `Offset(0.0, 0.0).toOVertex()`
 /// - `Vector2(0.0, 0.0).toOVertex()`
-class OVertex extends vm.Vector2 {
+class OVertex {
   /// Creates a new [OVertex] with the given [x] and [y] values.
   factory OVertex(double x, double y) {
-    return OVertex.zero()..setValues(x, y);
+    return OVertex.zero()
+      ..dx = x
+      ..dy = y;
   }
 
   /// Creates a new zeroed and empty [OVertex].
@@ -38,27 +43,33 @@ class OVertex extends vm.Vector2 {
         eastCp = null,
         southCp = null,
         westCp = null,
-        super.zero();
+        dx = 0,
+        dy = 0;
 
   /// Creates a new [OVertex] from a [vm.Vector2].
-  factory OVertex.vector2(vm.Vector2 vector2) {
-    return OVertex.zero()..setFrom(vector2);
-  }
+  // factory OVertex.vector2(vm.Vector2 vector2) {
+  //   return OVertex.zero()..setFrom(vector2);
+  // }
 
   /// Creates a new [OVertex] from an [Offset].
   factory OVertex.offset(Offset offset) {
-    return OVertex.zero()..setValues(offset.dx, offset.dy);
+    return OVertex.zero()
+      ..dx = offset.dx
+      ..dy = offset.dy;
   }
 
-  /// Creates a new [OVertex] with the same [x] and [y] values.
+  /// Creates a new [OVertex] with the same `x` and `y` values.
   factory OVertex.all(double xy) {
-    return OVertex.zero()..setValues(xy, xy);
+    return OVertex.zero()
+      ..dx = xy
+      ..dy = xy;
   }
 
   /// Creates a copy of the given [OVertex].
   factory OVertex.copy(OVertex other) {
     return OVertex.zero()
-      ..setFrom(other)
+      ..dx = other.dx
+      ..dy = other.dy
       ..northCp = other.northCp
       ..eastCp = other.eastCp
       ..southCp = other.southCp
@@ -82,87 +93,82 @@ class OVertex extends vm.Vector2 {
   /// Creates a new [OVertex] with bezier control points.
   factory OVertex.bezier({
     required OVertex position,
-    vm.Vector2? north,
-    vm.Vector2? east,
-    vm.Vector2? south,
-    vm.Vector2? west,
+    ui.Offset? north,
+    ui.Offset? east,
+    ui.Offset? south,
+    ui.Offset? west,
   }) {
     return OVertex.zero()
-      ..setFrom(position)
+      ..dx = position.dx
+      ..dy = position.dy
       ..northCp = north
       ..eastCp = east
       ..southCp = south
       ..westCp = west;
   }
 
+  double dx;
+  double dy;
+
+  double distanceTo(OVertex other) {
+    return sqrt(pow(other.dx - dx, 2) + pow(other.dy - dy, 2));
+  }
+
   /// The bezier control point for the north direction.
-  vm.Vector2? northCp;
+  ui.Offset? northCp;
 
   /// The bezier control point for the east direction.
-  vm.Vector2? eastCp;
+  ui.Offset? eastCp;
 
   /// The bezier control point for the south direction.
-  vm.Vector2? southCp;
+  ui.Offset? southCp;
 
   /// The bezier control point for the west direction.
-  vm.Vector2? westCp;
+  ui.Offset? westCp;
 
   OVertex _lerp(OVertex to, double t) {
     return OVertex.zero()
-      ..setFrom(to)
-      ..sub(this)
-      ..scale(t)
-      ..add(this);
+      ..dx = ((to.dx - dx) / t) + dx
+      ..dy = ((to.dy - dy) / t) + dy;
   }
 
-  @override
   OVertex clone() => OVertex.copy(this);
 
   /// Converts this [OVertex] to an [Offset].
-  Offset toOffset() => Offset(x, y);
+  Offset toOffset() => Offset(dx, dy);
+
+  OVertex operator -() => clone()
+    ..dx = -dx
+    ..dy = -dy;
 
   @override
-  OVertex operator -() => clone()..negate();
+  OVertex operator +(ui.Offset other) => clone()
+    ..dx += other.dx
+    ..dy += other.dy;
 
   @override
-  OVertex operator +(vm.Vector2 other) => clone()..add(other);
+  OVertex operator -(ui.Offset other) => clone()
+    ..dx -= other.dx
+    ..dy -= other.dy;
 
   @override
-  OVertex operator -(vm.Vector2 other) => clone()..sub(other);
-
-  @override
-  OVertex operator *(double scale) => clone()..scale(scale);
+  OVertex operator *(double scale) => clone()
+    ..dx /= scale
+    ..dy /= scale;
 
   /// Check if two vectors are the same.
   @override
   bool operator ==(Object other) =>
       other is OVertex &&
-      x == other.x &&
-      y == other.y &&
+      dx == other.dx &&
+      dy == other.dy &&
       northCp == other.northCp &&
       eastCp == other.eastCp &&
       southCp == other.southCp &&
       westCp == other.westCp;
 
   @override
-  int get hashCode => Object.hash(x, y, northCp, eastCp, southCp, westCp);
-}
-
-/// Extension on [vm.Vector2] to convert it to an [OVertex].
-extension Vector2ToOVertex on vm.Vector2 {
-  /// Converts a [vm.Vector2] to an [OVertex] with
-  /// the given control points.
-  OVertex toOVertex({
-    vm.Vector2? northCp,
-    vm.Vector2? eastCp,
-    vm.Vector2? southCp,
-    vm.Vector2? westCp,
-  }) =>
-      OVertex.vector2(this)
-        ..northCp = northCp
-        ..eastCp = eastCp
-        ..southCp = southCp
-        ..westCp = westCp;
+  int get hashCode => Object.hash(dx, dy, northCp, eastCp, southCp, westCp);
 }
 
 /// Extension on [Offset] to convert it to an [OVertex].
@@ -170,10 +176,10 @@ extension OffsetToOVertex on Offset {
   /// Converts an [Offset] to an [OVertex] with
   /// the given control points.
   OVertex toOVertex({
-    vm.Vector2? northCp,
-    vm.Vector2? eastCp,
-    vm.Vector2? southCp,
-    vm.Vector2? westCp,
+    ui.Offset? northCp,
+    ui.Offset? eastCp,
+    ui.Offset? southCp,
+    ui.Offset? westCp,
   }) =>
       OVertex.offset(this)
         ..northCp = northCp
@@ -201,15 +207,15 @@ extension BezierizeOVertex on OVertex {
   /// This overrides the control points of the current [OVertex],
   /// being `null` if not provided.
   OVertex bezier({
-    vm.Vector2? north,
-    vm.Vector2? east,
-    vm.Vector2? south,
-    vm.Vector2? west,
+    OVertex? north,
+    OVertex? east,
+    OVertex? south,
+    OVertex? west,
   }) {
     return this
-      ..eastCp = east
-      ..northCp = north
-      ..southCp = south
-      ..westCp = west;
+      ..eastCp = east == null ? null : ui.Offset(east.dx, east.dy)
+      ..northCp = north == null ? null : ui.Offset(north.dx, north.dy)
+      ..southCp = south == null ? null : ui.Offset(south.dx, south.dy)
+      ..westCp = west == null ? null : ui.Offset(west.dx, west.dy);
   }
 }
