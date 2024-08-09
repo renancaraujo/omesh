@@ -1,8 +1,9 @@
 import 'dart:math';
+import 'dart:ui' as ui;
 
 import 'package:flutter/widgets.dart';
 import 'package:mesh/mesh.dart';
-import 'package:vector_math/vector_math.dart' as vm;
+// import 'package:vector_math/vector_math.dart' as vm;
 
 /// A version of [OMeshRect] after rendered into a rectangualar area.
 ///
@@ -106,38 +107,44 @@ class RenderedOVertex {
     required _DeNormalizedOVertex? vertexToTheWest,
     required double distanceFactor,
   }) {
-    vm.Vector2 inferCp({
-      vm.Vector2? cp,
-      ({vm.Vector2 relativeVertex, vm.Vector2 guide})? relativeInfo,
+    ui.Offset inferCp({
+      ui.Offset? cp,
+      ({OVertex relativeVertex, ui.Offset guide})? relativeInfo,
     }) {
       if (cp != null) {
         return cp;
-      } else if (relativeInfo != null) {
+      }
+
+      if (relativeInfo != null) {
         final (:relativeVertex, :guide) = relativeInfo;
 
-        final ogRotationRad = _angleBetween(guide, position);
-        final rotationRad = _angleBetween(relativeVertex, position);
+        final ogRotationRad =
+            _angleBetween(guide, ui.Offset(position.dx, position.dy));
+        final rotationRad = _angleBetween(
+            ui.Offset(relativeVertex.dx, relativeVertex.dy),
+            ui.Offset(position.dx, position.dy));
         final rotationRadLerp = _radiusLerp(rotationRad, ogRotationRad, 0.8);
 
         final distance = position.distanceTo(relativeVertex);
 
-        final rotatedRelativeVertex = vm.Vector2(
-          position.x + cos(rotationRadLerp) * distance * distanceFactor,
-          position.y + sin(rotationRadLerp) * distance * distanceFactor,
+        final rotatedRelativeVertex = ui.Offset(
+          position.dx + cos(rotationRadLerp) * distance * distanceFactor,
+          position.dy + sin(rotationRadLerp) * distance * distanceFactor,
         );
 
         return rotatedRelativeVertex;
-      } else {
-        return position;
       }
+      return ui.Offset(position.dx, position.dy);
     }
+
+    final ui.Offset positionOffset = ui.Offset(position.dx, position.dy);
 
     final north = inferCp(
       cp: position.northCp,
       relativeInfo: vertexToTheNorth != null
           ? (
               relativeVertex: vertexToTheNorth,
-              guide: position - vm.Vector2(0, 1)
+              guide: positionOffset - const ui.Offset(0, 1)
             )
           : null,
     );
@@ -147,7 +154,7 @@ class RenderedOVertex {
       relativeInfo: vertexToTheEast != null
           ? (
               relativeVertex: vertexToTheEast,
-              guide: position + vm.Vector2(1, 0)
+              guide: positionOffset + const ui.Offset(1, 0)
             )
           : null,
     );
@@ -157,7 +164,7 @@ class RenderedOVertex {
       relativeInfo: vertexToTheSouth != null
           ? (
               relativeVertex: vertexToTheSouth,
-              guide: position + vm.Vector2(0, 1)
+              guide: positionOffset + const ui.Offset(0, 1)
             )
           : null,
     );
@@ -167,13 +174,13 @@ class RenderedOVertex {
       relativeInfo: vertexToTheWest != null
           ? (
               relativeVertex: vertexToTheWest,
-              guide: position - vm.Vector2(1, 0)
+              guide: positionOffset - const ui.Offset(1, 0)
             )
           : null,
     );
 
     return RenderedOVertex(
-      p: position,
+      p: ui.Offset(position.dx, position.dy),
       north: north,
       east: east,
       south: south,
@@ -181,8 +188,8 @@ class RenderedOVertex {
     );
   }
 
-  static double _angleBetween(vm.Vector2 a, vm.Vector2 b) {
-    return atan2(a.y - b.y, a.x - b.x);
+  static double _angleBetween(ui.Offset a, ui.Offset b) {
+    return atan2(a.dy - b.dy, a.dx - b.dx);
   }
 
   static double _radiusLerp(double a, double b, double t) {
@@ -197,19 +204,19 @@ class RenderedOVertex {
   }
 
   /// The position of the vertex.
-  final vm.Vector2 p;
+  final ui.Offset p;
 
   /// The control point for the north direction.
-  final vm.Vector2 north;
+  final ui.Offset north;
 
   /// The control point for the east direction.
-  final vm.Vector2 east;
+  final ui.Offset east;
 
   /// The control point for the south direction.
-  final vm.Vector2 south;
+  final ui.Offset south;
 
   /// The control point for the west direction.
-  final vm.Vector2 west;
+  final ui.Offset west;
 
   @override
   bool operator ==(Object other) {
@@ -224,13 +231,7 @@ class RenderedOVertex {
   }
 
   @override
-  int get hashCode {
-    return p.hashCode ^
-        north.hashCode ^
-        east.hashCode ^
-        south.hashCode ^
-        west.hashCode;
-  }
+  int get hashCode => Object.hash(p, north, east, south, west);
 
   @override
   String toString() {
@@ -245,8 +246,8 @@ extension on OVertex {
   _DeNormalizedOVertex denormalize(Rect rect) {
     return _DeNormalizedOVertex(
       OVertex(
-        x * rect.width + rect.left,
-        y * rect.height + rect.top,
+        dx * rect.width + rect.left,
+        dy * rect.height + rect.top,
       )
         ..eastCp = eastCp?.withinV(rect)
         ..northCp = northCp?.withinV(rect)
@@ -256,11 +257,11 @@ extension on OVertex {
   }
 }
 
-extension on vm.Vector2 {
-  vm.Vector2 withinV(Rect rect) {
-    return vm.Vector2(
-      x * rect.width + rect.left,
-      y * rect.height + rect.top,
+extension on ui.Offset {
+  ui.Offset withinV(Rect rect) {
+    return ui.Offset(
+      dx * rect.width + rect.left,
+      dy * rect.height + rect.top,
     );
   }
 }

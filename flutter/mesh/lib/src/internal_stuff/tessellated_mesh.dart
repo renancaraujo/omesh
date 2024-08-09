@@ -2,22 +2,17 @@
 
 import 'dart:typed_data';
 import 'dart:ui' show VertexMode, Vertices;
+import 'dart:ui' as ui show Offset;
 
 import 'package:flutter/rendering.dart' show Size, VertexMode;
 import 'package:mesh/internal_stuff.dart';
-import 'package:mesh/src/utils.dart';
-import 'package:vector_math/vector_math.dart' as vm;
-import 'package:vector_math/vector_math.dart';
 
 class TessellatedMesh {
   TessellatedMesh({
-    required this.tessellation,
-  });
+    required int tessellation,
+  })  : _vertexData = Float32List((tessellation * tessellation) * 24);
 
-  final int tessellation;
-  late final _trianglesLength = (tessellation * tessellation) * 12;
-  late final _verticesTriangles = Float32List(_trianglesLength);
-  late final _textureTriangles = Float32List(_trianglesLength);
+  final Float32List _vertexData;
 
   /// Returns a [Vertices] object with the given
   /// [size], [cornerIndices], [verticesMesh], [textureMesh],
@@ -28,89 +23,46 @@ class TessellatedMesh {
     required RenderedOMeshRect verticesMesh,
     required RenderedOMeshRect textureMesh,
     required int tessellation,
-    required bool impellerCompatibilityMode,
   }) {
-    final verticesTrianglesIterable = _getTriangles(
+    final lengthInF32 = _vertexData.length ~/ 2;
+    final offsetInBytes = lengthInF32 * 4;
+    final verticesTriangles = Float32List.view(_vertexData.buffer, 0, lengthInF32);
+    final textureTriangles = Float32List.view(_vertexData.buffer, offsetInBytes, lengthInF32);
+
+    _writeTriangles(
       size,
       cornerIndices,
       verticesMesh,
       tessellation,
-      impellerCompatibilityMode: impellerCompatibilityMode,
+      verticesTriangles,
     );
 
-    final textureTrianglesIterable = _getTriangles(
+    _writeTriangles(
       size,
       cornerIndices,
       textureMesh,
       tessellation,
-      impellerCompatibilityMode: impellerCompatibilityMode,
+      textureTriangles,
     );
-
-    final verticesIterator = verticesTrianglesIterable.iterator;
-    final texturesIterator = textureTrianglesIterable.iterator;
-    for (var i = 0; i < _trianglesLength; i++) {
-      verticesIterator.moveNext();
-      _verticesTriangles[i] = verticesIterator.current;
-
-      texturesIterator.moveNext();
-      _textureTriangles[i] = texturesIterator.current;
-    }
 
     return Vertices.raw(
       VertexMode.triangles,
-      _verticesTriangles,
-      textureCoordinates: _textureTriangles,
+      verticesTriangles,
+      textureCoordinates: textureTriangles,
     );
   }
 
-  Iterable<double> _getTriangles(
+  void _writeTriangles(
     Size size,
     List<int> cornerIndices,
     RenderedOMeshRect renderedOMeshRect,
-    int tessellation, {
-    required bool impellerCompatibilityMode,
-  }) sync* {
-    var topLeft = renderedOMeshRect.vertices[cornerIndices[0]];
-    var topRight = renderedOMeshRect.vertices[cornerIndices[1]];
-    var bottomLeft = renderedOMeshRect.vertices[cornerIndices[2]];
-    var bottomRight = renderedOMeshRect.vertices[cornerIndices[3]];
-
-    if (impellerCompatibilityMode) {
-      const displace = 2.0;
-
-      topLeft = RenderedOVertex(
-        p: Vector2(topLeft.p.x - displace, topLeft.p.y - displace),
-        north: topLeft.north,
-        east: topLeft.east,
-        south: topLeft.south,
-        west: topLeft.west,
-      );
-
-      topRight = RenderedOVertex(
-        p: Vector2(topRight.p.x + displace, topRight.p.y - displace),
-        north: topRight.north,
-        east: topRight.east,
-        south: topRight.south,
-        west: topRight.west,
-      );
-
-      bottomLeft = RenderedOVertex(
-        p: Vector2(bottomLeft.p.x - displace, bottomLeft.p.y + displace),
-        north: bottomLeft.north,
-        east: bottomLeft.east,
-        south: bottomLeft.south,
-        west: bottomLeft.west,
-      );
-
-      bottomRight = RenderedOVertex(
-        p: Vector2(bottomRight.p.x + displace, bottomRight.p.y + displace),
-        north: bottomRight.north,
-        east: bottomRight.east,
-        south: bottomRight.south,
-        west: bottomRight.west,
-      );
-    }
-
+    int tessellation,
+    Float32List output,
+  ) {
+    final topLeft = renderedOMeshRect.vertices[cornerIndices[0]];
+    final topRight = renderedOMeshRect.vertices[cornerIndices[1]];
+    final bottomLeft = renderedOMeshRect.vertices[cornerIndices[2]];
+    final bottomRight = renderedOMeshRect.vertices[cornerIndices[3]];
     final surface = _BezierPatch(
       topLeft: topLeft,
       topRight: topRight,
@@ -118,6 +70,7 @@ class TessellatedMesh {
       bottomRight: bottomRight,
     );
 
+    var offset = 0;
     for (var tRow = 0; tRow < tessellation; tRow++) {
       for (var tCol = 0; tCol < tessellation; tCol++) {
         final uLeft = tCol / tessellation;
@@ -130,19 +83,21 @@ class TessellatedMesh {
         final bottomLeft = surface.getPoint(uLeft, vBottom);
         final bottomRight = surface.getPoint(uRight, vBottom);
 
-        yield* _yieldVector(topLeft);
-        yield* _yieldVector(topRight);
-        yield* _yieldVector(bottomRight);
-        yield* _yieldVector(topLeft);
-        yield* _yieldVector(bottomLeft);
-        yield* _yieldVector(bottomRight);
+        output[offset++] = topLeft.dx;
+        output[offset++] = topLeft.dy;
+        output[offset++] = topRight.dx;
+        output[offset++] = topRight.dy;
+        output[offset++] = bottomRight.dx;
+        output[offset++] = bottomRight.dy;
+
+        output[offset++] = topLeft.dx;
+        output[offset++] = topLeft.dy;
+        output[offset++] = bottomLeft.dx;
+        output[offset++] = bottomLeft.dy;
+        output[offset++] = bottomRight.dx;
+        output[offset++] = bottomRight.dy;
       }
     }
-  }
-
-  Iterable<double> _yieldVector(vm.Vector2 v) sync* {
-    yield v.x;
-    yield v.y;
   }
 }
 
@@ -159,7 +114,14 @@ class _BezierPatch {
   final RenderedOVertex bottomLeft;
   final RenderedOVertex bottomRight;
 
-  vm.Vector2 getPoint(double u, double v, {bool debug = false}) {
+  /// Linearly interpolate between two doubles.
+  static ui.Offset _lerpDouble(ui.Offset a, ui.Offset b, double t) {
+    return a * (1.0 - t) + b * t;
+  }
+
+  // This is the hottest function in the animated mesh gradient
+  // example
+  ui.Offset getPoint(double u, double v) {
     // Thanks mr Paul de Casteljau
     final topEdge = _bezierInterpolation(
       point1: topLeft.p,
@@ -180,12 +142,12 @@ class _BezierPatch {
     final vcptl = topLeft.south - topLeft.p;
     final vcptr = topRight.south - topRight.p;
 
-    final vcpt = vector2Lerp(vcptl, vcptr, u) + topEdge;
+    final vcpt = _lerpDouble(vcptl, vcptr, u) + topEdge;
 
     final vcpbl = bottomLeft.north - bottomLeft.p;
     final vcpbr = bottomRight.north - bottomRight.p;
 
-    final vcpb = vector2Lerp(vcpbl, vcpbr, u) + bottomEdge;
+    final vcpb = _lerpDouble(vcpbl, vcpbr, u) + bottomEdge;
 
     return _bezierInterpolation(
       point1: topEdge,
@@ -196,19 +158,26 @@ class _BezierPatch {
     );
   }
 
-  vm.Vector2 _bezierInterpolation({
-    required vm.Vector2 point1,
-    required vm.Vector2 controlPoint1,
-    required vm.Vector2 controlPoint2,
-    required vm.Vector2 point2,
+  ui.Offset _bezierInterpolation({
+    required ui.Offset point1,
+    required ui.Offset controlPoint1,
+    required ui.Offset controlPoint2,
+    required ui.Offset point2,
     required double t,
   }) {
     final mt = 1.0 - t;
-    var point = point1;
-    point *= mt * mt * mt;
-    point += controlPoint1 * mt * mt * t * 3;
-    point += controlPoint2 * mt * t * t * 3;
-    point += point2 * t * t * t;
-    return point;
+    final mt2 = mt * mt;
+    final mt3 = mt2 * mt;
+    final t3 = t * t * t;
+    final dx = (mt3 * point1.dx) +
+        (controlPoint1.dx * mt2 * t * 3) +
+        (controlPoint2.dx * mt * t * t * 3) +
+        (point2.dx * t3);
+    final dy = (mt3 * point1.dy) +
+        (controlPoint1.dy * mt2 * t * 3) +
+        (controlPoint2.dy * mt * t * t * 3) +
+        (point2.dy * t3);
+
+    return ui.Offset(dx, dy);
   }
 }
