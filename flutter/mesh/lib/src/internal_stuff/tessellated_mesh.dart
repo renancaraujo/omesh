@@ -9,13 +9,10 @@ import 'package:mesh/internal_stuff.dart';
 
 class TessellatedMesh {
   TessellatedMesh({
-    required this.tessellation,
-  })  : _verticesTriangles = Float32List((tessellation * tessellation) * 12),
-        _textureTriangles = Float32List((tessellation * tessellation) * 12);
+    required int tessellation,
+  })  : _vertexData = Float32List((tessellation * tessellation) * 24);
 
-  final int tessellation;
-  final Float32List _verticesTriangles;
-  final Float32List _textureTriangles;
+  final Float32List _vertexData;
 
   /// Returns a [Vertices] object with the given
   /// [size], [cornerIndices], [verticesMesh], [textureMesh],
@@ -26,15 +23,18 @@ class TessellatedMesh {
     required RenderedOMeshRect verticesMesh,
     required RenderedOMeshRect textureMesh,
     required int tessellation,
-    required bool impellerCompatibilityMode,
   }) {
+    final lengthInF32 = _vertexData.length ~/ 2;
+    final offsetInBytes = lengthInF32 * 4;
+    final verticesTriangles = Float32List.view(_vertexData.buffer, 0, lengthInF32);
+    final textureTriangles = Float32List.view(_vertexData.buffer, offsetInBytes, lengthInF32);
+
     _writeTriangles(
       size,
       cornerIndices,
       verticesMesh,
       tessellation,
-      _verticesTriangles,
-      impellerCompatibilityMode: impellerCompatibilityMode,
+      verticesTriangles,
     );
 
     _writeTriangles(
@@ -42,14 +42,13 @@ class TessellatedMesh {
       cornerIndices,
       textureMesh,
       tessellation,
-      _textureTriangles,
-      impellerCompatibilityMode: impellerCompatibilityMode,
+      textureTriangles,
     );
 
     return Vertices.raw(
       VertexMode.triangles,
-      _verticesTriangles,
-      textureCoordinates: _textureTriangles,
+      verticesTriangles,
+      textureCoordinates: textureTriangles,
     );
   }
 
@@ -58,50 +57,12 @@ class TessellatedMesh {
     List<int> cornerIndices,
     RenderedOMeshRect renderedOMeshRect,
     int tessellation,
-    Float32List output, {
-    required bool impellerCompatibilityMode,
-  }) {
-    var topLeft = renderedOMeshRect.vertices[cornerIndices[0]];
-    var topRight = renderedOMeshRect.vertices[cornerIndices[1]];
-    var bottomLeft = renderedOMeshRect.vertices[cornerIndices[2]];
-    var bottomRight = renderedOMeshRect.vertices[cornerIndices[3]];
-
-    if (impellerCompatibilityMode) {
-      const displace = 2.0;
-
-      topLeft = RenderedOVertex(
-        p: ui.Offset(topLeft.p.dx - displace, topLeft.p.dy - displace),
-        north: topLeft.north,
-        east: topLeft.east,
-        south: topLeft.south,
-        west: topLeft.west,
-      );
-
-      topRight = RenderedOVertex(
-        p: ui.Offset(topRight.p.dx + displace, topRight.p.dy - displace),
-        north: topRight.north,
-        east: topRight.east,
-        south: topRight.south,
-        west: topRight.west,
-      );
-
-      bottomLeft = RenderedOVertex(
-        p: ui.Offset(bottomLeft.p.dx - displace, bottomLeft.p.dy + displace),
-        north: bottomLeft.north,
-        east: bottomLeft.east,
-        south: bottomLeft.south,
-        west: bottomLeft.west,
-      );
-
-      bottomRight = RenderedOVertex(
-        p: ui.Offset(bottomRight.p.dx + displace, bottomRight.p.dy + displace),
-        north: bottomRight.north,
-        east: bottomRight.east,
-        south: bottomRight.south,
-        west: bottomRight.west,
-      );
-    }
-
+    Float32List output,
+  ) {
+    final topLeft = renderedOMeshRect.vertices[cornerIndices[0]];
+    final topRight = renderedOMeshRect.vertices[cornerIndices[1]];
+    final bottomLeft = renderedOMeshRect.vertices[cornerIndices[2]];
+    final bottomRight = renderedOMeshRect.vertices[cornerIndices[3]];
     final surface = _BezierPatch(
       topLeft: topLeft,
       topRight: topRight,
@@ -117,28 +78,24 @@ class TessellatedMesh {
         final vTop = tRow / tessellation;
         final vBottom = (tRow + 1) / tessellation;
 
-        final ui.Offset(dx: topLeftX, dy: topLeftY) =
-            surface.getPoint(uLeft, vTop);
-        final ui.Offset(dx: topRightX, dy: topRightY) =
-            surface.getPoint(uRight, vTop);
-        final ui.Offset(dx: bottomLeftX, dy: bottomLeftY) =
-            surface.getPoint(uLeft, vBottom);
-        final ui.Offset(dx: bottomRightX, dy: bottomRightY) =
-            surface.getPoint(uRight, vBottom);
+        final topLeft = surface.getPoint(uLeft, vTop);
+        final topRight = surface.getPoint(uRight, vTop);
+        final bottomLeft = surface.getPoint(uLeft, vBottom);
+        final bottomRight = surface.getPoint(uRight, vBottom);
 
-        output[offset++] = topLeftX;
-        output[offset++] = topLeftY;
-        output[offset++] = topRightX;
-        output[offset++] = topRightY;
-        output[offset++] = bottomLeftX;
-        output[offset++] = bottomLeftY;
+        output[offset++] = topLeft.dx;
+        output[offset++] = topLeft.dy;
+        output[offset++] = topRight.dx;
+        output[offset++] = topRight.dy;
+        output[offset++] = bottomRight.dx;
+        output[offset++] = bottomRight.dy;
 
-        output[offset++] = topLeftX;
-        output[offset++] = topLeftY;
-        output[offset++] = bottomLeftX;
-        output[offset++] = bottomLeftY;
-        output[offset++] = bottomRightX;
-        output[offset++] = bottomRightY;
+        output[offset++] = topLeft.dx;
+        output[offset++] = topLeft.dy;
+        output[offset++] = bottomLeft.dx;
+        output[offset++] = bottomLeft.dy;
+        output[offset++] = bottomRight.dx;
+        output[offset++] = bottomRight.dy;
       }
     }
   }

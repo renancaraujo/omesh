@@ -1,15 +1,7 @@
 import 'dart:math';
-
-import 'package:flutter/rendering.dart' show Offset;
-import 'package:mesh/mesh.dart';
-import 'package:mesh/src/utils.dart';
-// import 'package:vector_math/vector_math.dart' as vm;
 import 'dart:ui' as ui;
 
 /// A vertex with bezier control points.
-///
-/// It extends [vm.Vector2] and adds control points for each direction on
-/// a [OMeshRect].
 ///
 /// The control points are used to create bezier curves between vertices.
 ///
@@ -25,10 +17,9 @@ import 'dart:ui' as ui;
 /// - `(0.5, 0.5).v.bezier(north: (0.5, 0.4).v)`
 ///   => `OVertex.bezier(position: OVertex(0.5, 0.5), north: OVertex(0.5, 0.5))`
 ///
-/// It is also possible to convert an [Offset] or a [vm.Vector2] to an [OVertex]
+/// It is also possible to convert an [ui.Offset] or to an [OVertex]
 /// via the following extensions:
 /// - `Offset(0.0, 0.0).toOVertex()`
-/// - `Vector2(0.0, 0.0).toOVertex()`
 class OVertex {
   /// Creates a new [OVertex] with the given [x] and [y] values.
   factory OVertex(double x, double y) {
@@ -46,13 +37,8 @@ class OVertex {
         dx = 0,
         dy = 0;
 
-  /// Creates a new [OVertex] from a [vm.Vector2].
-  // factory OVertex.vector2(vm.Vector2 vector2) {
-  //   return OVertex.zero()..setFrom(vector2);
-  // }
-
-  /// Creates a new [OVertex] from an [Offset].
-  factory OVertex.offset(Offset offset) {
+  /// Creates a new [OVertex] from an [ui.Offset].
+  factory OVertex.offset(ui.Offset offset) {
     return OVertex.zero()
       ..dx = offset.dx
       ..dy = offset.dy;
@@ -78,10 +64,10 @@ class OVertex {
 
   /// Linearly interpolates between two [OVertex] objects.
   factory OVertex.lerp(OVertex a, OVertex b, double t) {
-    final n = vector2MaybeLerp(a.northCp, b.northCp, t);
-    final e = vector2MaybeLerp(a.eastCp, b.eastCp, t);
-    final s = vector2MaybeLerp(a.southCp, b.southCp, t);
-    final w = vector2MaybeLerp(a.westCp, b.westCp, t);
+    final n = ui.Offset.lerp(a.northCp, b.northCp, t);
+    final e = ui.Offset.lerp(a.eastCp, b.eastCp, t);
+    final s = ui.Offset.lerp(a.southCp, b.southCp, t);
+    final w = ui.Offset.lerp(a.westCp, b.westCp, t);
 
     return a._lerp(b, t)
       ..northCp = n
@@ -107,9 +93,17 @@ class OVertex {
       ..westCp = west;
   }
 
+  /// The x component of the offset.
+  ///
+  /// The y component is given by [dy].
   double dx;
+
+  /// The y component of the offset.
+  ///
+  /// The x component is given by [dx].
   double dy;
 
+  /// Compute the euclidian distance between [other] and this.
   double distanceTo(OVertex other) {
     return sqrt(pow(other.dx - dx, 2) + pow(other.dy - dy, 2));
   }
@@ -132,26 +126,28 @@ class OVertex {
       ..dy = ((to.dy - dy) / t) + dy;
   }
 
+  /// Create a copy of this OVertex.
   OVertex clone() => OVertex.copy(this);
 
-  /// Converts this [OVertex] to an [Offset].
-  Offset toOffset() => Offset(dx, dy);
+  /// Converts this [OVertex] to an [ui.Offset].
+  ui.Offset toOffset() => ui.Offset(dx, dy);
 
+  /// Unary negation operator.
   OVertex operator -() => clone()
     ..dx = -dx
     ..dy = -dy;
 
-  @override
+  /// Binary addition operator.
   OVertex operator +(ui.Offset other) => clone()
     ..dx += other.dx
     ..dy += other.dy;
 
-  @override
+  /// Binary subtraction operator.
   OVertex operator -(ui.Offset other) => clone()
     ..dx -= other.dx
     ..dy -= other.dy;
 
-  @override
+  /// Binary multiplication operator.
   OVertex operator *(double scale) => clone()
     ..dx /= scale
     ..dy /= scale;
@@ -171,9 +167,9 @@ class OVertex {
   int get hashCode => Object.hash(dx, dy, northCp, eastCp, southCp, westCp);
 }
 
-/// Extension on [Offset] to convert it to an [OVertex].
-extension OffsetToOVertex on Offset {
-  /// Converts an [Offset] to an [OVertex] with
+/// Extension on [ui.Offset] to convert it to an [OVertex].
+extension OffsetToOVertex on ui.Offset {
+  /// Converts an [ui.Offset] to an [OVertex] with
   /// the given control points.
   OVertex toOVertex({
     ui.Offset? northCp,

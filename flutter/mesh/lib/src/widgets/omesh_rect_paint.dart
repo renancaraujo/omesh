@@ -234,7 +234,6 @@ class OMeshRectPaint {
         verticesMesh: verticesMesh,
         textureMesh: textureMesh,
         tessellation: tessellation,
-        impellerCompatibilityMode: impellerCompatibilityMode,
       );
 
       canvas.drawVertices(
