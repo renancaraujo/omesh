@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:cached_value/cached_value.dart';
 import 'package:flutter/rendering.dart'
-    show BlendMode, Canvas, Color, Paint, Rect;
+    show BlendMode, Canvas, Color, Matrix4, Paint, Rect;
 import 'package:flutter_shaders/flutter_shaders.dart';
 import 'package:mesh/internal_stuff.dart';
 import 'package:mesh/mesh.dart';
@@ -110,8 +110,8 @@ class OMeshRectPaint {
         final x = index % nRectX;
 
         return [
-          (x, y), (x + 1, y), //
-          (x, y + 1), (x + 1, y + 1), //
+          (x, y).onGrid(mw, mh), (x + 1, y).onGrid(mw, mh), //
+          (x, y + 1).onGrid(mw, mh), (x + 1, y + 1).onGrid(mw, mh), //
         ];
       },
     );
@@ -157,14 +157,12 @@ class OMeshRectPaint {
       );
     }
 
-    // some shorthan helpers
-    final mw = meshRect.width;
-    final mh = meshRect.height;
 
     // Extract the current texture vertices, patches and vertex colors
     // from the caches.
     final textureVertices = textureVerticesCache.value;
     final patches = patchesCache.value;
+
     final vertexColors = inferredColorsCache.value;
 
     // Denormalize the vertices and infer control points.
@@ -188,18 +186,13 @@ class OMeshRectPaint {
       final (patchIndex, patch) = tuple;
 
       // tl
-      final index00 = patch[0].onGrid(mw, mh);
+      final index00 = patch[0];
       // tr
-      final index01 = patch[1].onGrid(mw, mh);
+      final index01 = patch[1];
       // bl
-      final index10 = patch[2].onGrid(mw, mh);
+      final index10 = patch[2];
       // br
-      final index11 = patch[3].onGrid(mw, mh);
-
-      final patchIndices = [
-        index00, index01, //
-        index10, index11, //
-      ];
+      final index11 = patch[3];
 
       final (colors, biases) = [
         vertexColors[index00], vertexColors[index01], //
@@ -210,6 +203,7 @@ class OMeshRectPaint {
         return acc;
       });
 
+      //--
       final paintShader = Paint()
         ..shader = (shaderProvider.getShaderFor(patchIndex)
           ..setFloatUniforms(
@@ -221,14 +215,38 @@ class OMeshRectPaint {
               ..setBools(biases)
               ..setColorSpace(meshRect.colorSpace)
               ..setFloat(
-                debugMode?.enableDots ?? false ? tessellation.toDouble() : 0.0,
+                (debugMode?.enableDots ?? false)
+                    ? tessellation.toDouble()
+                    : 0.0,
               ),
           ));
+
+      final recorder = PictureRecorder();
+      Canvas(recorder).drawRect(
+        rect,
+        paintShader,
+      );
+      final picture = recorder.endRecording();
+      final image = picture.toImageSync(
+        rect.size.width.ceil(),
+        rect.size.height.ceil(),
+      );
+      final imagePaint = Paint()
+        ..shader = ImageShader(
+          image,
+          TileMode.clamp,
+          TileMode.clamp,
+          Matrix4.identity().storage,
+        );
+      // --
 
       final vertices =
           tessellatedMeshCache.value.getTessellatedVerticesForPatch(
         size: rect.size,
-        cornerIndices: patchIndices,
+        cornerIndices: [
+          index00, index01, //
+          index10, index11, //
+        ],
         verticesMesh: verticesMesh,
         textureMesh: textureMesh,
         tessellation: tessellation,
@@ -238,7 +256,7 @@ class OMeshRectPaint {
       canvas.drawVertices(
         vertices,
         BlendMode.srcOver,
-        paintShader,
+        imagePaint,
       );
     }
     canvas.restore();
@@ -281,5 +299,11 @@ extension on UniformsSetter {
     for (final color in colors) {
       setColorWide(color);
     }
+  }
+}
+
+extension on OVertex {
+  Size toSize() {
+    return Size(x, y);
   }
 }

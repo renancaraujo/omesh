@@ -19,6 +19,12 @@ void main() {
 }
 
 enum Example {
+  intrinsicAnimation(
+    view: InstrinsicAnimation(),
+    title: 'Intrinsic animation',
+    description: 'An example to illustrate animation on state change',
+    code: InstrinsicAnimation.code,
+  ),
   basic(
     view: BasicUsage(),
     title: 'Basic Usage',
@@ -32,12 +38,7 @@ enum Example {
 More advanced example with different colors in each vertex, bezier vertices and color inference''',
     code: AdvancedUsage.code,
   ),
-  intrinsicAnimation(
-    view: InstrinsicAnimation(),
-    title: 'Intrinsic animation',
-    description: 'An example to illustrate animation on state change',
-    code: InstrinsicAnimation.code,
-  ),
+  
   customAnimation(
     view: CustomAnimation(),
     title: 'Custom animation',
