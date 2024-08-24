@@ -69,7 +69,6 @@ class OMeshGradient extends StatelessWidget {
     this.debugMode,
     this.tessellation,
     this.size,
-    this.impellerCompatibilityMode,
     this.addRepaintBoundary,
   });
 
@@ -90,15 +89,6 @@ class OMeshGradient extends StatelessWidget {
   /// the maximum size of the parent's [BoxConstraints].
   final Size? size;
 
-  /// Renders each segment of th mesh expanded 1 pixel to every direction to
-  /// avoid line artifacts when using the impeller backend.
-  ///
-  /// This is a temporary workaround for the impeller backend,
-  /// and should be set to false unless using impeller is the only option.
-  ///
-  /// Because every segment is expanded, this may cause other visual
-  /// artifacts if any of the vertices has transparent/semitransparent colors.
-  final bool? impellerCompatibilityMode;
 
   /// Whether to add a [RepaintBoundary] around the mesh widget
   /// to avoid repainting the whole widget tree when the mesh changes.
@@ -118,7 +108,6 @@ class OMeshGradient extends StatelessWidget {
           debugMode: debugMode,
           tessellation: tessellation ?? 12,
           size: size,
-          impellerCompatibilityMode: impellerCompatibilityMode ?? false,
         );
 
         if (addRepaintBoundary ?? true) {
@@ -205,7 +194,6 @@ class AnimatedOMeshGradient extends StatelessWidget {
     this.tessellation,
     this.debugMode,
     this.size,
-    this.impellerCompatibilityMode,
     super.key,
   });
 
@@ -232,16 +220,6 @@ class AnimatedOMeshGradient extends StatelessWidget {
   /// the minimum size of the parent constraints.
   final Size? size;
 
-  /// Renders each segment of th mesh expanded 1 pixel to every direction to
-  /// avoid line artifacts when using the impeller backend.
-  ///
-  /// This is a temporary workaround for the impeller backend,
-  /// and should be set to false unless using impeller is the only option.
-  ///
-  /// Because every segment is expanded, this may cause other visual
-  /// artifacts if any of the vertices has transparent/semitransparent colors.
-  final bool? impellerCompatibilityMode;
-
   @override
   Widget build(BuildContext context) {
     return RepaintBoundary(
@@ -255,7 +233,6 @@ class AnimatedOMeshGradient extends StatelessWidget {
             mesh: mesh,
             debugMode: debugMode,
             tessellation: tessellation,
-            impellerCompatibilityMode: impellerCompatibilityMode,
             addRepaintBoundary: false,
           );
         },
@@ -369,7 +346,6 @@ class _OMeshGradient extends StatefulWidget {
     required this.tessellation,
     required this.debugMode,
     required this.shaderProvider,
-    required this.impellerCompatibilityMode,
     this.size,
   });
 
@@ -378,7 +354,7 @@ class _OMeshGradient extends StatefulWidget {
   final int tessellation;
   final DebugMode? debugMode;
   final Size? size;
-  final bool impellerCompatibilityMode;
+
 
   @override
   State<_OMeshGradient> createState() => _OMeshGradientState();
@@ -390,7 +366,6 @@ class _OMeshGradientState extends State<_OMeshGradient> {
     meshRect: widget.mesh,
     debugMode: widget.debugMode,
     tessellation: widget.tessellation,
-    impellerCompatibilityMode: widget.impellerCompatibilityMode,
   );
 
   @override

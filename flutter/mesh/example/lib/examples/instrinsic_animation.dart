@@ -93,7 +93,6 @@ class _InstrinsicAnimationState extends State<InstrinsicAnimation> {
             curve: Curves.easeInOut,
             debugMode: DebugMode.none,
             tessellation: 12,
-            impellerCompatibilityMode: true,
             duration: const Duration(seconds: 1),
             mesh: OMeshRect(
               width: 3,

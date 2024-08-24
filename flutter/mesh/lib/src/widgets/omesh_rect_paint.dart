@@ -1,11 +1,60 @@
 import 'dart:ui';
 
 import 'package:cached_value/cached_value.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart'
-    show BlendMode, Canvas, Color, Paint, Rect;
+    show BlendMode, Canvas, Color, Matrix4, Paint, Rect;
 import 'package:flutter_shaders/flutter_shaders.dart';
 import 'package:mesh/internal_stuff.dart';
 import 'package:mesh/mesh.dart';
+
+/// Global flag that defines if O'Mesh will try to be compatible with
+/// the Impeller rendering engine.
+///
+/// True by default.
+///
+/// Set to false if you are opting out of impeller completely.
+///
+/// See also:
+/// - [enableOMeshImpellerCompatibilityOnAndroid] to enable on Android if
+/// ou are opting in on Impeller on Android.
+bool enableOMeshImpellerCompatibility = true;
+
+/// When [enableOMeshImpellerCompatibility] is true, this flag will enable
+/// Impeller compatibility on Android.
+///
+/// False by default.
+///
+/// Set to true if you are opting in on Impeller on Android.
+bool enableOMeshImpellerCompatibilityOnAndroid = false;
+
+// Check if the current graphic backend is impeller
+bool get _enableImpellerCompatibility {
+  // disable checks if the feature is disabled
+  if (!enableOMeshImpellerCompatibility) {
+    return false;
+  }
+
+  // Impeller is not supported on web
+  if (kIsWeb) {
+    return false;
+  }
+
+  if (defaultTargetPlatform == TargetPlatform.iOS) {
+    return true;
+  }
+
+  if (defaultTargetPlatform == TargetPlatform.macOS) {
+    return true;
+  }
+
+  //  Impeller on android is only supported if the feature is enabled
+  if (defaultTargetPlatform == TargetPlatform.android) {
+    return enableOMeshImpellerCompatibilityOnAndroid;
+  }
+
+  return false;
+}
 
 /// A class that draws a [OMeshRect] into a [Canvas].
 ///
@@ -19,17 +68,12 @@ class OMeshRectPaint {
     required OMeshRect meshRect,
     required int tessellation,
     required DebugMode? debugMode,
-    required this.impellerCompatibilityMode,
   })  : _debugMode = debugMode,
         _tessellation = tessellation,
         _meshRect = meshRect;
 
   /// The shader provider instance associated with this paint.
   final OMeshShaderProvider shaderProvider;
-
-  /// Enable compatibility mode for impeller runtime.
-  /// See [OMeshGradient.impellerCompatibilityMode] for more information.
-  final bool impellerCompatibilityMode;
 
   /// The guiding mesh to be rendered.
   OMeshRect get meshRect => _meshRect;
@@ -73,7 +117,7 @@ class OMeshRectPaint {
   /// A [CachedValue] that holds the undistorted vertices of the mesh.
   ///
   /// It is dependent on the [meshRect]'s width and height.
-  late final textureVerticesCache = CachedValue(
+  late final _textureVerticesCache = CachedValue(
     () {
       return List.generate(
         growable: false,
@@ -96,7 +140,7 @@ class OMeshRectPaint {
   /// of 4 that form a patch  of the mesh.
   ///
   /// It is dependent on the [meshRect]'s width and height.
-  late final patchesCache = CachedValue(() {
+  late final _patchesCache = CachedValue(() {
     final mw = meshRect.width;
     final mh = meshRect.height;
     final nRectX = mw - 1;
@@ -110,8 +154,8 @@ class OMeshRectPaint {
         final x = index % nRectX;
 
         return [
-          (x, y), (x + 1, y), //
-          (x, y + 1), (x + 1, y + 1), //
+          (x, y).onGrid(mw, mh), (x + 1, y).onGrid(mw, mh), //
+          (x, y + 1).onGrid(mw, mh), (x + 1, y + 1).onGrid(mw, mh), //
         ];
       },
     );
@@ -125,21 +169,26 @@ class OMeshRectPaint {
   /// A [CachedValue] that holds the vertex colors of the mesh.
   ///
   /// It is dependent on the [meshRect].
-  late final inferredColorsCache = CachedValue(() {
+  late final _inferredColorsCache = CachedValue<(List<Color>, List<bool>)>(() {
     final colorMixer = OMeshRectColorMixer(meshRect);
 
     final mw = meshRect.width;
     final mh = meshRect.height;
 
-    return List.generate(
-      growable: false,
+    return Iterable.generate(
       mw * mh,
       colorMixer.getVertexColor,
-    );
-  }).withDependency(() => meshRect);
+    ).fold(([], []), (acc, el) {
+      acc.$1.add(el.$1);
+      acc.$2.add(el.$2);
+      return acc;
+    });
+  })
+      .withDependency(() => meshRect.colors)
+      .withDependency(() => (meshRect.width, meshRect.height));
 
   /// A [CachedValue] that holds the tessellated mesh.
-  late final tessellatedMeshCache = CachedValue(
+  late final _tessellatedMeshCache = CachedValue(
     () => TessellatedMesh(
       tessellation: tessellation,
     ),
@@ -157,15 +206,11 @@ class OMeshRectPaint {
       );
     }
 
-    // some shorthan helpers
-    final mw = meshRect.width;
-    final mh = meshRect.height;
-
     // Extract the current texture vertices, patches and vertex colors
     // from the caches.
-    final textureVertices = textureVerticesCache.value;
-    final patches = patchesCache.value;
-    final vertexColors = inferredColorsCache.value;
+    final textureVertices = _textureVerticesCache.value;
+    final patches = _patchesCache.value;
+    final vertexColors = _inferredColorsCache.value;
 
     // Denormalize the vertices and infer control points.
     final verticesMesh = RenderedOMeshRect(
@@ -185,69 +230,135 @@ class OMeshRectPaint {
 
     // Draw each patch one at a time.
     for (final tuple in patches.reversed.indexed) {
-      final (patchIndex, patch) = tuple;
+      final (patchIndex, [index00, index01, index10, index11]) = tuple;
 
-      // tl
-      final index00 = patch[0].onGrid(mw, mh);
-      // tr
-      final index01 = patch[1].onGrid(mw, mh);
-      // bl
-      final index10 = patch[2].onGrid(mw, mh);
-      // br
-      final index11 = patch[3].onGrid(mw, mh);
-
-      final patchIndices = [
-        index00, index01, //
-        index10, index11, //
-      ];
-
-      final (colors, biases) = [
-        vertexColors[index00], vertexColors[index01], //
-        vertexColors[index10], vertexColors[index11], //
-      ].fold<(List<Color>, List<bool>)>(([], []), (acc, el) {
-        acc.$1.add(el.$1);
-        acc.$2.add(el.$2);
-        return acc;
-      });
-
-      final paintShader = Paint()
-        ..shader = (shaderProvider.getShaderFor(patchIndex)
-          ..setFloatUniforms(
-            (s) => s
-              ..setSize(rect.size)
-              ..setFloats([
-                textureVertices[index00].x,
-                textureVertices[index00].y,
-              ])
-              ..setFloats([
-                textureVertices[index11].x,
-                textureVertices[index11].y,
-              ])
-              ..setColorsWide(colors)
-              ..setBools(biases)
-              ..setColorSpace(meshRect.colorSpace)
-              ..setFloat(
-                debugMode?.enableDots ?? false ? tessellation.toDouble() : 0.0,
-              ),
-          ));
+      final gradeintPaint = _enableImpellerCompatibility
+          ? _getPrerenderedPaint(rect)
+          : _getShaderPaint(
+              patchIndex: patchIndex,
+              index00: index00,
+              index01: index01,
+              index10: index10,
+              index11: index11,
+              textureVertices: textureVertices,
+              vertexColors: vertexColors,
+              rect: rect,
+            );
 
       final vertices =
-          tessellatedMeshCache.value.getTessellatedVerticesForPatch(
-        cornerIndices: patchIndices,
+          _tessellatedMeshCache.value.getTessellatedVerticesForPatch(
+        cornerIndices: [
+          index00, index01, //
+          index10, index11, //
+        ],
         verticesMesh: verticesMesh,
         textureMesh: textureMesh,
         tessellation: tessellation,
-        impellerCompatibilityMode: impellerCompatibilityMode,
       );
 
       canvas.drawVertices(
         vertices,
         BlendMode.srcOver,
-        paintShader,
+        gradeintPaint,
       );
     }
     canvas.restore();
   }
+
+  Paint _getShaderPaint({
+    required int patchIndex,
+    required int index00,
+    required int index01,
+    required int index10,
+    required int index11,
+    required List<OVertex> textureVertices,
+    required (List<Color>, List<bool>) vertexColors,
+    required Rect rect,
+  }) {
+    final (colors, biases) = vertexColors;
+    final patchColors = [
+      colors[index00], colors[index01], //
+      colors[index10], colors[index11], //
+    ];
+    final patchBiases = [
+      biases[index00], biases[index01], //
+      biases[index10], biases[index11], //
+    ];
+
+    return Paint()
+      ..shader = (shaderProvider.getShaderFor(patchIndex)
+        ..setFloatUniforms(
+          (s) => s
+            ..setSize(rect.size)
+            ..setFloats([
+              textureVertices[index00].x,
+              textureVertices[index00].y,
+            ])
+            ..setFloats([
+              textureVertices[index11].x,
+              textureVertices[index11].y,
+            ])
+            ..setColorsWide(patchColors)
+            ..setBools(patchBiases)
+            ..setColorSpace(meshRect.colorSpace)
+            ..setFloat(
+              debugMode?.enableDots ?? false ? tessellation.toDouble() : 0.0,
+            ),
+        ));
+  }
+
+  // Impeller is quite unstable when rendering fragment shaders with the
+  // vertices API.
+  // To work around this, we prerender the gradient into an image, call
+  // toImageSync
+  // and return a paint with a ImageShader instead of a fragment shader.
+  Paint _getPrerenderedPaint(Rect rect) {
+    _rect = rect;
+    final image = _impellerColorCache.value;
+    return Paint()
+      ..shader = ImageShader(
+        image,
+        TileMode.decal,
+        TileMode.decal,
+        Matrix4.identity().storage,
+      );
+  }
+
+  late Rect _rect;
+  late final _impellerColorCache = CachedValue<Image>(() {
+    final patches = _patchesCache.value;
+    final textureVertices = _textureVerticesCache.value;
+    final vertexColors = _inferredColorsCache.value;
+
+    final recorder = PictureRecorder();
+    final canvas = Canvas(recorder);
+
+    for (final tuple in patches.reversed.indexed) {
+      final (patchIndex, [index00, index01, index10, index11]) = tuple;
+
+      final paintShader = _getShaderPaint(
+        patchIndex: patchIndex,
+        index00: index00,
+        index01: index01,
+        index10: index10,
+        index11: index11,
+        textureVertices: textureVertices,
+        vertexColors: vertexColors,
+        rect: _rect,
+      );
+
+      canvas.drawRect(_rect, paintShader);
+    }
+
+    final picture = recorder.endRecording();
+    return picture.toImageSync(
+      _rect.size.width.ceil(),
+      _rect.size.height.ceil(),
+    );
+  })
+      .withDependency(() => _rect)
+      .withDependency(() => meshRect.colors)
+      .withDependency(() => (meshRect.width, meshRect.height));
 }
 
 extension on (int, int) {
