@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'dart:ui' as ui;
 
 /// A vertex with `x` and `y` components.
@@ -23,25 +22,20 @@ class OVertex {
       : x = 0.0,
         y = 0.0;
 
-  /// Creates a new [OVertex] from an [ui.Offset].
-  OVertex.offset(ui.Offset offset)
-      : x = offset.dx,
-        y = offset.dy;
-
   /// Creates a new [OVertex] with the same `x` and `y` values.
   OVertex.all(double xy)
       : x = xy,
         y = xy;
 
+  /// Creates a new [OVertex] from an [ui.Offset].
+  OVertex.offset(ui.Offset offset)
+      : x = offset.dx,
+        y = offset.dy;
+
   /// Creates a copy of the given [OVertex].
   OVertex.copy(OVertex other)
       : x = other.x,
         y = other.y;
-
-  /// Linearly interpolates between two [OVertex] objects.
-  factory OVertex.lerp(OVertex a, OVertex b, double t) {
-    return a.lerpTo(b, t);
-  }
 
   /// Creates an [BezierOVertex] with the given control points.
   factory OVertex.bezier({
@@ -80,13 +74,8 @@ class OVertex {
   /// Linearly interpolate between two [OVertex] objects.
   OVertex lerpTo(OVertex to, double t) {
     return OVertex.zero()
-      ..x = ((to.x - x) / t) + x
-      ..y = ((to.y - y) / t) + y;
-  }
-
-  /// Compute the euclidian distance between [other] and this.
-  double distanceTo(OVertex other) {
-    return sqrt(pow(other.x - x, 2) + pow(other.y - y, 2));
+      ..x = x * (1.0 - t) + to.x * t
+      ..y = y * (1.0 - t) + to.y * t;
   }
 
   /// Unary negation operator.
@@ -106,8 +95,8 @@ class OVertex {
 
   /// Binary multiplication operator.
   OVertex operator *(double scale) => clone()
-    ..x /= scale
-    ..y /= scale;
+    ..x *= scale
+    ..y *= scale;
 
   /// Check if two vectors are the same.
   @override
@@ -229,8 +218,8 @@ class BezierOVertex extends OVertex {
   @override
   BezierOVertex lerpTo(OVertex to, double t) {
     final lerped = BezierOVertex.zero()
-      ..x = ((to.x - x) / t) + x
-      ..y = ((to.y - y) / t) + y;
+      ..x = x * (1.0 - t) + to.x * t
+      ..y = y * (1.0 - t) + to.y * t;
     if (to is! BezierOVertex) {
       return lerped;
     }

@@ -10,7 +10,7 @@ import 'package:mesh/internal_stuff.dart';
 class TessellatedMesh {
   TessellatedMesh({
     required int tessellation,
-  })  : _vertexData = Float32List((tessellation * tessellation) * 24);
+  }) : _vertexData = Float32List((tessellation * tessellation) * 24);
 
   final Float32List _vertexData;
 
@@ -26,8 +26,16 @@ class TessellatedMesh {
   }) {
     final lengthInF32 = _vertexData.length ~/ 2;
     final offsetInBytes = lengthInF32 * 4;
-    final verticesTriangles = Float32List.view(_vertexData.buffer, 0, lengthInF32);
-    final textureTriangles = Float32List.view(_vertexData.buffer, offsetInBytes, lengthInF32);
+    final verticesTriangles = Float32List.view(
+      _vertexData.buffer,
+      0,
+      lengthInF32,
+    );
+    final textureTriangles = Float32List.view(
+      _vertexData.buffer,
+      offsetInBytes,
+      lengthInF32,
+    );
 
     _writeTriangles(
       size,

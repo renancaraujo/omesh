@@ -1,25 +1,25 @@
 import 'dart:math';
 import 'dart:ui' as ui;
 
-import 'package:flutter/widgets.dart';
+import 'package:flutter/foundation.dart';
 import 'package:mesh/mesh.dart';
 // import 'package:vector_math/vector_math.dart' as vm;
 
 /// A version of [OMeshRect] after rendered into a rectangualar area.
 ///
-/// Vertices are non-normalized to positions relative to a [Rect].
+/// Vertices are non-normalized to positions relative to a [ui.Rect].
 ///
 /// Bezier control points are inferred from the positions of the
 /// sorrounding vertices.
 
 class RenderedOMeshRect {
-  /// Creates a new [RenderedOMeshRect] from a [OMeshRect] and a [Rect].
+  /// Creates a new [RenderedOMeshRect] from a [OMeshRect] and a [ui.Rect].
   RenderedOMeshRect({
     required this.mesh,
-    required Rect rect,
-    List<OVertex>? normalizedVertices,
+    required ui.Rect rect,
+    List<OVertex>? normalizedVerticesOverride,
   }) {
-    final denormalizedVertices = (normalizedVertices ?? mesh.vertices)
+    final denormalizedVertices = (normalizedVerticesOverride ?? mesh.vertices)
         .map((ov) => ov.denormalize(rect))
         .toList();
 
@@ -34,7 +34,7 @@ class RenderedOMeshRect {
   }
 
   /// The mesh that was rendered.
-  late final OMeshRect mesh;
+  final OMeshRect mesh;
 
   /// The vertices of the mesh after rendering.
   late final List<RenderedOVertex> vertices;
@@ -65,28 +65,28 @@ class RenderedOVertex {
   ) {
     final position = denormalizedVertices[index];
 
-    _DeNormalizedOVertex? vertexToTheNorth;
+    ui.Offset? vertexToTheNorth;
     final ovNorthIndex = index - meshWidth;
     if (ovNorthIndex >= 0) {
-      vertexToTheNorth = denormalizedVertices[ovNorthIndex];
+      vertexToTheNorth = denormalizedVertices[ovNorthIndex].toOffset();
     }
 
-    _DeNormalizedOVertex? vertexToTheEast;
+    ui.Offset? vertexToTheEast;
     final ovEastIndex = index + 1;
     if (ovEastIndex % meshWidth != 0) {
-      vertexToTheEast = denormalizedVertices[ovEastIndex];
+      vertexToTheEast = denormalizedVertices[ovEastIndex].toOffset();
     }
 
-    _DeNormalizedOVertex? vertexToTheSouth;
+    ui.Offset? vertexToTheSouth;
     final ovSouthIndex = index + meshWidth;
     if (ovSouthIndex < denormalizedVertices.length) {
-      vertexToTheSouth = denormalizedVertices[ovSouthIndex];
+      vertexToTheSouth = denormalizedVertices[ovSouthIndex].toOffset();
     }
 
-    _DeNormalizedOVertex? vertexToTheWest;
+    ui.Offset? vertexToTheWest;
     final ovWestIndex = index - 1;
     if (ovWestIndex % meshWidth != meshWidth - 1) {
-      vertexToTheWest = denormalizedVertices[ovWestIndex];
+      vertexToTheWest = denormalizedVertices[ovWestIndex].toOffset();
     }
 
     return RenderedOVertex._fromRelativeVertices(
@@ -100,87 +100,83 @@ class RenderedOVertex {
   }
 
   factory RenderedOVertex._fromRelativeVertices(
-    OVertex position, {
-    required _DeNormalizedOVertex? vertexToTheNorth,
-    required _DeNormalizedOVertex? vertexToTheEast,
-    required _DeNormalizedOVertex? vertexToTheSouth,
-    required _DeNormalizedOVertex? vertexToTheWest,
+    _DeNormalizedOVertex denormalizedVertex, {
+    required ui.Offset? vertexToTheNorth,
+    required ui.Offset? vertexToTheEast,
+    required ui.Offset? vertexToTheSouth,
+    required ui.Offset? vertexToTheWest,
     required double distanceFactor,
   }) {
+    final positionOffset = denormalizedVertex.toOffset();
+
     ui.Offset inferCp({
-      ui.Offset? cp,
-      ({OVertex relativeVertex, ui.Offset guide})? relativeInfo,
+      ({
+        ui.Offset relativeVertexOffset,
+        ui.Offset guide,
+      })? relativeInfo,
     }) {
-      if (cp != null) {
-        return cp;
+      if (relativeInfo == null) {
+        return positionOffset;
       }
 
-      if (relativeInfo != null) {
-        final (:relativeVertex, :guide) = relativeInfo;
+      final (:relativeVertexOffset, :guide) = relativeInfo;
 
-        final ogRotationRad =
-            _angleBetween(guide, ui.Offset(position.x, position.y));
-        final rotationRad = _angleBetween(
-            ui.Offset(relativeVertex.x, relativeVertex.y),
-            ui.Offset(position.x, position.y));
-        final rotationRadLerp = _radiusLerp(rotationRad, ogRotationRad, 0.8);
+      final ogRotationRad = _angleBetween(guide, positionOffset);
+      final rotationRad = _angleBetween(relativeVertexOffset, positionOffset);
+      final rotationRadLerp = _radiusLerp(rotationRad, ogRotationRad, 0.8);
 
-        final distance = position.distanceTo(relativeVertex);
+      final distance = positionOffset.distanceTo(relativeVertexOffset);
 
-        final rotatedRelativeVertex = ui.Offset(
-          position.x + cos(rotationRadLerp) * distance * distanceFactor,
-          position.y + sin(rotationRadLerp) * distance * distanceFactor,
-        );
+      final rotatedRelativeVertex = ui.Offset(
+        positionOffset.dx + cos(rotationRadLerp) * distance * distanceFactor,
+        positionOffset.dy + sin(rotationRadLerp) * distance * distanceFactor,
+      );
 
-        return rotatedRelativeVertex;
-      }
-      return ui.Offset(position.x, position.y);
+      return rotatedRelativeVertex;
     }
 
-    final ui.Offset positionOffset = ui.Offset(position.x, position.y);
+    final north = denormalizedVertex.north?.toOffset() ??
+        inferCp(
+          relativeInfo: vertexToTheNorth != null
+              ? (
+                  relativeVertexOffset: vertexToTheNorth,
+                  guide: positionOffset - const ui.Offset(0, 1)
+                )
+              : null,
+        );
 
-    final north = inferCp(
-      cp: position.northCp,
-      relativeInfo: vertexToTheNorth != null
-          ? (
-              relativeVertex: vertexToTheNorth,
-              guide: positionOffset - const ui.Offset(0, 1)
-            )
-          : null,
-    );
+    final east = denormalizedVertex.east?.toOffset() ??
+        inferCp(
+          relativeInfo: vertexToTheEast != null
+              ? (
+                  relativeVertexOffset: vertexToTheEast,
+                  guide: positionOffset + const ui.Offset(1, 0)
+                )
+              : null,
+        );
 
-    final east = inferCp(
-      cp: position.eastCp,
-      relativeInfo: vertexToTheEast != null
-          ? (
-              relativeVertex: vertexToTheEast,
-              guide: positionOffset + const ui.Offset(1, 0)
-            )
-          : null,
-    );
+    final south = denormalizedVertex.south?.toOffset() ??
+        inferCp(
+          relativeInfo: vertexToTheSouth != null
+              ? (
+                  relativeVertexOffset: vertexToTheSouth,
+                  guide: positionOffset + const ui.Offset(0, 1)
+                )
+              : null,
+        );
 
-    final south = inferCp(
-      cp: position.southCp,
-      relativeInfo: vertexToTheSouth != null
-          ? (
-              relativeVertex: vertexToTheSouth,
-              guide: positionOffset + const ui.Offset(0, 1)
-            )
-          : null,
-    );
-
-    final west = inferCp(
-      cp: position.westCp,
-      relativeInfo: vertexToTheWest != null
-          ? (
-              relativeVertex: vertexToTheWest,
-              guide: positionOffset - const ui.Offset(1, 0)
-            )
-          : null,
-    );
+    final west = denormalizedVertex.west?.toOffset() ??
+        inferCp(
+          relativeInfo: vertexToTheWest != null
+              ? (
+                  relativeVertexOffset: vertexToTheWest,
+                  guide: positionOffset - const ui.Offset(1, 0)
+                )
+              : null,
+        );
 
     return RenderedOVertex(
-      p: ui.Offset(position.x, position.y),
+      p: positionOffset,
       north: north,
       east: east,
       south: south,
@@ -240,28 +236,42 @@ RenderedOVertex(p: $p, north: $north, east: $east, south: $south, west: $west)''
   }
 }
 
-extension type _DeNormalizedOVertex(OVertex vertex) implements OVertex {}
-
 extension on OVertex {
-  _DeNormalizedOVertex denormalize(Rect rect) {
-    return _DeNormalizedOVertex(
-      OVertex(
+  _DeNormalizedOVertex denormalize(ui.Rect rect) {
+    final denormalized = _DeNormalizedOVertex(
+      BezierOVertex(
         x * rect.width + rect.left,
         y * rect.height + rect.top,
-      )
-        ..eastCp = eastCp?.withinV(rect)
-        ..northCp = northCp?.withinV(rect)
-        ..southCp = southCp?.withinV(rect)
-        ..westCp = westCp?.withinV(rect),
+      ),
     );
+    final t = this;
+    if (t is BezierOVertex) {
+      denormalized
+        ..north = t.north?.withinV(rect)
+        ..east = t.east?.withinV(rect)
+        ..south = t.south?.withinV(rect)
+        ..west = t.west?.withinV(rect);
+    }
+
+    return denormalized;
   }
 }
 
+extension type _DeNormalizedOVertex(BezierOVertex vertex)
+    implements BezierOVertex {}
+
 extension on ui.Offset {
-  ui.Offset withinV(Rect rect) {
-    return ui.Offset(
-      dx * rect.width + rect.left,
-      dy * rect.height + rect.top,
+  /// Compute the euclidian distance between [other] and this.
+  double distanceTo(ui.Offset other) {
+    return sqrt(pow(other.dx - dx, 2) + pow(other.dy - dy, 2));
+  }
+}
+
+extension on OVertex {
+  OVertex withinV(ui.Rect rect) {
+    return OVertex(
+      x * rect.width + rect.left,
+      y * rect.height + rect.top,
     );
   }
 }

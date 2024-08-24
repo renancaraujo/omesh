@@ -174,7 +174,7 @@ class OMeshRectPaint {
     );
     final textureMesh = RenderedOMeshRect(
       mesh: meshRect,
-      normalizedVertices: textureVertices,
+      normalizedVerticesOverride: textureVertices,
       rect: rect,
     );
 
@@ -215,10 +215,14 @@ class OMeshRectPaint {
           ..setFloatUniforms(
             (s) => s
               ..setSize(rect.size)
-              ..setFloats(
-                  [textureVertices[index00].x, textureVertices[index00].y])
-              ..setFloats(
-                  [textureVertices[index11].x, textureVertices[index11].y])
+              ..setFloats([
+                textureVertices[index00].x,
+                textureVertices[index00].y,
+              ])
+              ..setFloats([
+                textureVertices[index11].x,
+                textureVertices[index11].y,
+              ])
               ..setColorsWide(colors)
               ..setBools(biases)
               ..setColorSpace(meshRect.colorSpace)

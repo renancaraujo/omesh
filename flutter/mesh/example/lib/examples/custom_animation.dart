@@ -190,7 +190,7 @@ class _CustomAnimationState extends State<CustomAnimation>
 }
 
 extension on OVertex {
-  OVertex to(OVertex b, double t) => OVertex.lerp(this, b, t);
+  OVertex to(OVertex b, double t) => lerpTo(b, t);
 }
 
 extension on Color? {
