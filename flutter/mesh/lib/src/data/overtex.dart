@@ -98,7 +98,7 @@ class OVertex {
     ..x *= scale
     ..y *= scale;
 
-  /// Check if two vectors are the same.
+  /// Check if two [OVertex] objects are equal.
   @override
   bool operator ==(Object other) =>
       other is OVertex && x == other.x && y == other.y;

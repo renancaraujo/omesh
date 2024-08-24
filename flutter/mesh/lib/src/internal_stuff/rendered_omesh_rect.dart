@@ -3,7 +3,6 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:mesh/mesh.dart';
-// import 'package:vector_math/vector_math.dart' as vm;
 
 /// A version of [OMeshRect] after rendered into a rectangualar area.
 ///
