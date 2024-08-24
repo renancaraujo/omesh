@@ -5,14 +5,20 @@ concurrency:
   cancel-in-progress: true
 
 on:
+  pull_request:
+    paths:
+      - ".github/workflows/omesh_flutter.yaml"
+      - "flutter/mesh/lib/**"
+      - "flutter/mesh/test/**"
+      - "flutter/mesh/pubspec.yaml"
   push:
     branches:
       - main
-  pull_request_target:
-    types:
-      - opened
-      - edited
-      - synchronize
+    paths:
+      - ".github/workflows/omesh_flutter.yaml"
+      - "flutter/mesh/lib/**"
+      - "flutter/mesh/test/**"
+      - "flutter/mesh/pubspec.yaml"
 
 jobs:
   semantic_pull_request:
