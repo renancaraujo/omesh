@@ -391,14 +391,15 @@ void main() {
           west: OVertex(1, 2),
         );
 
-        final added = vertex + BezierOVertex(
-          1,
-          2,
-          north: OVertex(1, 2),
-          east: OVertex(1, 2),
-          south: OVertex(1, 2),
-          west: OVertex(1, 2),
-        );
+        final added = vertex +
+            BezierOVertex(
+              1,
+              2,
+              north: OVertex(1, 2),
+              east: OVertex(1, 2),
+              south: OVertex(1, 2),
+              west: OVertex(1, 2),
+            );
 
         expect(added.x, 2.0);
         expect(added.y, 4.0);
@@ -420,14 +421,15 @@ void main() {
           west: OVertex(1, 2),
         );
 
-        final subtracted = vertex - BezierOVertex(
-          1,
-          2,
-          north: OVertex(1, 2),
-          east: OVertex(1, 2),
-          south: OVertex(1, 2),
-          west: OVertex(1, 2),
-        );
+        final subtracted = vertex -
+            BezierOVertex(
+              1,
+              2,
+              north: OVertex(1, 2),
+              east: OVertex(1, 2),
+              south: OVertex(1, 2),
+              west: OVertex(1, 2),
+            );
 
         expect(subtracted.x, 0.0);
         expect(subtracted.y, 0.0);

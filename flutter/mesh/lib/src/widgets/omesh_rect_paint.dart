@@ -233,11 +233,11 @@ class OMeshRectPaint {
 
       final vertices =
           tessellatedMeshCache.value.getTessellatedVerticesForPatch(
-        size: rect.size,
         cornerIndices: patchIndices,
         verticesMesh: verticesMesh,
         textureMesh: textureMesh,
         tessellation: tessellation,
+        impellerCompatibilityMode: impellerCompatibilityMode,
       );
 
       canvas.drawVertices(

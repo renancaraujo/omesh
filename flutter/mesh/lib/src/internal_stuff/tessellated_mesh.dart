@@ -4,7 +4,6 @@ import 'dart:typed_data';
 import 'dart:ui' show VertexMode, Vertices;
 import 'dart:ui' as ui show Offset;
 
-import 'package:flutter/rendering.dart' show Size, VertexMode;
 import 'package:mesh/internal_stuff.dart';
 
 class TessellatedMesh {
@@ -15,14 +14,14 @@ class TessellatedMesh {
   final Float32List _vertexData;
 
   /// Returns a [Vertices] object with the given
-  /// [size], [cornerIndices], [verticesMesh], [textureMesh],
+  /// [cornerIndices], [verticesMesh], [textureMesh],
   /// and [tessellation].
   Vertices getTessellatedVerticesForPatch({
-    required Size size,
     required List<int> cornerIndices,
     required RenderedOMeshRect verticesMesh,
     required RenderedOMeshRect textureMesh,
     required int tessellation,
+    required bool impellerCompatibilityMode,
   }) {
     final lengthInF32 = _vertexData.length ~/ 2;
     final offsetInBytes = lengthInF32 * 4;
@@ -38,19 +37,19 @@ class TessellatedMesh {
     );
 
     _writeTriangles(
-      size,
       cornerIndices,
       verticesMesh,
       tessellation,
       verticesTriangles,
+      impellerCompatibilityMode: impellerCompatibilityMode,
     );
 
     _writeTriangles(
-      size,
       cornerIndices,
       textureMesh,
       tessellation,
       textureTriangles,
+      impellerCompatibilityMode: impellerCompatibilityMode,
     );
 
     return Vertices.raw(
@@ -61,16 +60,52 @@ class TessellatedMesh {
   }
 
   void _writeTriangles(
-    Size size,
     List<int> cornerIndices,
     RenderedOMeshRect renderedOMeshRect,
     int tessellation,
-    Float32List output,
-  ) {
-    final topLeft = renderedOMeshRect.vertices[cornerIndices[0]];
-    final topRight = renderedOMeshRect.vertices[cornerIndices[1]];
-    final bottomLeft = renderedOMeshRect.vertices[cornerIndices[2]];
-    final bottomRight = renderedOMeshRect.vertices[cornerIndices[3]];
+    Float32List output, {
+    required bool impellerCompatibilityMode,
+  }) {
+    var topLeft = renderedOMeshRect.vertices[cornerIndices[0]];
+    var topRight = renderedOMeshRect.vertices[cornerIndices[1]];
+    var bottomLeft = renderedOMeshRect.vertices[cornerIndices[2]];
+    var bottomRight = renderedOMeshRect.vertices[cornerIndices[3]];
+
+    if (impellerCompatibilityMode) {
+      const displace = 2.0;
+      topLeft = RenderedOVertex(
+        p: ui.Offset(topLeft.p.dx - displace, topLeft.p.dy - displace),
+        north: topLeft.north,
+        east: topLeft.east,
+        south: topLeft.south,
+        west: topLeft.west,
+      );
+
+      topRight = RenderedOVertex(
+        p: ui.Offset(topRight.p.dx + displace, topRight.p.dy - displace),
+        north: topRight.north,
+        east: topRight.east,
+        south: topRight.south,
+        west: topRight.west,
+      );
+
+      bottomLeft = RenderedOVertex(
+        p: ui.Offset(bottomLeft.p.dx - displace, bottomLeft.p.dy + displace),
+        north: bottomLeft.north,
+        east: bottomLeft.east,
+        south: bottomLeft.south,
+        west: bottomLeft.west,
+      );
+
+      bottomRight = RenderedOVertex(
+        p: ui.Offset(bottomRight.p.dx + displace, bottomRight.p.dy + displace),
+        north: bottomRight.north,
+        east: bottomRight.east,
+        south: bottomRight.south,
+        west: bottomRight.west,
+      );
+    }
+
     final surface = _BezierPatch(
       topLeft: topLeft,
       topRight: topRight,
