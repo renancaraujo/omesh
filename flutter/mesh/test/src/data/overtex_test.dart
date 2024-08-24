@@ -8,8 +8,8 @@ void main() {
     group('constructors', () {
       test('OVertex.zero', () {
         final vertex = OVertex.zero();
-        expect(vertex.dx, 0.0);
-        expect(vertex.dy, 0.0);
+        expect(vertex.x, 0.0);
+        expect(vertex.y, 0.0);
         expect(vertex.northCp, isNull);
         expect(vertex.eastCp, isNull);
         expect(vertex.southCp, isNull);
@@ -18,8 +18,8 @@ void main() {
 
       test('OVertex', () {
         final vertex = OVertex(1, 2);
-        expect(vertex.dx, 1.0);
-        expect(vertex.dy, 2.0);
+        expect(vertex.x, 1.0);
+        expect(vertex.y, 2.0);
         expect(vertex.northCp, isNull);
         expect(vertex.eastCp, isNull);
         expect(vertex.southCp, isNull);
@@ -28,8 +28,8 @@ void main() {
 
       test('OVertex.offset', () {
         final vertex = OVertex.offset(const Offset(1, 2));
-        expect(vertex.dx, 1.0);
-        expect(vertex.dy, 2.0);
+        expect(vertex.x, 1.0);
+        expect(vertex.y, 2.0);
         expect(vertex.northCp, isNull);
         expect(vertex.eastCp, isNull);
         expect(vertex.southCp, isNull);
@@ -38,8 +38,8 @@ void main() {
 
       test('OVertex.all', () {
         final vertex = OVertex.all(1);
-        expect(vertex.dx, 1.0);
-        expect(vertex.dy, 1.0);
+        expect(vertex.x, 1.0);
+        expect(vertex.y, 1.0);
         expect(vertex.northCp, isNull);
         expect(vertex.eastCp, isNull);
         expect(vertex.southCp, isNull);
@@ -49,8 +49,8 @@ void main() {
       test('OVertex.copy', () {
         final vertex = OVertex(1, 2);
         final copy = OVertex.copy(vertex);
-        expect(copy.dx, 1.0);
-        expect(copy.dy, 2.0);
+        expect(copy.x, 1.0);
+        expect(copy.y, 2.0);
         expect(copy.northCp, isNull);
         expect(copy.eastCp, isNull);
         expect(copy.southCp, isNull);
@@ -114,8 +114,8 @@ void main() {
       test('negate', () {
         final vertex = OVertex(1, 2);
         final negated = -vertex;
-        expect(negated.dx, -1.0);
-        expect(negated.dy, -2.0);
+        expect(negated.x, -1.0);
+        expect(negated.y, -2.0);
       });
     });
 
@@ -123,8 +123,8 @@ void main() {
       test('plus', () {
         final vertex = OVertex(1, 2);
         final added = vertex + const ui.Offset(1, 2);
-        expect(added.dx, 2.0);
-        expect(added.dy, 4.0);
+        expect(added.x, 2.0);
+        expect(added.y, 4.0);
       });
     });
 
@@ -132,8 +132,8 @@ void main() {
       test('minus', () {
         final vertex = OVertex(1, 2);
         final subtracted = vertex - const ui.Offset(1, 2);
-        expect(subtracted.dx, 0.0);
-        expect(subtracted.dy, 0.0);
+        expect(subtracted.x, 0.0);
+        expect(subtracted.y, 0.0);
       });
     });
 
@@ -141,8 +141,8 @@ void main() {
       test('multiply', () {
         final vertex = OVertex(1, 2);
         final scaled = vertex * 2;
-        expect(scaled.dx, 2.0);
-        expect(scaled.dy, 4.0);
+        expect(scaled.x, 2.0);
+        expect(scaled.y, 4.0);
       });
     });
   });
@@ -156,8 +156,8 @@ void main() {
         southCp: const ui.Offset(1, 2),
         westCp: const ui.Offset(1, 2),
       );
-      expect(vertex.dx, 1.0);
-      expect(vertex.dy, 2.0);
+      expect(vertex.x, 1.0);
+      expect(vertex.y, 2.0);
       expect(vertex.northCp, const ui.Offset(1, 2));
       expect(vertex.eastCp, const ui.Offset(1, 2));
       expect(vertex.southCp, const ui.Offset(1, 2));
@@ -174,8 +174,8 @@ void main() {
         southCp: const ui.Offset(1, 2),
         westCp: const ui.Offset(1, 2),
       );
-      expect(vertex.dx, 1.0);
-      expect(vertex.dy, 2.0);
+      expect(vertex.x, 1.0);
+      expect(vertex.y, 2.0);
       expect(vertex.northCp, const ui.Offset(1, 2));
       expect(vertex.eastCp, const ui.Offset(1, 2));
       expect(vertex.southCp, const ui.Offset(1, 2));

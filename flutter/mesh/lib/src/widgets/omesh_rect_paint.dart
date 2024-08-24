@@ -216,9 +216,9 @@ class OMeshRectPaint {
             (s) => s
               ..setSize(rect.size)
               ..setFloats(
-                  [textureVertices[index00].dx, textureVertices[index00].dy])
+                  [textureVertices[index00].x, textureVertices[index00].y])
               ..setFloats(
-                  [textureVertices[index11].dx, textureVertices[index11].dy])
+                  [textureVertices[index11].x, textureVertices[index11].y])
               ..setColorsWide(colors)
               ..setBools(biases)
               ..setColorSpace(meshRect.colorSpace)

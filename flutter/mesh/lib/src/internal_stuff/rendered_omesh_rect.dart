@@ -119,25 +119,25 @@ class RenderedOVertex {
         final (:relativeVertex, :guide) = relativeInfo;
 
         final ogRotationRad =
-            _angleBetween(guide, ui.Offset(position.dx, position.dy));
+            _angleBetween(guide, ui.Offset(position.x, position.y));
         final rotationRad = _angleBetween(
-            ui.Offset(relativeVertex.dx, relativeVertex.dy),
-            ui.Offset(position.dx, position.dy));
+            ui.Offset(relativeVertex.x, relativeVertex.y),
+            ui.Offset(position.x, position.y));
         final rotationRadLerp = _radiusLerp(rotationRad, ogRotationRad, 0.8);
 
         final distance = position.distanceTo(relativeVertex);
 
         final rotatedRelativeVertex = ui.Offset(
-          position.dx + cos(rotationRadLerp) * distance * distanceFactor,
-          position.dy + sin(rotationRadLerp) * distance * distanceFactor,
+          position.x + cos(rotationRadLerp) * distance * distanceFactor,
+          position.y + sin(rotationRadLerp) * distance * distanceFactor,
         );
 
         return rotatedRelativeVertex;
       }
-      return ui.Offset(position.dx, position.dy);
+      return ui.Offset(position.x, position.y);
     }
 
-    final ui.Offset positionOffset = ui.Offset(position.dx, position.dy);
+    final ui.Offset positionOffset = ui.Offset(position.x, position.y);
 
     final north = inferCp(
       cp: position.northCp,
@@ -180,7 +180,7 @@ class RenderedOVertex {
     );
 
     return RenderedOVertex(
-      p: ui.Offset(position.dx, position.dy),
+      p: ui.Offset(position.x, position.y),
       north: north,
       east: east,
       south: south,
@@ -246,8 +246,8 @@ extension on OVertex {
   _DeNormalizedOVertex denormalize(Rect rect) {
     return _DeNormalizedOVertex(
       OVertex(
-        dx * rect.width + rect.left,
-        dy * rect.height + rect.top,
+        x * rect.width + rect.left,
+        y * rect.height + rect.top,
       )
         ..eastCp = eastCp?.withinV(rect)
         ..northCp = northCp?.withinV(rect)
