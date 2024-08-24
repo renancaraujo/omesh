@@ -3,7 +3,9 @@
 [![License: BSD-3][license_badge]][license_link]
 [![pub package][pub_badge]][pub_link]
 
-⚡ Fast and highly customizable vector animated Mesh Gradients for Flutter applications.
+⚡ Fast and highly customizable animated Mesh Gradients for Flutter applications.
+
+It is not a JPEG 🌭
 
 <img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/preview.png" width="500">
 
@@ -29,7 +31,6 @@ Designing with code is fun, but with a design tool everything gets easier.
 Try the [O'Mesh Flutter playground](https://omesh-playground.renan.gg) and generate flutter code from designs.
 
 <img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/playground.jpeg" width="500">
-
 
 ## Documentation and resources 📚
 
@@ -385,52 +386,59 @@ class _MyWidgetState extends State<MyWidget> with SingleTickerProviderStateMixin
 
 ## About impeller
 
-When running on the [Impeller Rendering Engine](https://docs.flutter.dev/perf/impeller) (which is default for Flutter on iOS),
-one might see some line-ish artifacts:
+O'Mesh has had issues when running on the [Impeller Rendering Engine](https://docs.flutter.dev/perf/impeller) in previous versions.
+These issues were caused by some instability on Impeller, specifically in the Vertices API, which O'Mesh uses in a unique way.
 
-<img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/impeller.png" width="250">
+These issues are fixed in the latest version of O'Mesh, but if you are Opting in or out of impeller for any of the platforms, you need to consider the following:
 
-This is caused by a [very specific issue](https://github.com/flutter/flutter/issues/151355) that has been already fixed in the flutter `main` channel but can still be observed on
-Flutter stable version 3.22.
+### Impeller on iOS
 
-To work around that you can either:
+Impeller is [enabled by default when running Flutter on iOS](https://docs.flutter.dev/perf/impeller#ios). **If you are opting out of it**, add the following before your `runApp` call:
 
-- Use a later version of flutter greater than 3.22.x, which can be in the beta or main channel. ([What?](https://github.com/flutter/flutter/blob/master/docs/releases/Flutter-build-release-channels.md)).
-- Disable impeller in your project ([by following these instructions](https://docs.flutter.dev/perf/impeller#ios)).
+```dart
+enableOMeshImpellerCompatibility = false;
+```
 
-If none of the above is an option for you, there is a last resource:
-Set the flag `impellerCompatibilityMode` on `OMeshGradient` widget to true. This will make the mesh gradient patch fill those gaps..
-Mind that this will cause different articfacts if any of the colors in the mesh semi-transparent.
+### Impeller on macOS
 
-When using `impellerCompatibilityMode`, use only opaque colors.
+Impeller is [not enabled by default on macOS](https://docs.flutter.dev/perf/impeller#macos), regardless of whether you opt-in or out of it, O'Mesh should be compatible with it.
+
+### Impeller on Android
+
+Impeller is [not enabled by default on Android](https://docs.flutter.dev/perf/impeller#android). **If you are opting into it**, make sure you enabled the following flag before your `runApp` call:
+
+```dart
+enableOMeshImpellerCompatibilityOnAndroid = true;
+```
 
 ## Troubleshooting
 
 Known situations where O'Mesh doesn't seem to behave the way it is supposed to.
 
-### OMG, there are some ugly lines on my mesh
+### Panic! I am having Impeller issues
 
-If you see lines like this:
 
-<img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/impeller.png" width="200">
+O'Mesh had some issues when running on the [Impeller Rendering Engine](https://docs.flutter.dev/perf/impeller) in previous versions.
+These issues were supposed to be fixed in the latest version of O'Mesh. If you are facing a problem that can only be observed when the impeller is ON,
+report it in the Issues tab on [Github](https://github.com/renancaraujo/omesh).
 
-It may be caused by an issue with the Impeller rendering engine. Learn the possible workarounds [here](#about-impeller).
+Learn about O'Mesh support on impeller [here](#about-impeller).
 
-### Holy smokes, my mesh animation is slooow
+### Holy smokes, my mesh animation is slow
 
 This may be caused by too many triangles in your mesh
 
 The number of triangles in a mesh can be described by `(width-1) * (height-1) * (tessellationFactor ^ 2) * 2`.
 
-The default tessellation factor is 12, consider lowering that value for small sized containers or for
+The default tessellation factor is 12, consider lowering that value for small-sized containers or 
 meshes with too many vertices. See below the visual impacts of a change in the tessellation factor.
 
 ### I see some artifacts when the mesh is distorted
 
-Visible triangles may be caused by not enough tessellation in the mesh. High tessellation factor give more
+Visible triangles may be caused by not enough tessellation in the mesh. A high tessellation factor gives more
 accurate curves, with a performance cost. The default tessellation factor is around 12, which should be enough
-to most mesh designs.
-This, of course may not be true to all mesh gradient designs and screen sizes. If you need more accurate
+for most mesh designs.
+This, of course, may not be true for all mesh gradient designs and screen sizes. If you need more accurate
 curves, consider raising the tessellation factor, if the target devices can take the extra performance toll when
 animation.
 
@@ -444,7 +452,7 @@ See below the differences between different tessellation factors (3 and 30):
 ### Issues with color space xyY
 
 When using the xyY colorspace you may face issues when setting at least one of the vertices
-to complete black. Like on the second image below:
+to complete black. Like in the second image below:
 
 <p float="left">
     <img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/xyy_issue1.png" width="200"> 
@@ -453,7 +461,7 @@ to complete black. Like on the second image below:
 
 This is expected behavior, as the xyY color space relies on illumination to interpolate colors, black cannot be interpolated.
 
-As a workaround, try to set a minimal value to at least one of the color channels (R, G or B).
+As a workaround, try to set a minimal value to at least one of the color channels (R, G, or B).
 
 In other words:
 
@@ -472,7 +480,7 @@ This work wouldn't be possible without some special people:
 - Luke Pighetti for nerd-sniping me about this a year ago
 - Lots of mathematicians behind the theories that sustain this package
 - The Dart and Flutter folks at Google
-- My Mom that gave birth to me
+- My mom, who gave birth to me
 
 ---
 
