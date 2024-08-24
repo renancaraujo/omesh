@@ -21,7 +21,6 @@ class TessellatedMesh {
     required RenderedOMeshRect verticesMesh,
     required RenderedOMeshRect textureMesh,
     required int tessellation,
-    required bool impellerCompatibilityMode,
   }) {
     final lengthInF32 = _vertexData.length ~/ 2;
     final offsetInBytes = lengthInF32 * 4;
@@ -41,7 +40,6 @@ class TessellatedMesh {
       verticesMesh,
       tessellation,
       verticesTriangles,
-      impellerCompatibilityMode: impellerCompatibilityMode,
     );
 
     _writeTriangles(
@@ -49,7 +47,6 @@ class TessellatedMesh {
       textureMesh,
       tessellation,
       textureTriangles,
-      impellerCompatibilityMode: impellerCompatibilityMode,
     );
 
     return Vertices.raw(
@@ -63,54 +60,13 @@ class TessellatedMesh {
     List<int> cornerIndices,
     RenderedOMeshRect renderedOMeshRect,
     int tessellation,
-    Float32List output, {
-    required bool impellerCompatibilityMode,
-  }) {
-    var topLeft = renderedOMeshRect.vertices[cornerIndices[0]];
-    var topRight = renderedOMeshRect.vertices[cornerIndices[1]];
-    var bottomLeft = renderedOMeshRect.vertices[cornerIndices[2]];
-    var bottomRight = renderedOMeshRect.vertices[cornerIndices[3]];
-
-    if (impellerCompatibilityMode) {
-      const displace = 2.0;
-      topLeft = RenderedOVertex(
-        p: ui.Offset(topLeft.p.dx - displace, topLeft.p.dy - displace),
-        north: topLeft.north,
-        east: topLeft.east,
-        south: topLeft.south,
-        west: topLeft.west,
-      );
-
-      topRight = RenderedOVertex(
-        p: ui.Offset(topRight.p.dx + displace, topRight.p.dy - displace),
-        north: topRight.north,
-        east: topRight.east,
-        south: topRight.south,
-        west: topRight.west,
-      );
-
-      bottomLeft = RenderedOVertex(
-        p: ui.Offset(bottomLeft.p.dx - displace, bottomLeft.p.dy + displace),
-        north: bottomLeft.north,
-        east: bottomLeft.east,
-        south: bottomLeft.south,
-        west: bottomLeft.west,
-      );
-
-      bottomRight = RenderedOVertex(
-        p: ui.Offset(bottomRight.p.dx + displace, bottomRight.p.dy + displace),
-        north: bottomRight.north,
-        east: bottomRight.east,
-        south: bottomRight.south,
-        west: bottomRight.west,
-      );
-    }
-
+    Float32List output,
+  ) {
     final surface = _BezierPatch(
-      topLeft: topLeft,
-      topRight: topRight,
-      bottomLeft: bottomLeft,
-      bottomRight: bottomRight,
+      topLeft: renderedOMeshRect.vertices[cornerIndices[0]],
+      topRight: renderedOMeshRect.vertices[cornerIndices[1]],
+      bottomLeft: renderedOMeshRect.vertices[cornerIndices[2]],
+      bottomRight: renderedOMeshRect.vertices[cornerIndices[3]],
     );
 
     var offset = 0;
