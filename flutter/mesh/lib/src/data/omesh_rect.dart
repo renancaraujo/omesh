@@ -104,7 +104,7 @@ class OMeshRect {
       smoothColors: b.smoothColors,
       vertices: [
         for (int i = 0; i < b.vertices.length; i++)
-          OVertex.lerp(a.vertices[i], b.vertices[i], t),
+          a.vertices[i].lerpTo(b.vertices[i], t),
       ],
       colors: [
         for (int i = 0; i < b.colors.length; i++)

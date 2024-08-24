@@ -174,7 +174,7 @@ class OMeshRectPaint {
     );
     final textureMesh = RenderedOMeshRect(
       mesh: meshRect,
-      normalizedVertices: textureVertices,
+      normalizedVerticesOverride: textureVertices,
       rect: rect,
     );
 
@@ -215,10 +215,14 @@ class OMeshRectPaint {
           ..setFloatUniforms(
             (s) => s
               ..setSize(rect.size)
-              ..setFloats(
-                  [textureVertices[index00].dx, textureVertices[index00].dy])
-              ..setFloats(
-                  [textureVertices[index11].dx, textureVertices[index11].dy])
+              ..setFloats([
+                textureVertices[index00].x,
+                textureVertices[index00].y,
+              ])
+              ..setFloats([
+                textureVertices[index11].x,
+                textureVertices[index11].y,
+              ])
               ..setColorsWide(colors)
               ..setBools(biases)
               ..setColorSpace(meshRect.colorSpace)
@@ -229,11 +233,11 @@ class OMeshRectPaint {
 
       final vertices =
           tessellatedMeshCache.value.getTessellatedVerticesForPatch(
-        size: rect.size,
         cornerIndices: patchIndices,
         verticesMesh: verticesMesh,
         textureMesh: textureMesh,
         tessellation: tessellation,
+        impellerCompatibilityMode: impellerCompatibilityMode,
       );
 
       canvas.drawVertices(
