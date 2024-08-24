@@ -240,9 +240,8 @@ void fragment(vec2 uv, vec2 pos, inout vec4 color) {
     float hasSoroundingBias = uBias00 + uBias01 + uBias10 + uBias11;
     vec2 uvInSquare = (uv - uv00) / (uv11 - uv00);
 
-    // if uv is outside the square, return transparent
     if(uvInSquare.x < 0.0 || uvInSquare.x > 1.0 || uvInSquare.y < 0.0 || uvInSquare.y > 1.0) {
-        color = vec4(0.0, 0.0, 0.0, 0.0);
+        color = vec4(0.0);
         return;
     }
 

@@ -89,7 +89,6 @@ class OMeshGradient extends StatelessWidget {
   /// the maximum size of the parent's [BoxConstraints].
   final Size? size;
 
-
   /// Whether to add a [RepaintBoundary] around the mesh widget
   /// to avoid repainting the whole widget tree when the mesh changes.
   ///
@@ -354,7 +353,6 @@ class _OMeshGradient extends StatefulWidget {
   final int tessellation;
   final DebugMode? debugMode;
   final Size? size;
-
 
   @override
   State<_OMeshGradient> createState() => _OMeshGradientState();
