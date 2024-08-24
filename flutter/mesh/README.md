@@ -5,9 +5,9 @@
 
 ⚡ Fast and highly customizable animated Mesh Gradients for Flutter applications.
 
-It is not a JPEG 🌭
-
 <img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/preview.png" width="500">
+
+It is not a JPEG 🌭
 
 ---
 
@@ -417,7 +417,6 @@ Known situations where O'Mesh doesn't seem to behave the way it is supposed to.
 
 ### Panic! I am having Impeller issues
 
-
 O'Mesh had some issues when running on the [Impeller Rendering Engine](https://docs.flutter.dev/perf/impeller) in previous versions.
 These issues were supposed to be fixed in the latest version of O'Mesh. If you are facing a problem that can only be observed when the impeller is ON,
 report it in the Issues tab on [Github](https://github.com/renancaraujo/omesh).
@@ -430,7 +429,7 @@ This may be caused by too many triangles in your mesh
 
 The number of triangles in a mesh can be described by `(width-1) * (height-1) * (tessellationFactor ^ 2) * 2`.
 
-The default tessellation factor is 12, consider lowering that value for small-sized containers or 
+The default tessellation factor is 12, consider lowering that value for small-sized containers or
 meshes with too many vertices. See below the visual impacts of a change in the tessellation factor.
 
 ### I see some artifacts when the mesh is distorted
