@@ -401,7 +401,11 @@ enableOMeshImpellerCompatibility = false;
 
 ### Impeller on macOS
 
-Impeller is [not enabled by default on macOS](https://docs.flutter.dev/perf/impeller#macos), regardless of whether you opt-in or out of it, O'Mesh should be compatible with it.
+Impeller is [not enabled by default on macOS](https://docs.flutter.dev/perf/impeller#macos), **If you are opting into it**, make sure you enabled the following flag before your `runApp` call:
+
+```dart
+enableOMeshImpellerCompatibilityOnMacOS = true;
+```
 
 ### Impeller on Android
 
