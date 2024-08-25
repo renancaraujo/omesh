@@ -342,10 +342,6 @@ class OMeshRectPaint {
     final textureVertices = _textureVerticesCache.value;
     final vertexColors = _inferredColorsCache.value;
 
-    // pixel density
-    final scale =
-        WidgetsBinding.instance.platformDispatcher.views.first.devicePixelRatio;
-
     final recorder = PictureRecorder();
     final canvas = Canvas(recorder);
 
@@ -384,8 +380,8 @@ class OMeshRectPaint {
 
     final picture = recorder.endRecording();
     return picture.toImageSync(
-      (scale * _rect.size.width).round(),
-      (scale * _rect.size.height).round(),
+      _rect.size.width.round(),
+      _rect.size.height.round(),
     );
   })
       .withDependency(() => _rect)
