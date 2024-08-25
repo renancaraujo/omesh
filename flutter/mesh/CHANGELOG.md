@@ -1,3 +1,8 @@
+# v0.4.1
+
+- feat: add macos impeller flag [#17](https://github.com/renancaraujo/omesh/pull/17)
+- fix: cache breaking and equality [#16](https://github.com/renancaraujo/omesh/pull/16)
+
 # v0.4.0
 
 - feat: Animated mesh gradients are up to 2x faster now thanks to @jonahwilliams [#10](https://github.com/renancaraujo/omesh/pull/10)
