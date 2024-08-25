@@ -4,17 +4,7 @@ import 'package:cached_value/cached_value.dart';
 import 'package:flutter/foundation.dart';
 
 import 'package:flutter/rendering.dart'
-    show
-        Alignment,
-        BlendMode,
-        BoxConstraints,
-        Canvas,
-        Color,
-        Matrix4,
-        Paint,
-        Rect,
-        SingleChildLayoutDelegate;
-import 'package:flutter/widgets.dart' show WidgetsBinding;
+    show BlendMode, Canvas, Color, Matrix4, Paint, Rect;
 
 import 'package:flutter_shaders/flutter_shaders.dart';
 import 'package:mesh/internal_stuff.dart';
@@ -358,8 +348,8 @@ class OMeshRectPaint {
         biases[index10], biases[index11], //
       ];
 
-      var textureTopLeft = textureVertices[index00];
-      var textureBottomRight = textureVertices[index11];
+      final textureTopLeft = textureVertices[index00];
+      final textureBottomRight = textureVertices[index11];
 
       final paintShader = _getShaderPaint(
         patchIndex: patchIndex,

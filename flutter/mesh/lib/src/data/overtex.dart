@@ -286,10 +286,8 @@ class BezierOVertex extends OVertex {
   @override
   int get hashCode => Object.hash(x, y, north, east, south, west);
 
-
   @override
-  String toString() =>
-      'BezierOVertex($x, $y, north: $north, '
+  String toString() => 'BezierOVertex($x, $y, north: $north, '
       'east: $east, south: $south, west: $west)';
 }
 
