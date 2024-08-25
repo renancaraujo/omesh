@@ -101,10 +101,16 @@ class OVertex {
   /// Check if two [OVertex] objects are equal.
   @override
   bool operator ==(Object other) =>
-      other is OVertex && x == other.x && y == other.y;
+      runtimeType == other.runtimeType &&
+      other is OVertex &&
+      x == other.x &&
+      y == other.y;
 
   @override
   int get hashCode => Object.hash(x, y);
+
+  @override
+  String toString() => 'OVertex($x, $y)';
 }
 
 /// Extension on [ui.Offset] to convert it to an [OVertex].
@@ -268,6 +274,7 @@ class BezierOVertex extends OVertex {
 
   @override
   bool operator ==(Object other) =>
+      runtimeType == other.runtimeType &&
       other is BezierOVertex &&
       x == other.x &&
       y == other.y &&
@@ -278,6 +285,10 @@ class BezierOVertex extends OVertex {
 
   @override
   int get hashCode => Object.hash(x, y, north, east, south, west);
+
+  @override
+  String toString() => 'BezierOVertex($x, $y, north: $north, '
+      'east: $east, south: $south, west: $west)';
 }
 
 /// Extension on [OVertex] to create a new [OVertex] with bezier control points.
@@ -291,12 +302,22 @@ extension BezierizeOVertex on OVertex {
     OVertex? east,
     OVertex? south,
     OVertex? west,
-  }) =>
-      BezierOVertex.oVertex(
-        this,
-        north: north,
-        east: east,
-        south: south,
-        west: west,
-      );
+  }) {
+    final converted = BezierOVertex.oVertex(
+      this,
+    );
+    final t = this;
+    if (t is BezierOVertex) {
+      return converted
+        ..north = north ?? t.north
+        ..east = east ?? t.east
+        ..south = south ?? t.south
+        ..west = west ?? t.west;
+    }
+    return converted
+      ..north = north
+      ..east = east
+      ..south = south
+      ..west = west;
+  }
 }
