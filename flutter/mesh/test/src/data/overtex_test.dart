@@ -243,15 +243,15 @@ void main() {
         );
 
         final vertex2 = BezierOVertex(
-          2,
           1,
-          north: OVertex(2, 1),
-          east: OVertex(1, 1),
-          south: OVertex(2, 2),
-          west: OVertex(1, 2),
+          2,
+          north: OVertex(1, 2),
+          east: OVertex(2, 2),
+          south: OVertex(1, 2),
+          west: OVertex(2, 1),
         );
 
-        expect(vertex1, isNot(vertex2));
+        expect(vertex1, isNot(equals(vertex2)));
       });
     });
 

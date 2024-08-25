@@ -2,8 +2,20 @@ import 'dart:ui';
 
 import 'package:cached_value/cached_value.dart';
 import 'package:flutter/foundation.dart';
+
 import 'package:flutter/rendering.dart'
-    show BlendMode, Canvas, Color, Matrix4, Paint, Rect;
+    show
+        Alignment,
+        BlendMode,
+        BoxConstraints,
+        Canvas,
+        Color,
+        Matrix4,
+        Paint,
+        Rect,
+        SingleChildLayoutDelegate;
+import 'package:flutter/widgets.dart' show WidgetsBinding;
+
 import 'package:flutter_shaders/flutter_shaders.dart';
 import 'package:mesh/internal_stuff.dart';
 import 'package:mesh/mesh.dart';
@@ -78,7 +90,9 @@ class OMeshRectPaint {
   /// The guiding mesh to be rendered.
   OMeshRect get meshRect => _meshRect;
   set meshRect(OMeshRect value) {
-    if (value == _meshRect) return;
+    if (value == _meshRect) {
+      return;
+    }
     _meshRect = value.clone();
     _needsRepaint = true;
   }
@@ -185,6 +199,8 @@ class OMeshRectPaint {
     });
   })
       .withDependency(() => meshRect.colors)
+      .withDependency(() => meshRect.smoothColors)
+      .withDependency(() => meshRect.colorSpace)
       .withDependency(() => (meshRect.width, meshRect.height));
 
   /// A [CachedValue] that holds the tessellated mesh.
@@ -232,16 +248,24 @@ class OMeshRectPaint {
     for (final tuple in patches.reversed.indexed) {
       final (patchIndex, [index00, index01, index10, index11]) = tuple;
 
+      final (colors, biases) = vertexColors;
+      final patchColors = [
+        colors[index00], colors[index01], //
+        colors[index10], colors[index11], //
+      ];
+      final patchBiases = [
+        biases[index00], biases[index01], //
+        biases[index10], biases[index11], //
+      ];
+
       final gradeintPaint = _enableImpellerCompatibility
           ? _getPrerenderedPaint(rect)
           : _getShaderPaint(
               patchIndex: patchIndex,
-              index00: index00,
-              index01: index01,
-              index10: index10,
-              index11: index11,
-              textureVertices: textureVertices,
-              vertexColors: vertexColors,
+              textureTopLeft: textureVertices[index00],
+              textureBottomRight: textureVertices[index11],
+              patchColors: patchColors,
+              patchBiases: patchBiases,
               rect: rect,
             );
 
@@ -267,36 +291,24 @@ class OMeshRectPaint {
 
   Paint _getShaderPaint({
     required int patchIndex,
-    required int index00,
-    required int index01,
-    required int index10,
-    required int index11,
-    required List<OVertex> textureVertices,
-    required (List<Color>, List<bool>) vertexColors,
+    required OVertex textureTopLeft,
+    required OVertex textureBottomRight,
+    required List<Color> patchColors,
+    required List<bool> patchBiases,
     required Rect rect,
   }) {
-    final (colors, biases) = vertexColors;
-    final patchColors = [
-      colors[index00], colors[index01], //
-      colors[index10], colors[index11], //
-    ];
-    final patchBiases = [
-      biases[index00], biases[index01], //
-      biases[index10], biases[index11], //
-    ];
-
     return Paint()
       ..shader = (shaderProvider.getShaderFor(patchIndex)
         ..setFloatUniforms(
           (s) => s
             ..setSize(rect.size)
             ..setFloats([
-              textureVertices[index00].x,
-              textureVertices[index00].y,
+              textureTopLeft.x,
+              textureTopLeft.y,
             ])
             ..setFloats([
-              textureVertices[index11].x,
-              textureVertices[index11].y,
+              textureBottomRight.x,
+              textureBottomRight.y,
             ])
             ..setColorsWide(patchColors)
             ..setBools(patchBiases)
@@ -330,34 +342,58 @@ class OMeshRectPaint {
     final textureVertices = _textureVerticesCache.value;
     final vertexColors = _inferredColorsCache.value;
 
+    // pixel density
+    final scale =
+        WidgetsBinding.instance.platformDispatcher.views.first.devicePixelRatio;
+
     final recorder = PictureRecorder();
     final canvas = Canvas(recorder);
 
-    for (final tuple in patches.reversed.indexed) {
+    for (final tuple in patches.indexed) {
       final (patchIndex, [index00, index01, index10, index11]) = tuple;
+
+      final (colors, biases) = vertexColors;
+      final patchColors = [
+        colors[index00], colors[index01], //
+        colors[index10], colors[index11], //
+      ];
+      final patchBiases = [
+        biases[index00], biases[index01], //
+        biases[index10], biases[index11], //
+      ];
+
+      var textureTopLeft = textureVertices[index00];
+      var textureBottomRight = textureVertices[index11];
 
       final paintShader = _getShaderPaint(
         patchIndex: patchIndex,
-        index00: index00,
-        index01: index01,
-        index10: index10,
-        index11: index11,
-        textureVertices: textureVertices,
-        vertexColors: vertexColors,
+        textureTopLeft: textureTopLeft,
+        textureBottomRight: textureBottomRight,
+        patchColors: patchColors,
+        patchBiases: patchBiases,
         rect: _rect,
       );
 
-      canvas.drawRect(_rect, paintShader);
+      canvas.drawRect(
+        _rect,
+        paintShader
+          ..isAntiAlias = false
+          ..filterQuality = FilterQuality.high,
+      );
     }
 
     final picture = recorder.endRecording();
     return picture.toImageSync(
-      _rect.size.width.ceil(),
-      _rect.size.height.ceil(),
+      (scale * _rect.size.width).round(),
+      (scale * _rect.size.height).round(),
     );
   })
       .withDependency(() => _rect)
+      .withDependency(() => debugMode)
+      .withDependency(() => meshRect.fallbackColor)
       .withDependency(() => meshRect.colors)
+      .withDependency(() => meshRect.smoothColors)
+      .withDependency(() => meshRect.colorSpace)
       .withDependency(() => (meshRect.width, meshRect.height));
 }
 
