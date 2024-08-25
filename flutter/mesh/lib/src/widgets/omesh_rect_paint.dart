@@ -23,6 +23,14 @@ import 'package:mesh/mesh.dart';
 bool enableOMeshImpellerCompatibility = true;
 
 /// When [enableOMeshImpellerCompatibility] is true, this flag will enable
+/// Impeller compatibility on macOS.
+///
+/// False by default.
+///
+/// Set to true if you are opting in on Impeller on macOS.
+bool enableOMeshImpellerCompatibilityOnMacOS = false;
+
+/// When [enableOMeshImpellerCompatibility] is true, this flag will enable
 /// Impeller compatibility on Android.
 ///
 /// False by default.
@@ -42,12 +50,14 @@ bool get _enableImpellerCompatibility {
     return false;
   }
 
+  // Impeller on iOS is always supported
   if (defaultTargetPlatform == TargetPlatform.iOS) {
     return true;
   }
 
+  // Impeller on macOS is only supported if the feature is enabled
   if (defaultTargetPlatform == TargetPlatform.macOS) {
-    return true;
+    return enableOMeshImpellerCompatibilityOnMacOS;
   }
 
   //  Impeller on android is only supported if the feature is enabled
