@@ -1,0 +1,43 @@
+# File spec for O'Mesh:
+
+- finger print:1B
+- filespec version:1B
+- (n)layer count:1B
+- layers:n*L
+
+(L) Layer info:
+- mesh type:1B
+- mesh data:[R]
+
+(R) Rectangular mesh layer:
+- (w)width:1B
+- (h)height:1B
+- positions & control points (nulling for null control points):w*h*V
+- colors (nulling for undefined colors):O
+- color space:7b
+- smoothcolors:1b
+- fallback color (optional):1b+{C}
+- background color (optional):1b+{C}
+
+(V) Rectangular mesh vertex:
+- x:8B
+- y:8B
+- (n,e,s,w)presence of control points:1B
+- north:n{16B}
+- east:e{16B}
+- south:s{16B}
+- west:w{16B}
+
+(O) Rectangular mesh color list:
+- (n)length:2B
+- color values:n*C
+
+(C) Rectangular mesh vertex color:
+- color header (index, colorspace):2B
+- color value:[J]
+
+(J) sRGB color value:
+- red:1B
+- green:1B
+- blue:1B
+- alpha:1B

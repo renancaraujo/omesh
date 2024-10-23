@@ -25,7 +25,7 @@ extension type OMeshRectColorMixer(OMeshRect mesh) {
     );
   }
 
-  Color get _fb => mesh.fallbackColor;
+  Color get _fb => mesh.fallbackColor ?? const Color(0x00000000);
   List<Color?> get _colors => mesh.colors;
   int get _w => mesh.width;
   int get _h => mesh.height;

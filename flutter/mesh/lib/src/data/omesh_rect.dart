@@ -36,7 +36,7 @@ class OMeshRect {
           height: height,
           vertices: vertices,
           colors: colors,
-          fallbackColor: fallbackColor ?? const Color(0x00000000),
+          fallbackColor: fallbackColor,
           backgroundColor: backgroundColor,
           colorSpace: colorSpace ?? OMeshColorSpace.lab,
           smoothColors: smoothColors ?? true,
@@ -94,7 +94,7 @@ class OMeshRect {
         a.fallbackColor,
         b.fallbackColor,
         t,
-      )!,
+      ),
       backgroundColor: Color.lerp(
         a.backgroundColor,
         b.backgroundColor,
@@ -127,7 +127,7 @@ class OMeshRect {
   /// the mesh) does not have a color assigned.
   ///
   /// Defaults to black transparent.
-  final Color fallbackColor;
+  final Color? fallbackColor;
 
   /// The color to use as background of the painted area.
   ///
@@ -208,6 +208,20 @@ class OMeshRect {
         colors.hashCode ^
         colorSpace.hashCode ^
         smoothColors.hashCode;
+  }
+
+  @override
+  String toString() {
+    return 'OMeshRect('
+        'width: $width, '
+        'height: $height, '
+        'fallbackColor: $fallbackColor, '
+        'backgroundColor: $backgroundColor, '
+        'vertices: $vertices, '
+        'colors: $colors, '
+        'colorSpace: $colorSpace, '
+        'smoothColors: $smoothColors'
+        ')';
   }
 
   /// Returns a new [OMeshRect] with the given [vertices].
