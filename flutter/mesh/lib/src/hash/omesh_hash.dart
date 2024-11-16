@@ -5,7 +5,7 @@ import 'package:mesh/mesh.dart';
 import 'package:mesh/src/hash/compression/zlib/zlib.dart' as zlib;
 import 'package:mesh/src/hash/omesh_codec.dart';
 
-const _kPrefix = 'O';
+const _kPrefix = 'O:';
 
 String getHashFromMesh(OMeshRect mesh) {
   final bytes = OMeshBinaryFormatCodec.v1.encoder.convert(mesh);
@@ -34,6 +34,6 @@ String _removePadding(String base64String) {
 
 String _addPadding(String base64String) {
   // Calculate the padding needed to make the length a multiple of 4
-  int paddingNeeded = (4 - base64String.length % 4) % 4;
+  final paddingNeeded = (4 - base64String.length % 4) % 4;
   return base64String + ('=' * paddingNeeded);
 }

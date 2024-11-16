@@ -19,15 +19,14 @@ void main() {
     );
 
     final hash = getHashFromMesh(verySimpleOMesh);
-    print('hash: $hash ${hash.length}');
 
-//     expect(
-//       hash,
-//       equals(
-//         '''
-// eJxj8vdVYVBiQAf2HzCE0CRgDLgAI4Pb5JX_GRgZGJkZAA45CCg''',
-//       ),
-//     );
+    expect(
+      hash,
+      equals(
+        '''
+O:eJxjVGJAB_YfMITQJGAMuAAjg9vklf8ZGBkYmRkAzqEHZw''',
+      ),
+    );
 
     final mesh = getMeshFromHash(hash);
 
@@ -67,15 +66,14 @@ void main() {
     );
 
     final hash = getHashFromMesh(simpleOMesh);
-    print('hash: $hash ${hash.length}');
 
-//     expect(
-//       hash,
-//       equals(
-//         '''
-// eJxj8vdlZGRgZt6_bkfg61a5Hfu3VD10XydSzWD_qD9G4-uh_v0rZ4LALAb7r4dAIoftl0BV7J8CYdhfvs5lW7D4OoP9HZCGGE37JxCawf4jVMtNqBn7W6BaPsBUQBn2HxggwP4D2BlB9s_BtscwMHAyMCzVzvjPwOg2eeV_BiYwybxUe8F_BpYXt678Z2AFi7BNF135n4EdzOYAkcwMAM0AYso=''',
-//       ),
-//     );
+    expect(
+      hash,
+      equals(
+        '''
+O:eJxjNGaAgv1bqh66rxOpZrB_1B-j8fVQ__6VM0FgFoP910MgkcP2S6AqYMD-8nUu24LF1xns74A0xGjaP4HQDPYfoVpuQs2Aa_kAU_EBJsCAyrB_DrY9hoGVYal2xn8Gt8kr_zMs1V7wn-HFrSv_GaaLrvzPyMTEzMLEysTEzAAAfmNFVw''',
+      ),
+    );
 
     final mesh = getMeshFromHash(hash);
 
@@ -132,15 +130,14 @@ void main() {
     );
 
     final hash = getHashFromMesh(meshRect);
-    print('hash: $hash ${hash.length}');
 
-//     expect(
-//       hash,
-//       equals(
-//         '''
-// eJxj8vdlZGRgZt6_bkfg61a5Hfu3VD10XydSzWD_qD9G4-uh_v0rZ4LALAb7r4dAIoftl0BV7J8CYdhfvs5lW7D4OoP9HZCGGE37JxCawf4jVMtNqBn7W6BaPsBUQBn2HxggwP4D2BlB9s_BtscwMHAyMCzVzvjPwOg2eeV_BiYwybxUe8F_BpYXt678Z2AFi7BNF135n4EdzOYAkcwMAM0AYso=''',
-//       ),
-//     );
+    expect(
+      hash,
+      equals(
+        '''
+O:eJxdUD1MwkAUfrVFqyadOjjpyu5MvhFX1JHByRlXHA0zi4N2cBAWHUg0DmyNuDhIohIDYkJaEQLBoTXB9cz13TWRL2nv8u77ee8Z-_7NrLLZLHz79XKYb7jHhJd8wy2HO_qBENS6a7lS3b_TjOkiI1YFzfBP-YJ-riTFpn_RLEgyOtsJ8KDOD-kwq-gMDJi3ipAt8aweekl9F715q1rM_uKTnTFko3WMEqMt9FmJsZv0gK8niXaaEHLTmFACvLHOwvRcwkOgEqL_BNLAKEk-IrwrherBwmu1mJ23qhjKqFoXgWp6zFNRGppaRAsFXy8m1ow2X_SOCYGSxJxOmKjJfnglhEhPwCfZdH99KUjQhvztCRK3h4I64kCQKD0KOju5EjTwPGEsmVbGNJdN_lZs27YzBjmOI_4AV4_w0A''',
+      ),
+    );
 
     final mesh = getMeshFromHash(hash);
 
@@ -235,15 +232,14 @@ void main() {
     );
 
     final hash = getHashFromMesh(complexOMesh);
-    print('hash: $hash ${hash.length}');
 
-//     expect(
-//       hash,
-//       equals(
-//         '''
-// eJxlkD8sQ1EUxr-nqT9P_X_FVGuNYuaMrQFRtnY2V2yszF0sDBYWgyY2g-QlFYsgShAhjapWpS01VMVy5d577jM4w3n33nfOd37na5mdtiz4_W76cK6yHjp011bykbSzCrrghwOZ56qgJ3WPuUfhRiaVGAW9ph1Z7O5tytgC1XWvu8Ea7q4-0E0mlQg3jkGXUEFX8p5JeaJ0YirKXMGVnihlI3JcFGYcPRqO43EVVJCglXXbm_I8kdy5syfIdLycyTinnF7NKNhUVI0j9KAV6JoVc2pBh960B4bWpipDGfyixveUDfQ9W2PspaIiWvqDZqY_aN6C2Pd_0nntg00lhsvzdlluyPO3pkeZkZb3UODRBrK0qALutqGXdcld0K3-Q3W9JjwH69K48BeoxnRexSdbyeKAA__7txBovakIgbZaQwi0q9yhsv1RFsvoVDnwURYL6FLnbpV7MBkV6MVUXKAPM3GBfpUHVHasQKCJoBUMNjFohUJNDFljY00Mt8zHhM8H7Bd-BHBaqIpf3kxZ_A==''',
-//       ),
-//     );
+    expect(
+      hash,
+      equals(
+        '''
+O:eJxlkDFMwkAUhl9pVaywwYorjsQZ3wguJqBOMDtj3HSVmcVFBxdZHCRxYzC5BOJixIgGjdEQawUxgOKANS5n7u5dGXzDtdf-73_f-411Vqlm-sVYle1uO6lKZAfwij6cijMzAHyW9yw7i49rpfwC4FslIsTseF_UAeBI9bI98mBl9YKtWikfH9cBr0EW3oh7reSb4rlW9EhBSt8UmykxLg16HD5pjvqiLHQFaL9o-1NekoWjezuJuuP1UlQD22o17WBjRzbO46NywFtybMsFI_iuMtC0Ng4ISuN3FL7vrKEfKBodL3Yk0eYEmpgm0LQFUu7_rB2Vg41dgnNouyY1OPQcqlF6pOF_cGm0huxuyAJ2qOmFrlAGvFN_cKTWBD_BkQgu_g04JDpf8UVRkjmE4eOHc2j1OYfhmHP47PEtcawBLKU5wHKOA6zkOBihkAdGNOqBEYt5YCQSHgRWs1zGYgRM07SsKcuangkGg7P2XChsmnDi_nK4cAf8D12wRBE''',
+      ),
+    );
 
     final mesh = getMeshFromHash(hash);
 
