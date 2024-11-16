@@ -3,10 +3,10 @@ import 'dart:convert';
 import 'package:binarize/binarize.dart';
 import 'package:mesh/mesh.dart';
 import 'package:mesh/src/hash/binary_payload/omesh_binary_format_payload.dart'
-    show MeshType, OMeshBinaryFormat, OMeshBinaryFormatPayloadType;
+    show OMeshBinaryFormat, OMeshBinaryFormatPayloadType;
 
 export 'package:mesh/src/hash/binary_payload/omesh_binary_format_payload.dart'
-    show MeshType, OMeshBinaryFormat, OMeshBinaryFormatPayloadType;
+    show OMeshBinaryFormat, OMeshBinaryFormatPayloadType;
 
 class OMeshBinaryFormatCodec extends Codec<OMeshRect, Uint8List> {
   const OMeshBinaryFormatCodec._({

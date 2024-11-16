@@ -1,19 +1,19 @@
-import 'dart:convert';
-
-import 'package:binarize/binarize.dart'
-    show ByteData, PayloadType, binarize;
+import 'package:binarize/binarize.dart' show ByteData, PayloadType;
 import 'package:mesh/mesh.dart';
 import 'package:mesh/src/hash/binary_payload/omesh_payload_type.dart';
 import 'package:mesh/src/hash/binary_payload/omesh_rect_payload.dart';
 
+/// The whole information contained on a omesh binary file
 typedef OMeshBinaryFormat = ({
   int specVersion,
   OMeshRect mesh,
 });
 
+/// A [PayloadType] for [OMeshBinaryFormat]
 class OMeshBinaryFormatPayloadType extends PayloadType<OMeshBinaryFormat> {
   const OMeshBinaryFormatPayloadType._();
 
+  /// The singleton instance
   static const OMeshBinaryFormatPayloadType instance =
       OMeshBinaryFormatPayloadType._();
 

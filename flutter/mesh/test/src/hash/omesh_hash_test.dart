@@ -85,8 +85,7 @@ O:eJxjNGaAgv1bqh66rxOpZrB_1B-j8fVQ__6VM0FgFoP910MgkcP2S6AqYMD-8nUu24LF1xns74A0xG
       width: 5,
       height: 4,
       colorSpace: OMeshColorSpace.xyY,
-      fallbackColor: Color(0xff0e0e0e),
-      backgroundColor: null,
+      fallbackColor: const Color(0xff0e0e0e),
       vertices: [
         (-0.07, -0.04).v, (0.27, -0.07).v, (0.52, -0.08).v, (0.79, -0.07).v,
         (1.08, -0.08).v, // Row 1
