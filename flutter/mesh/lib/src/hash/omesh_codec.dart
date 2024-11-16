@@ -3,31 +3,20 @@ import 'dart:convert';
 import 'package:binarize/binarize.dart';
 import 'package:mesh/mesh.dart';
 import 'package:mesh/src/hash/binary_payload/omesh_binary_format_payload.dart'
-    show
-        MeshType,
-        OMeshBinaryFormat,
-        OMeshBinaryFormatPayloadType,
-        kOMeshFingerprint;
+    show MeshType, OMeshBinaryFormat, OMeshBinaryFormatPayloadType;
 
 export 'package:mesh/src/hash/binary_payload/omesh_binary_format_payload.dart'
-    show
-        MeshType,
-        OMeshBinaryFormat,
-        OMeshBinaryFormatPayloadType,
-        kOMeshFingerprint;
+    show MeshType, OMeshBinaryFormat, OMeshBinaryFormatPayloadType;
 
 class OMeshBinaryFormatCodec extends Codec<List<OMeshRect>, Uint8List> {
   const OMeshBinaryFormatCodec._({
-    required this.fingerPrint,
     required this.specVersion,
   });
 
   static const v1 = OMeshBinaryFormatCodec._(
-    fingerPrint: kOMeshFingerprint,
     specVersion: 1,
   );
 
-  final String fingerPrint;
   final int specVersion;
 
   @override
@@ -37,7 +26,6 @@ class OMeshBinaryFormatCodec extends Codec<List<OMeshRect>, Uint8List> {
   @override
   Converter<List<OMeshRect>, Uint8List> get encoder =>
       _OMeshBinaryFormatEncoder(
-        fingerPrint: fingerPrint,
         specVersion: specVersion,
       );
 }
@@ -53,17 +41,14 @@ class _OMeshBinaryFormatDecoder extends Converter<Uint8List, List<OMeshRect>> {
 
 class _OMeshBinaryFormatEncoder extends Converter<List<OMeshRect>, Uint8List> {
   _OMeshBinaryFormatEncoder({
-    required this.fingerPrint,
     required this.specVersion,
   });
 
-  final String fingerPrint;
   final int specVersion;
 
   @override
   Uint8List convert(List<OMeshRect> input) {
     final format = (
-      fingerPrint: fingerPrint,
       specVersion: specVersion,
       layerCount: input.length,
       layers: input.map((e) => (MeshType.rect, e)).toList(),

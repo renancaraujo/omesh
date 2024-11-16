@@ -14,8 +14,10 @@ class OMeshRectPayloadType extends OMeshPayloadType<OMeshRect> {
 
   @override
   OMeshRect get(ByteData data, ByteOffset o) {
-    final width = data.getUint8(o.displace(1));
-    final height = data.getUint8(o.displace(1));
+    final widthHeight = data.getUint8(o.displace(1));
+    final width = widthHeight >> 4;
+    final height = widthHeight & 0xF;
+
     final verticesLength = width * height;
     final vertices = List<OVertex>.generate(
       verticesLength,
@@ -38,8 +40,7 @@ class OMeshRectPayloadType extends OMeshPayloadType<OMeshRect> {
 
   @override
   int length(OMeshRect value) {
-    const widthLength = 1;
-    const heightLength = 1;
+    const widthHeightLength = 1;
     final verticesLength = value.vertices.fold<int>(
       0,
       (previousValue, element) =>
@@ -57,18 +58,13 @@ class OMeshRectPayloadType extends OMeshPayloadType<OMeshRect> {
       ),
     );
 
-    return widthLength +
-        heightLength +
-        verticesLength +
-        colorsLength +
-        metadataLength;
+    return widthHeightLength + verticesLength + colorsLength + metadataLength;
   }
 
   @override
   void set(OMeshRect value, ByteData data, ByteOffset o) {
-    data
-      ..setUint8(o.displace(1), value.width)
-      ..setUint8(o.displace(1), value.height);
+    final widthHeight = value.width << 4 | value.height;
+    data.setUint8(o.displace(1), widthHeight);
 
     for (var i = 0; i < value.vertices.length; i++) {
       OVertexPayloadType.instance.set(value.vertices[i], data, o);
@@ -120,11 +116,10 @@ class _OMeshRectMetadataPayloadType
     final isThereBackgroundColor = otherInfo & 0x2 != 0;
 
     final fallbackColor =
-        isThereFallbackColor ? ColorPayloadType.instance.get(data, o).$2 : null;
+        isThereFallbackColor ? ColorPayloadType.instance.get(data, o) : null;
 
-    final backgroundColor = isThereBackgroundColor
-        ? ColorPayloadType.instance.get(data, o).$2
-        : null;
+    final backgroundColor =
+        isThereBackgroundColor ? ColorPayloadType.instance.get(data, o) : null;
 
     return (
       colorSpace: colorSpace,
@@ -139,10 +134,10 @@ class _OMeshRectMetadataPayloadType
     const colorSpaceAndSmoothColorsLength = 1;
     const otherInfoLength = 1;
     final fallbackColorLength = value.fallbackColor != null
-        ? ColorPayloadType.instance.length((0, value.fallbackColor!))
+        ? ColorPayloadType.instance.length(value.fallbackColor!)
         : 0;
     final backgroundColorLength = value.backgroundColor != null
-        ? ColorPayloadType.instance.length((0, value.backgroundColor!))
+        ? ColorPayloadType.instance.length(value.backgroundColor!)
         : 0;
 
     return colorSpaceAndSmoothColorsLength +
@@ -165,11 +160,11 @@ class _OMeshRectMetadataPayloadType
     data.setUint8(o.displace(1), otherInfo);
 
     if (value.fallbackColor != null) {
-      ColorPayloadType.instance.set((0, value.fallbackColor!), data, o);
+      ColorPayloadType.instance.set(value.fallbackColor!, data, o);
     }
 
     if (value.backgroundColor != null) {
-      ColorPayloadType.instance.set((0, value.backgroundColor!), data, o);
+      ColorPayloadType.instance.set(value.backgroundColor!, data, o);
     }
   }
 }

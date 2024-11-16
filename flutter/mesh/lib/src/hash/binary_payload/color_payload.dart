@@ -8,74 +8,103 @@ class ColorListPayloadType extends OMeshPayloadType<List<Color?>> {
 
   @override
   List<Color?> get(ByteData data, ByteOffset o) {
-    final length = data.getUint16(o.displace(2));
-    final colors = List<Color?>.filled(colorSlots, null);
-    for (var i = 0; i < length; i++) {
-      final (index, color) = ColorPayloadType.instance.get(data, o);
-      colors[index] = color;
+    final colorDictLength = data.getUint8(o.displace(1));
+    final colorDict = <Color?>[null];
+    for (var i = 0; i < colorDictLength; i++) {
+      final color = ColorPayloadType.instance.get(data, o);
+      colorDict.add(color);
     }
+
+    final colors = List<Color?>.filled(colorSlots, null);
+    for (var i = 0; i < colorSlots; i++) {
+      final colorIndex = data.getUint8(o.displace(1));
+      colors[i] = colorDict[colorIndex];
+    }
+
     return colors;
   }
 
   @override
   int length(List<Color?> value) {
     assert(value.length <= colorSlots, 'do not exceed color slots');
-    const headerLength = 2;
-    final colorLength = value.whereNotNull().fold<int>(
-          0,
-          (previousValue, element) =>
-              previousValue + ColorPayloadType.instance.length((0, element)),
-        );
-    return headerLength + colorLength;
+    const colorDictLengthLength = 1;
+    final differentColors = value.whereNotNull().toSet();
+    final colorDictLength =
+        differentColors.fold<int>(0, (previousValue, element) {
+      final colorLength = ColorPayloadType.instance.length(element);
+      return previousValue + colorLength;
+    });
+    final colorLength = colorSlots;
+    return colorDictLengthLength + colorDictLength + colorLength;
   }
 
   @override
   void set(List<Color?> value, ByteData data, ByteOffset o) {
     assert(value.length <= colorSlots, 'do not exceed color slots');
-    data.setUint16(o.displace(2), value.whereNotNull().length);
-    for (var i = 0; i < value.length; i++) {
+
+    final differentColors = value.whereNotNull().toSet();
+    data.setUint8(o.displace(1), differentColors.length);
+    for (final color in differentColors) {
+      ColorPayloadType.instance.set(color, data, o);
+    }
+
+    final colorDictAsMap = differentColors.indexed.fold<Map<Color, int>>(
+      <Color, int>{},
+      (previousValue, element) {
+        final (index, color) = element;
+        return previousValue..[color] = index;
+      },
+    );
+    for (var i = 0; i < colorSlots; i++) {
       final color = value[i];
-      if (color == null) continue;
-      ColorPayloadType.instance.set((i, color), data, o);
+      if (color == null) {
+        data.setUint8(o.displace(1), 0);
+      } else {
+        final index = colorDictAsMap[color]!;
+        data.setUint8(o.displace(1), index + 1);
+      }
     }
   }
 }
 
-class ColorPayloadType extends OMeshPayloadType<(int, Color)> {
+class ColorPayloadType extends OMeshPayloadType<Color> {
   const ColorPayloadType._();
 
   static const ColorPayloadType instance = ColorPayloadType._();
 
+
   @override
-  int length((int, Color) value) {
-    const headerLength = 2;
-    final colorLength = _SRGBColorPayloadType.instance.length(value.$2);
+  Color get(ByteData data, ByteOffset o) {
+    // safeguard to save color meta information.
+    // first 3 bits: color space
+    final colorHeader = data.getUint8(o.displace(1));
+    // we read it but we are not prepared to use it yet.
+    final colorSpace = colorHeader & 0x07;
+
+    if(colorSpace != 0) {
+      throw UnimplementedError('only srgb is supported for now');
+    }
+
+    return _SRGBColorPayloadType.instance.get(data, o);
+  }
+
+
+  @override
+  int length(Color value) {
+    const headerLength = 1;
+    final colorLength = _SRGBColorPayloadType.instance.length(value);
     return headerLength + colorLength;
   }
 
   @override
-  (int, Color) get(ByteData data, ByteOffset o) {
-    // safeguard to save color meta information.
-    // first 10 bits: color index
-    // next 3 bits: color space
-    final colorHeader = data.getUint16(o.displace(2));
-
-    final index = colorHeader & 0x3FF;
-    // ignore: unused_local_variable
-    final colorSpace = (colorHeader >> 10) & 0x7;
-
-    return (index, _SRGBColorPayloadType.instance.get(data, o));
-  }
-
-  @override
-  void set((int, Color) value, ByteData data, ByteOffset o) {
-    final index = value.$1.clamp(0, 1023);
+  void set(Color value, ByteData data, ByteOffset o) {
+    
     // only support srgb for now
-    const colorsScape = 0;
-    final colorHeader = (index & 0x3FF) | ((colorsScape & 0x07) << 10);
+    const colorSpace = 0;
+    const colorHeader = colorSpace;
 
-    data.setUint16(o.displace(2), colorHeader);
-    _SRGBColorPayloadType.instance.set(value.$2, data, o);
+    data.setUint8(o.displace(1), colorHeader);
+    _SRGBColorPayloadType.instance.set(value, data, o);
   }
 }
 
