@@ -416,7 +416,7 @@ extension on UniformsSetter {
     );
   }
 
-  void setColorWide(Color color) {
+  void setColor(Color color) {
     final multiplier = color.opacity;
 
     setFloat(color.red / 255 * multiplier);
@@ -427,7 +427,7 @@ extension on UniformsSetter {
 
   void setColorsWide(List<Color> colors) {
     for (final color in colors) {
-      setColorWide(color);
+      setColor(color);
     }
   }
 }
