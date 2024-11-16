@@ -47,7 +47,7 @@ class OMeshRectPayloadType extends OMeshPayloadType<OMeshRect> {
           previousValue + OVertexPayloadType.instance.length(element),
     );
     final colorsLength =
-        ColorListPayloadType(value.height * value.height).length(value.colors);
+        ColorListPayloadType(value.width * value.height).length(value.colors);
 
     final metadataLength = _OMeshRectMetadataPayloadType.instance.length(
       (

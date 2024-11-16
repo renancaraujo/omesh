@@ -8,7 +8,7 @@ import 'package:mesh/src/hash/binary_payload/omesh_binary_format_payload.dart'
 export 'package:mesh/src/hash/binary_payload/omesh_binary_format_payload.dart'
     show MeshType, OMeshBinaryFormat, OMeshBinaryFormatPayloadType;
 
-class OMeshBinaryFormatCodec extends Codec<List<OMeshRect>, Uint8List> {
+class OMeshBinaryFormatCodec extends Codec<OMeshRect, Uint8List> {
   const OMeshBinaryFormatCodec._({
     required this.specVersion,
   });
@@ -20,26 +20,26 @@ class OMeshBinaryFormatCodec extends Codec<List<OMeshRect>, Uint8List> {
   final int specVersion;
 
   @override
-  Converter<Uint8List, List<OMeshRect>> get decoder =>
+  Converter<Uint8List, OMeshRect> get decoder =>
       _OMeshBinaryFormatDecoder();
 
   @override
-  Converter<List<OMeshRect>, Uint8List> get encoder =>
+  Converter<OMeshRect, Uint8List> get encoder =>
       _OMeshBinaryFormatEncoder(
         specVersion: specVersion,
       );
 }
 
-class _OMeshBinaryFormatDecoder extends Converter<Uint8List, List<OMeshRect>> {
+class _OMeshBinaryFormatDecoder extends Converter<Uint8List, OMeshRect> {
   @override
-  List<OMeshRect> convert(Uint8List input) {
+  OMeshRect convert(Uint8List input) {
     final reader = Payload.read(input);
     final format = reader.get(OMeshBinaryFormatPayloadType.instance);
-    return format.layers.map((e) => e.$2).toList();
+    return format.mesh;
   }
 }
 
-class _OMeshBinaryFormatEncoder extends Converter<List<OMeshRect>, Uint8List> {
+class _OMeshBinaryFormatEncoder extends Converter<OMeshRect, Uint8List> {
   _OMeshBinaryFormatEncoder({
     required this.specVersion,
   });
@@ -47,11 +47,10 @@ class _OMeshBinaryFormatEncoder extends Converter<List<OMeshRect>, Uint8List> {
   final int specVersion;
 
   @override
-  Uint8List convert(List<OMeshRect> input) {
+  Uint8List convert(OMeshRect input) {
     final format = (
       specVersion: specVersion,
-      layerCount: input.length,
-      layers: input.map((e) => (MeshType.rect, e)).toList(),
+      mesh: input,
     );
 
     final writer = Payload.write()

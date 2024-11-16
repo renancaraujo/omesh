@@ -16,6 +16,7 @@ environment:
 
 dependencies:
   archive: ^3.6.1
+  base_x: ^2.0.1
   binarize: ^1.5.0
   cached_value: ^1.0.0
   flutter:
