@@ -268,10 +268,10 @@ class ExampleView extends StatelessWidget {
                       ),
                       onPress: () async {
                         await launchUrl(
-                          Uri.parse('https://github.com/renancaraujo/omesh'),
+                          Uri.parse('https://omesh-playground.renan.gg/'),
                         );
                       },
-                      child: const StyledText('Open editor'),
+                      child: const StyledText('Open playground'),
                     ),
                   ),
                 ],
