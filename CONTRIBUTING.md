@@ -128,7 +128,7 @@ mark (e.g. `feat!: Remove the position argument from PositionComponent`).
 
 Examples of PR titles:
 
-- feat: Maake mesh gradeints great again
+- feat: Maake mesh gradients great again
 - fix(#123): Fix this bug on the issue # 123
 - docs: Make documentation decent
 - test: Add some tests to that feature

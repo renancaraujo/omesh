@@ -251,6 +251,29 @@ class ExampleView extends StatelessWidget {
                       child: const StyledText('Open in Github'),
                     ),
                   ),
+                  const SizedBox(width: 10),
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: PressableBox(
+                      style: Style(
+                        $box.padding(20, 10, 0),
+                        $text.style(
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w300,
+                        ),
+                        $on.hover(
+                          $text.style.color.white(),
+                        ),
+                      ),
+                      onPress: () async {
+                        await launchUrl(
+                          Uri.parse('https://github.com/renancaraujo/omesh'),
+                        );
+                      },
+                      child: const StyledText('Open editor'),
+                    ),
+                  ),
                 ],
               ),
               Box(
