@@ -1,72 +1,13 @@
 import 'dart:ui';
 
 import 'package:cached_value/cached_value.dart';
-import 'package:flutter/foundation.dart';
 
 import 'package:flutter/rendering.dart'
-    show BlendMode, Canvas, Color, Matrix4, Paint, Rect;
+    show BlendMode, Canvas, Color, Paint, Rect;
 
 import 'package:flutter_shaders/flutter_shaders.dart';
 import 'package:mesh/internal_stuff.dart';
 import 'package:mesh/mesh.dart';
-
-/// Global flag that defines if O'Mesh will try to be compatible with
-/// the Impeller rendering engine.
-///
-/// True by default.
-///
-/// Set to false if you are opting out of impeller completely.
-///
-/// See also:
-/// - [enableOMeshImpellerCompatibilityOnAndroid] to enable on Android if
-/// ou are opting in on Impeller on Android.
-bool enableOMeshImpellerCompatibility = true;
-
-/// When [enableOMeshImpellerCompatibility] is true, this flag will enable
-/// Impeller compatibility on macOS.
-///
-/// False by default.
-///
-/// Set to true if you are opting in on Impeller on macOS.
-bool enableOMeshImpellerCompatibilityOnMacOS = false;
-
-/// When [enableOMeshImpellerCompatibility] is true, this flag will enable
-/// Impeller compatibility on Android.
-///
-/// False by default.
-///
-/// Set to true if you are opting in on Impeller on Android.
-bool enableOMeshImpellerCompatibilityOnAndroid = false;
-
-// Check if the current graphic backend is impeller
-bool get _enableImpellerCompatibility {
-  // disable checks if the feature is disabled
-  if (!enableOMeshImpellerCompatibility) {
-    return false;
-  }
-
-  // Impeller is not supported on web
-  if (kIsWeb) {
-    return false;
-  }
-
-  // Impeller on iOS is always supported
-  if (defaultTargetPlatform == TargetPlatform.iOS) {
-    return true;
-  }
-
-  // Impeller on macOS is only supported if the feature is enabled
-  if (defaultTargetPlatform == TargetPlatform.macOS) {
-    return enableOMeshImpellerCompatibilityOnMacOS;
-  }
-
-  //  Impeller on android is only supported if the feature is enabled
-  if (defaultTargetPlatform == TargetPlatform.android) {
-    return enableOMeshImpellerCompatibilityOnAndroid;
-  }
-
-  return false;
-}
 
 /// A class that draws a [OMeshRect] into a [Canvas].
 ///
@@ -258,16 +199,14 @@ class OMeshRectPaint {
         biases[index10], biases[index11], //
       ];
 
-      final gradeintPaint = _enableImpellerCompatibility
-          ? _getPrerenderedPaint(rect)
-          : _getShaderPaint(
-              patchIndex: patchIndex,
-              textureTopLeft: textureVertices[index00],
-              textureBottomRight: textureVertices[index11],
-              patchColors: patchColors,
-              patchBiases: patchBiases,
-              rect: rect,
-            );
+      final gradientPaint = _getShaderPaint(
+        patchIndex: patchIndex,
+        textureTopLeft: textureVertices[index00],
+        textureBottomRight: textureVertices[index11],
+        patchColors: patchColors,
+        patchBiases: patchBiases,
+        rect: rect,
+      );
 
       final vertices =
           _tessellatedMeshCache.value.getTessellatedVerticesForPatch(
@@ -283,7 +222,7 @@ class OMeshRectPaint {
       canvas.drawVertices(
         vertices,
         BlendMode.srcOver,
-        gradeintPaint,
+        gradientPaint,
       );
     }
     canvas.restore();
@@ -318,79 +257,6 @@ class OMeshRectPaint {
             ),
         ));
   }
-
-  // Impeller is quite unstable when rendering fragment shaders with the
-  // vertices API.
-  // To work around this, we prerender the gradient into an image, call
-  // toImageSync
-  // and return a paint with a ImageShader instead of a fragment shader.
-  Paint _getPrerenderedPaint(Rect rect) {
-    _rect = rect;
-    final image = _impellerColorCache.value;
-    return Paint()
-      ..shader = ImageShader(
-        image,
-        TileMode.decal,
-        TileMode.decal,
-        Matrix4.identity().storage,
-      );
-  }
-
-  late Rect _rect;
-  late final _impellerColorCache = CachedValue<Image>(() {
-    final patches = _patchesCache.value;
-    final textureVertices = _textureVerticesCache.value;
-    final vertexColors = _inferredColorsCache.value;
-
-    final recorder = PictureRecorder();
-    final canvas = Canvas(recorder);
-
-    for (final tuple in patches.indexed) {
-      final (patchIndex, [index00, index01, index10, index11]) = tuple;
-
-      final (colors, biases) = vertexColors;
-      final patchColors = [
-        colors[index00], colors[index01], //
-        colors[index10], colors[index11], //
-      ];
-      final patchBiases = [
-        biases[index00], biases[index01], //
-        biases[index10], biases[index11], //
-      ];
-
-      final textureTopLeft = textureVertices[index00];
-      final textureBottomRight = textureVertices[index11];
-
-      final paintShader = _getShaderPaint(
-        patchIndex: patchIndex,
-        textureTopLeft: textureTopLeft,
-        textureBottomRight: textureBottomRight,
-        patchColors: patchColors,
-        patchBiases: patchBiases,
-        rect: _rect,
-      );
-
-      canvas.drawRect(
-        _rect,
-        paintShader
-          ..isAntiAlias = false
-          ..filterQuality = FilterQuality.high,
-      );
-    }
-
-    final picture = recorder.endRecording();
-    return picture.toImageSync(
-      _rect.size.width.round(),
-      _rect.size.height.round(),
-    );
-  })
-      .withDependency(() => _rect)
-      .withDependency(() => debugMode)
-      .withDependency(() => meshRect.fallbackColor)
-      .withDependency(() => meshRect.colors)
-      .withDependency(() => meshRect.smoothColors)
-      .withDependency(() => meshRect.colorSpace)
-      .withDependency(() => (meshRect.width, meshRect.height));
 }
 
 extension on (int, int) {
