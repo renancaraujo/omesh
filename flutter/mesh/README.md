@@ -389,31 +389,7 @@ class _MyWidgetState extends State<MyWidget> with SingleTickerProviderStateMixin
 O'Mesh has had issues when running on the [Impeller Rendering Engine](https://docs.flutter.dev/perf/impeller) in previous versions.
 These issues were caused by some instability on Impeller, specifically in the Vertices API, which O'Mesh uses in a unique way.
 
-These issues are fixed in the latest version of O'Mesh, but if you are Opting in or out of impeller for any of the platforms, you need to consider the following:
-
-### Impeller on iOS
-
-Impeller is [enabled by default when running Flutter on iOS](https://docs.flutter.dev/perf/impeller#ios). **If you are opting out of it**, add the following before your `runApp` call:
-
-```dart
-enableOMeshImpellerCompatibility = false;
-```
-
-### Impeller on macOS
-
-Impeller is [not enabled by default on macOS](https://docs.flutter.dev/perf/impeller#macos), **If you are opting into it**, make sure you enabled the following flag before your `runApp` call:
-
-```dart
-enableOMeshImpellerCompatibilityOnMacOS = true;
-```
-
-### Impeller on Android
-
-Impeller is [not enabled by default on Android](https://docs.flutter.dev/perf/impeller#android). **If you are opting into it**, make sure you enabled the following flag before your `runApp` call:
-
-```dart
-enableOMeshImpellerCompatibilityOnAndroid = true;
-```
+Since Flutter 3.24.3, these issues are fixed 🎉
 
 ## Troubleshooting
 
