@@ -9,8 +9,6 @@ import 'package:flutter_shaders/flutter_shaders.dart';
 import 'package:mesh/internal_stuff.dart';
 import 'package:mesh/mesh.dart';
 
-
-
 /// Global flag that defines if O'Mesh will try to be compatible with
 /// the Impeller rendering engine.
 @Deprecated('Impeller compatibility modes are not necessary anymore.'
