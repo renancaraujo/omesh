@@ -30,7 +30,7 @@ Designing with code is fun, but with a design tool everything gets easier.
 
 Try the [O'Mesh Flutter playground](https://omesh-playground.renan.gg) and generate flutter code from designs.
 
-<img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/playground.jpeg" width="500">
+<img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/playground.png" width="500">
 
 ## Documentation and resources 📚
 
