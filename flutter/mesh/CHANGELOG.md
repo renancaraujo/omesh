@@ -1,3 +1,8 @@
+# v0.4.2
+
+- feat: deprecate impeller compatibilty mode [#22](https://github.com/renancaraujo/omesh/pull/22)
+- feat: remove impeller compatibility mode [#21](https://github.com/renancaraujo/omesh/pull/21)
+
 # v0.4.1
 
 - feat: add macos impeller flag [#17](https://github.com/renancaraujo/omesh/pull/17)
