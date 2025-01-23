@@ -4,6 +4,7 @@ import 'package:example/examples/advanced.dart';
 import 'package:example/examples/basic.dart';
 import 'package:example/examples/custom_animation.dart';
 import 'package:example/examples/instrinsic_animation.dart';
+import 'package:example/examples/masking.dart';
 import 'package:flutter/material.dart';
 import 'package:mix/mix.dart';
 import 'package:syntax_highlight/syntax_highlight.dart';
@@ -44,6 +45,12 @@ More advanced example with different colors in each vertex, bezier vertices and 
     description: '''
 An example to illustrate animation from an animation controller.''',
     code: CustomAnimation.code,
+  ),
+  masking(
+    view: MaskingUsage(),
+    title: 'Masking Usage',
+    description: 'A simple example how to apply WidgetMask to OMeshGradient',
+    code: MaskingUsage.code,
   ),
   ;
 
@@ -96,7 +103,7 @@ class _MainState extends State<Main> {
                 style: Style(
                   $box.alignment.center(),
                   $box.width(145),
-                  $box.maxHeight(150),
+                  $box.maxHeight(180),
                   $box.borderRadius.topRight(16),
                   $box.borderRadius.bottomRight(16),
                   $box.padding(8),
