@@ -13,5 +13,6 @@ dependencies:
   mix: ^1.4.4
   syntax_highlight: ^0.4.0
   url_launcher: ^6.3.0
+  widget_mask: ^1.0.0+0
 
 flutter:
