@@ -44,8 +44,6 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          cache: true
-          cache-key: flutter-:os:-:channel:-:version:-:arch:-:hash:-${{ hashFiles('**/pubspec.lock') }}
       - name: formatting
         run: dart format --set-exit-if-changed lib test
       - name: analyze
