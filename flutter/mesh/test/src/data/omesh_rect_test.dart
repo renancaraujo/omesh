@@ -17,13 +17,17 @@ void main() {
             OVertex(1, 1),
           ],
           colors: const [
-            Color(0xFF000000),
-            Color(0xFF000000),
-            Color(0xFF000000),
-            Color(0xFF000000),
+            // Converted from Color(0xFF000000)
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
           ],
-          fallbackColor: const Color(0xFF0000FF),
-          backgroundColor: const Color(0xFF00FF00),
+          // Converted from Color(0xFF0000FF)
+          fallbackColor: const Color.from(alpha: 1, red: 0, green: 0, blue: 1),
+          // Converted from Color(0xFF00FF00)
+          backgroundColor:
+              const Color.from(alpha: 1, red: 0, green: 1, blue: 0),
           colorSpace: OMeshColorSpace.xyY,
           smoothColors: false,
         );
@@ -37,13 +41,19 @@ void main() {
           OVertex(1, 1),
         ]);
         expect(mesh.colors, const [
-          Color(0xFF000000),
-          Color(0xFF000000),
-          Color(0xFF000000),
-          Color(0xFF000000),
+          Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+          Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+          Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+          Color.from(alpha: 1, red: 0, green: 0, blue: 0),
         ]);
-        expect(mesh.fallbackColor, const Color(0xFF0000FF));
-        expect(mesh.backgroundColor, const Color(0xFF00FF00));
+        expect(
+          mesh.fallbackColor,
+          const Color.from(alpha: 1, red: 0, green: 0, blue: 1),
+        );
+        expect(
+          mesh.backgroundColor,
+          const Color.from(alpha: 1, red: 0, green: 1, blue: 0),
+        );
         expect(mesh.colorSpace, OMeshColorSpace.xyY);
         expect(mesh.smoothColors, false);
       });
@@ -59,13 +69,17 @@ void main() {
             OVertex(1, 1),
           ],
           colors: const [
-            Color(0xFF000000),
-            Color(0xFF000000),
-            Color(0xFF000000),
-            Color(0xFF000000),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
           ],
         );
-        expect(mesh.fallbackColor, const Color(0x00000000));
+        // Converted from Color(0x00000000)
+        expect(
+          mesh.fallbackColor,
+          const Color.from(alpha: 0, red: 0, green: 0, blue: 0),
+        );
         expect(mesh.backgroundColor, null);
         expect(mesh.colorSpace, OMeshColorSpace.lab);
         expect(mesh.smoothColors, true);
@@ -83,13 +97,13 @@ void main() {
           OVertex(1, 1),
         ],
         colors: const [
-          Color(0xFF000000),
-          Color(0xFF000000),
-          Color(0xFF000000),
-          Color(0xFF000000),
+          Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+          Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+          Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+          Color.from(alpha: 1, red: 0, green: 0, blue: 0),
         ],
-        fallbackColor: const Color(0xFF0000FF),
-        backgroundColor: const Color(0xFF00FF00),
+        fallbackColor: const Color.from(alpha: 1, red: 0, green: 0, blue: 1),
+        backgroundColor: const Color.from(alpha: 1, red: 0, green: 1, blue: 0),
         colorSpace: OMeshColorSpace.xyY,
         smoothColors: false,
       );
@@ -105,13 +119,14 @@ void main() {
             OVertex(1, 1),
           ],
           colors: const [
-            Color(0xFF000000),
-            Color(0xFF000000),
-            Color(0xFF000000),
-            Color(0xFF000000),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
           ],
-          fallbackColor: const Color(0xFF0000FF),
-          backgroundColor: const Color(0xFF00FF00),
+          fallbackColor: const Color.from(alpha: 1, red: 0, green: 0, blue: 1),
+          backgroundColor:
+              const Color.from(alpha: 1, red: 0, green: 1, blue: 0),
           colorSpace: OMeshColorSpace.xyY,
           smoothColors: false,
         );
@@ -130,14 +145,16 @@ void main() {
             OVertex(1, 1),
           ],
           colors: const [
-            Color(0xFF000000),
-            Color(0xFF000000),
-            Color(0xFF000000),
-            Color(0xFF000000),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
           ],
-          fallbackColor: const Color(0xFF0000FF),
-          backgroundColor: const Color(0xFF00FF00),
+          fallbackColor: const Color.from(alpha: 1, red: 0, green: 0, blue: 1),
+          backgroundColor:
+              const Color.from(alpha: 1, red: 0, green: 1, blue: 0),
           colorSpace: OMeshColorSpace.xyY,
+          // smoothColors not provided defaults to true in this case.
         );
 
         expect(mesh == mesh2, false);
@@ -155,13 +172,13 @@ void main() {
           OVertex(1, 1),
         ],
         colors: const [
-          Color(0xFF000000),
-          Color(0xFF000000),
-          Color(0xFF000000),
-          Color(0xFF000000),
+          Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+          Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+          Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+          Color.from(alpha: 1, red: 0, green: 0, blue: 0),
         ],
-        fallbackColor: const Color(0xFF0000FF),
-        backgroundColor: const Color(0xFF00FF00),
+        fallbackColor: const Color.from(alpha: 1, red: 0, green: 0, blue: 1),
+        backgroundColor: const Color.from(alpha: 1, red: 0, green: 1, blue: 0),
         colorSpace: OMeshColorSpace.xyY,
         smoothColors: false,
       );
@@ -177,13 +194,14 @@ void main() {
             OVertex(2, 2),
           ],
           colors: const [
-            Color(0xFFFFFFFF),
-            Color(0xFFFFFFFF),
-            Color(0xFFFFFFFF),
-            Color(0xFFFFFFFF),
+            Color.from(alpha: 1, red: 1, green: 1, blue: 1),
+            Color.from(alpha: 1, red: 1, green: 1, blue: 1),
+            Color.from(alpha: 1, red: 1, green: 1, blue: 1),
+            Color.from(alpha: 1, red: 1, green: 1, blue: 1),
           ],
-          fallbackColor: const Color(0xFFFFFFFF),
-          backgroundColor: const Color(0xFFFFFF00),
+          fallbackColor: const Color.from(alpha: 1, red: 1, green: 1, blue: 1),
+          backgroundColor:
+              const Color.from(alpha: 1, red: 1, green: 1, blue: 0),
           colorSpace: OMeshColorSpace.xyY,
           smoothColors: false,
         );
@@ -199,13 +217,22 @@ void main() {
           OVertex(1.5, 1.5),
         ]);
         expect(lerp.colors, const [
-          Color(0xff7f7f7f),
-          Color(0xff7f7f7f),
-          Color(0xff7f7f7f),
-          Color(0xff7f7f7f),
+          // Converted from Color(0xff7f7f7f)
+          Color.from(alpha: 1, red: 0.5, green: 0.5, blue: 0.5),
+          Color.from(alpha: 1, red: 0.5, green: 0.5, blue: 0.5),
+          Color.from(alpha: 1, red: 0.5, green: 0.5, blue: 0.5),
+          Color.from(alpha: 1, red: 0.5, green: 0.5, blue: 0.5),
         ]);
-        expect(lerp.fallbackColor, const Color(0xff7f7fff));
-        expect(lerp.backgroundColor, const Color(0xff7fff00));
+        // Converted from Color(0xff7f7fff)
+        expect(
+          lerp.fallbackColor,
+          const Color.from(alpha: 1, red: 0.5, green: 0.5, blue: 1),
+        );
+        // Converted from Color(0xff7fff00)
+        expect(
+          lerp.backgroundColor,
+          const Color.from(alpha: 1, red: 0.5, green: 1, blue: 0),
+        );
         expect(lerp.colorSpace, OMeshColorSpace.xyY);
         expect(lerp.smoothColors, false);
       });
@@ -223,10 +250,10 @@ void main() {
             OVertex(1, 1),
           ],
           colors: const [
-            Color(0xFF000000),
-            Color(0xFF000000),
-            Color(0xFF000000),
-            Color(0xFF000000),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
           ],
         );
 
@@ -256,10 +283,10 @@ void main() {
             OVertex(1, 1),
           ],
           colors: const [
-            Color(0xFF000000),
-            Color(0xFF000000),
-            Color(0xFF000000),
-            Color(0xFF000000),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
           ],
         );
 
@@ -284,17 +311,22 @@ void main() {
             OVertex(1, 1),
           ],
           colors: const [
-            Color(0xFF000000),
-            Color(0xFF000000),
-            Color(0xFF000000),
-            Color(0xFF000000),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
           ],
-          fallbackColor: const Color(0xFF0000FF),
+          fallbackColor: const Color.from(alpha: 1, red: 0, green: 0, blue: 1),
         );
 
-        final changed = mesh.setFallbackColor(const Color(0xFFFFFFFF));
+        final changed = mesh.setFallbackColor(
+          const Color.from(alpha: 1, red: 1, green: 1, blue: 1),
+        );
 
-        expect(changed.fallbackColor, const Color(0xFFFFFFFF));
+        expect(
+          changed.fallbackColor,
+          const Color.from(alpha: 1, red: 1, green: 1, blue: 1),
+        );
       });
 
       test('setBackgroundColor', () {
@@ -308,17 +340,23 @@ void main() {
             OVertex(1, 1),
           ],
           colors: const [
-            Color(0xFF000000),
-            Color(0xFF000000),
-            Color(0xFF000000),
-            Color(0xFF000000),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
           ],
-          backgroundColor: const Color(0xFF00FF00),
+          backgroundColor:
+              const Color.from(alpha: 1, red: 0, green: 1, blue: 0),
         );
 
-        final changed = mesh.setBackgroundColor(const Color(0xFFFFFFFF));
+        final changed = mesh.setBackgroundColor(
+          const Color.from(alpha: 1, red: 1, green: 1, blue: 1),
+        );
 
-        expect(changed.backgroundColor, const Color(0xFFFFFFFF));
+        expect(
+          changed.backgroundColor,
+          const Color.from(alpha: 1, red: 1, green: 1, blue: 1),
+        );
       });
 
       test('setColors', () {
@@ -332,29 +370,30 @@ void main() {
             OVertex(1, 1),
           ],
           colors: const [
-            Color(0xFF000000),
-            Color(0xFF000000),
-            Color(0xFF000000),
-            Color(0xFF000000),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
           ],
-          fallbackColor: const Color(0xFF0000FF),
-          backgroundColor: const Color(0xFF00FF00),
+          fallbackColor: const Color.from(alpha: 1, red: 0, green: 0, blue: 1),
+          backgroundColor:
+              const Color.from(alpha: 1, red: 0, green: 1, blue: 0),
           colorSpace: OMeshColorSpace.xyY,
           smoothColors: false,
         );
 
         final changed = mesh.setColors([
-          const Color(0xFFFFFFFF),
-          const Color(0xFFFFFFFF),
-          const Color(0xFFFFFFFF),
-          const Color(0xFFFFFFFF),
+          const Color.from(alpha: 1, red: 1, green: 1, blue: 1),
+          const Color.from(alpha: 1, red: 1, green: 1, blue: 1),
+          const Color.from(alpha: 1, red: 1, green: 1, blue: 1),
+          const Color.from(alpha: 1, red: 1, green: 1, blue: 1),
         ]);
 
         expect(changed.colors, const [
-          Color(0xFFFFFFFF),
-          Color(0xFFFFFFFF),
-          Color(0xFFFFFFFF),
-          Color(0xFFFFFFFF),
+          Color.from(alpha: 1, red: 1, green: 1, blue: 1),
+          Color.from(alpha: 1, red: 1, green: 1, blue: 1),
+          Color.from(alpha: 1, red: 1, green: 1, blue: 1),
+          Color.from(alpha: 1, red: 1, green: 1, blue: 1),
         ]);
       });
 
@@ -369,24 +408,28 @@ void main() {
             OVertex(1, 1),
           ],
           colors: const [
-            Color(0xFF000000),
-            Color(0xFF000000),
-            Color(0xFF000000),
-            Color(0xFF000000),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
           ],
-          fallbackColor: const Color(0xFF0000FF),
-          backgroundColor: const Color(0xFF00FF00),
+          fallbackColor: const Color.from(alpha: 1, red: 0, green: 0, blue: 1),
+          backgroundColor:
+              const Color.from(alpha: 1, red: 0, green: 1, blue: 0),
           colorSpace: OMeshColorSpace.xyY,
           smoothColors: false,
         );
 
-        final changed = mesh.setColor(const Color(0xFFFFFFFF), onIndex: 0);
+        final changed = mesh.setColor(
+          const Color.from(alpha: 1, red: 1, green: 1, blue: 1),
+          onIndex: 0,
+        );
 
         expect(changed.colors, const [
-          Color(0xFFFFFFFF),
-          Color(0xFF000000),
-          Color(0xFF000000),
-          Color(0xFF000000),
+          Color.from(alpha: 1, red: 1, green: 1, blue: 1),
+          Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+          Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+          Color.from(alpha: 1, red: 0, green: 0, blue: 0),
         ]);
       });
 
@@ -401,10 +444,10 @@ void main() {
             OVertex(1, 1),
           ],
           colors: const [
-            Color(0xFF000000),
-            Color(0xFF000000),
-            Color(0xFF000000),
-            Color(0xFF000000),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
           ],
           colorSpace: OMeshColorSpace.xyY,
         );
@@ -425,10 +468,10 @@ void main() {
             OVertex(1, 1),
           ],
           colors: const [
-            Color(0xFF000000),
-            Color(0xFF000000),
-            Color(0xFF000000),
-            Color(0xFF000000),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
+            Color.from(alpha: 1, red: 0, green: 0, blue: 0),
           ],
           smoothColors: false,
         );

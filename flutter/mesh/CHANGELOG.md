@@ -1,3 +1,7 @@
+# v0.4.3
+
+- feat: support wide gamut colors [#25](https://github.com/renancaraujo/omesh/pull/25)
+
 # v0.4.2
 
 - feat: deprecate impeller compatibility mode [#22](https://github.com/renancaraujo/omesh/pull/22)
