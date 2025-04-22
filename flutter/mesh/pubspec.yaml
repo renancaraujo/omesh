@@ -11,8 +11,8 @@ screenshots:
     path: doc/assets/preview.png
 
 environment:
-  sdk: ">=3.4.0 <4.0.0"
-  flutter: ">=3.22.0"
+  sdk: ">=3.6.0 <4.0.0"
+  flutter: ">=3.27.0"
 
 dependencies:
   cached_value: ^1.0.0

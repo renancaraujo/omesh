@@ -5,15 +5,10 @@ concurrency:
   cancel-in-progress: true
 
 on:
-  pull_request:
-    paths:
-      - ".github/workflows/omesh_flutter.yaml"
-      - "flutter/mesh/lib/**"
-      - "flutter/mesh/test/**"
-      - "flutter/mesh/pubspec.yaml"
-  push:
+   pull_request:
+    types: [ opened, synchronize, reopened, ready_for_review, converted_to_draft ]
     branches:
-      - main
+      - "*"
     paths:
       - ".github/workflows/omesh_flutter.yaml"
       - "flutter/mesh/lib/**"
@@ -46,12 +41,12 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
       - name: setup flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          cache: true
-          cache-key: flutter-:os:-:channel:-:version:-:arch:-:hash:-${{ hashFiles('**/pubspec.lock') }}
       - name: formatting
         run: dart format --set-exit-if-changed lib test
       - name: analyze

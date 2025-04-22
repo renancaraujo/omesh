@@ -12,12 +12,17 @@ extension type OMeshRectColorMixer(OMeshRect mesh) {
       return b;
     }
 
-    final alpha = (a.alpha + (b.alpha - a.alpha) * t).round();
-    final red = (a.red + (b.red - a.red) * t).round();
-    final green = (a.green + (b.green - a.green) * t).round();
-    final blue = (a.blue + (b.blue - a.blue) * t).round();
+    final alpha = a.a + (b.a - a.a) * t;
+    final red = a.r + (b.r - a.r) * t;
+    final green = a.g + (b.g - a.g) * t;
+    final blue = a.b + (b.b - a.b) * t;
 
-    return Color.fromARGB(alpha, red, green, blue);
+    return Color.from(
+      alpha: alpha,
+      red: red,
+      green: green,
+      blue: blue,
+    );
   }
 
   Color get _fb => mesh.fallbackColor;

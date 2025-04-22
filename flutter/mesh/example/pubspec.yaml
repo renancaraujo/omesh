@@ -3,7 +3,7 @@ description: "O'Mesh Examples App - Showcaseing usage example on flutter"
 publish_to: 'none'
 version: 0.0.0+1
 environment:
-  sdk: '>=3.3.0 <4.0.0'
+  sdk: '>=3.6.0 <4.0.0'
 
 dependencies:
   flutter:
@@ -16,3 +16,4 @@ dependencies:
   widget_mask: ^1.0.0+0
 
 flutter:
+  uses-material-design: false

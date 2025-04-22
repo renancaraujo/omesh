@@ -108,7 +108,7 @@ class _MainState extends State<Main> {
                   $box.borderRadius.bottomRight(16),
                   $box.padding(8),
                   $box.border(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withAlpha((255 * 0.2).floor()),
                     width: 1,
                     style: BorderStyle.solid,
                     strokeAlign: 2,
@@ -182,7 +182,9 @@ class ExampleButton extends StatelessWidget {
           $box.borderRadius.all(12),
           $with.scale(1),
           $box.color(
-            selected ? Colors.white.withOpacity(0.1) : Colors.transparent,
+            selected
+                ? Colors.white.withAlpha((255 * 0.1).floor())
+                : Colors.transparent,
           ),
           $on.hover(
             $box.color.white.withOpacity(0.4),
@@ -228,7 +230,7 @@ class ExampleView extends StatelessWidget {
                     style: Style(
                       $box.padding(20, 10, 0),
                       $text.style(
-                        color: Colors.white.withOpacity(0.7),
+                        color: Colors.white.withAlpha((255 * 0.7).floor()),
                         fontSize: 16,
                         fontWeight: FontWeight.w300,
                       ),
@@ -242,7 +244,7 @@ class ExampleView extends StatelessWidget {
                       style: Style(
                         $box.padding(20, 10, 0),
                         $text.style(
-                          color: Colors.white.withOpacity(0.7),
+                          color: Colors.white.withAlpha((255 * 0.7).floor()),
                           fontSize: 16,
                           fontWeight: FontWeight.w300,
                         ),
@@ -265,7 +267,7 @@ class ExampleView extends StatelessWidget {
                       style: Style(
                         $box.padding(20, 10, 0),
                         $text.style(
-                          color: Colors.white.withOpacity(0.7),
+                          color: Colors.white.withAlpha((255 * 0.7).floor()),
                           fontSize: 16,
                           fontWeight: FontWeight.w300,
                         ),
@@ -299,7 +301,7 @@ class ExampleView extends StatelessWidget {
                   $box.borderRadius.all(12),
                   $box.clipBehavior.antiAlias(),
                   $box.border(
-                    color: Colors.white.withOpacity(0.6),
+                    color: Colors.white.withAlpha((255 * 0.6).floor()),
                     width: 1,
                     style: BorderStyle.solid,
                     strokeAlign: -1,
@@ -311,7 +313,7 @@ class ExampleView extends StatelessWidget {
                 style: Style(
                   $box.padding(20, 10, 0),
                   $text.style(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withAlpha((255 * 0.9).floor()),
                     fontSize: 16,
                     fontWeight: FontWeight.w300,
                   ),
@@ -323,7 +325,7 @@ class ExampleView extends StatelessWidget {
                   $box.margin(20, 0),
                   $box.padding(20, 10, 0),
                   $text.style(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withAlpha((255 * 0.9).floor()),
                     fontSize: 16,
                     fontWeight: FontWeight.w300,
                   ),
@@ -335,7 +337,7 @@ class ExampleView extends StatelessWidget {
                   $box.padding(32, 22),
                   $box.borderRadius.all(12),
                   $box.border(
-                    color: Colors.white.withOpacity(0.6),
+                    color: Colors.white.withAlpha((255 * 0.6).floor()),
                     width: 1,
                     style: BorderStyle.solid,
                     strokeAlign: -1,
