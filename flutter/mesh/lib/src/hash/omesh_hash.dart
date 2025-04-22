@@ -5,7 +5,7 @@ import 'package:mesh/mesh.dart';
 import 'package:mesh/src/hash/compression/zlib/zlib.dart' as zlib;
 import 'package:mesh/src/hash/omesh_codec.dart';
 
-const _kPrefix = 'O:';
+const _kPrefix = 'OM:';
 
 String getHashFromMesh(OMeshRect mesh) {
   final bytes = OMeshBinaryFormatCodec.v1.encoder.convert(mesh);
