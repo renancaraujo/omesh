@@ -6,12 +6,6 @@ concurrency:
 
 on:
   pull_request:
-    paths:
-      - ".github/workflows/omesh_flutter.yaml"
-      - "flutter/mesh/lib/**"
-      - "flutter/mesh/test/**"
-      - "flutter/mesh/pubspec.yaml"
-  push:
     branches:
       - main
     paths:
