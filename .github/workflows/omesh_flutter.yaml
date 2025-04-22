@@ -5,9 +5,10 @@ concurrency:
   cancel-in-progress: true
 
 on:
-  pull_request:
+   pull_request:
+    types: [ opened, synchronize, reopened, ready_for_review, converted_to_draft ]
     branches:
-      - main
+      - "*"
     paths:
       - ".github/workflows/omesh_flutter.yaml"
       - "flutter/mesh/lib/**"
@@ -40,6 +41,8 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
       - name: setup flutter
         uses: subosito/flutter-action@v2
         with:
