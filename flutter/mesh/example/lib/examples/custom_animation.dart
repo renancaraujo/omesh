@@ -74,19 +74,19 @@ class _MyWidgetState extends State<MyWidget> with SingleTickerProviderStateMixin
               colors: [
                 null, null, null, //
 
-                C.orange[500]
-                    ?.withOpacity(0.8)
+              C.orange[500]
+                    ?.withAlpha((255 * 0.8).floor())
                     .to(const Color.fromARGB(255, 10, 33, 122), dt),
                 C.orange[200]
-                    ?.withOpacity(0.8)
+                    ?.withAlpha((255 * 0.8).floor())
                     .to(const Color.fromARGB(252, 103, 48, 205), dt),
                 C.orange[400]
-                    ?.withOpacity(0.90)
+                    ?.withAlpha((255 * 0.9).floor())
                     .to(const Color.fromARGB(252, 103, 53, 128), dt), //
 
-                C.orange[900].to(const Color.fromARGB(225, 9, 20, 109), dt),
+                C.orange[900].to(const Color.fromARGB(224, 53, 53, 54), dt),
                 C.orange[800]
-                    ?.withOpacity(0.98)
+                    ?.withAlpha((255 * 0.98).floor())
                     .to(const Color.fromARGB(255, 103, 48, 205), dt),
                 C.orange[900].to(const Color.fromARGB(255, 83, 0, 124), dt), //
 
@@ -164,18 +164,18 @@ class _CustomAnimationState extends State<CustomAnimation>
                 null, null, null, //
 
                 C.orange[500]
-                    ?.withOpacity(0.8)
+                    ?.withAlpha((255 * 0.8).floor())
                     .to(const Color.fromARGB(255, 10, 33, 122), dt),
                 C.orange[200]
-                    ?.withOpacity(0.8)
+                    ?.withAlpha((255 * 0.8).floor())
                     .to(const Color.fromARGB(252, 103, 48, 205), dt),
                 C.orange[400]
-                    ?.withOpacity(0.90)
+                    ?.withAlpha((255 * 0.9).floor())
                     .to(const Color.fromARGB(252, 103, 53, 128), dt), //
 
                 C.orange[900].to(const Color.fromARGB(224, 53, 53, 54), dt),
                 C.orange[800]
-                    ?.withOpacity(0.98)
+                    ?.withAlpha((255 * 0.98).floor())
                     .to(const Color.fromARGB(255, 103, 48, 205), dt),
                 C.orange[900].to(const Color.fromARGB(255, 83, 0, 124), dt), //
 

@@ -301,12 +301,12 @@ extension on UniformsSetter {
   }
 
   void setColorWide(Color color) {
-    final multiplier = color.opacity;
+    final multiplier = color.a;
 
-    setFloat(color.red / 255 * multiplier);
-    setFloat(color.green / 255 * multiplier);
-    setFloat(color.blue / 255 * multiplier);
-    setFloat(color.opacity);
+    setFloat(color.r * multiplier);
+    setFloat(color.g * multiplier);
+    setFloat(color.b * multiplier);
+    setFloat(color.a);
   }
 
   void setColorsWide(List<Color> colors) {
