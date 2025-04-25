@@ -1,23 +1,23 @@
+import 'package:binarize/binarize.dart';
 import 'package:flutter/services.dart';
-import 'package:mesh/src/hash/binary_payload/omesh_payload_type.dart';
 
-class ColorListPayloadType extends OMeshPayloadType<List<Color?>> {
+class ColorListPayloadType extends PayloadType<List<Color?>> {
   const ColorListPayloadType(this.colorSlots);
 
   final int colorSlots;
 
   @override
-  List<Color?> get(ByteData data, ByteOffset o) {
-    final colorDictLength = data.getUint8(o.displace(1));
+  List<Color?> get(ByteReader reader, [Endian? endian]) {
+    final colorDictLength = reader.uint8();
     final colorDict = <Color?>[null];
     for (var i = 0; i < colorDictLength; i++) {
-      final color = ColorPayloadType.instance.get(data, o);
+      final color = ColorPayloadType.instance.get(reader, endian);
       colorDict.add(color);
     }
 
     final colors = List<Color?>.filled(colorSlots, null);
     for (var i = 0; i < colorSlots; i++) {
-      final colorIndex = data.getUint8(o.displace(1));
+      final colorIndex = reader.uint8();
       colors[i] = colorDict[colorIndex];
     }
 
@@ -25,27 +25,13 @@ class ColorListPayloadType extends OMeshPayloadType<List<Color?>> {
   }
 
   @override
-  int length(List<Color?> value) {
-    assert(value.length <= colorSlots, 'do not exceed color slots');
-    const colorDictLengthLength = 1;
-    final differentColors = value.whereNotNull().toSet();
-    final colorDictLength =
-        differentColors.fold<int>(0, (previousValue, element) {
-      final colorLength = ColorPayloadType.instance.length(element);
-      return previousValue + colorLength;
-    });
-    final colorLength = colorSlots;
-    return colorDictLengthLength + colorDictLength + colorLength;
-  }
-
-  @override
-  void set(List<Color?> value, ByteData data, ByteOffset o) {
+  void set(ByteWriter writer, List<Color?> value, [Endian? endian]) {
     assert(value.length <= colorSlots, 'do not exceed color slots');
 
     final differentColors = value.whereNotNull().toSet();
-    data.setUint8(o.displace(1), differentColors.length);
+    writer.uint8(differentColors.length);
     for (final color in differentColors) {
-      ColorPayloadType.instance.set(color, data, o);
+      ColorPayloadType.instance.set(writer, color, endian);
     }
 
     final colorDictAsMap = differentColors.indexed.fold<Map<Color, int>>(
@@ -58,81 +44,69 @@ class ColorListPayloadType extends OMeshPayloadType<List<Color?>> {
     for (var i = 0; i < colorSlots; i++) {
       final color = value[i];
       if (color == null) {
-        data.setUint8(o.displace(1), 0);
+        writer.uint8(0);
       } else {
         final index = colorDictAsMap[color]!;
-        data.setUint8(o.displace(1), index + 1);
+        writer.uint8(index + 1);
       }
     }
   }
 }
 
-class ColorPayloadType extends OMeshPayloadType<Color> {
+class ColorPayloadType extends PayloadType<Color> {
   const ColorPayloadType._();
 
   static const ColorPayloadType instance = ColorPayloadType._();
 
-
   @override
-  Color get(ByteData data, ByteOffset o) {
+  Color get(ByteReader reader, [Endian? endian]) {
     // safeguard to save color meta information.
     // first 3 bits: color space
-    final colorHeader = data.getUint8(o.displace(1));
+    final colorHeader = reader.uint8();
     // we read it but we are not prepared to use it yet.
     final colorSpace = colorHeader & 0x07;
 
-    if(colorSpace != 0) {
+    if (colorSpace != 0) {
       throw UnimplementedError('only srgb is supported for now');
     }
 
-    return _SRGBColorPayloadType.instance.get(data, o);
-  }
-
-
-  @override
-  int length(Color value) {
-    const headerLength = 1;
-    final colorLength = _SRGBColorPayloadType.instance.length(value);
-    return headerLength + colorLength;
+    return _SRGBColorPayloadType.instance.get(reader, endian);
   }
 
   @override
-  void set(Color value, ByteData data, ByteOffset o) {
-    
+  void set(ByteWriter writer, Color value, [Endian? endian]) {
     // only support srgb for now
     const colorSpace = 0;
     const colorHeader = colorSpace;
 
-    data.setUint8(o.displace(1), colorHeader);
-    _SRGBColorPayloadType.instance.set(value, data, o);
+    writer.uint8(colorHeader);
+
+    _SRGBColorPayloadType.instance.set(writer, value, endian);
   }
 }
 
-class _SRGBColorPayloadType extends OMeshPayloadType<Color> {
+class _SRGBColorPayloadType extends PayloadType<Color> {
   const _SRGBColorPayloadType._();
 
   static const _SRGBColorPayloadType instance = _SRGBColorPayloadType._();
 
   @override
-  int length(Color value) => 4;
-
-  @override
-  Color get(ByteData data, ByteOffset o) {
-    final r = data.getUint8(o.displace(1));
-    final g = data.getUint8(o.displace(1));
-    final b = data.getUint8(o.displace(1));
-    final a = data.getUint8(o.displace(1));
+  Color get(ByteReader reader, [Endian? endian]) {
+    final r = reader.uint8();
+    final g = reader.uint8();
+    final b = reader.uint8();
+    final a = reader.uint8();
 
     return Color.fromARGB(a, r, g, b);
   }
 
   @override
-  void set(Color value, ByteData data, ByteOffset o) {
-    data
-      ..setUint8(o.displace(1), value.red)
-      ..setUint8(o.displace(1), value.green)
-      ..setUint8(o.displace(1), value.blue)
-      ..setUint8(o.displace(1), value.alpha);
+  void set(ByteWriter writer, Color value, [Endian? endian]) {
+    writer
+      ..uint8(value.red)
+      ..uint8(value.green)
+      ..uint8(value.blue)
+      ..uint8(value.alpha);
   }
 }
 

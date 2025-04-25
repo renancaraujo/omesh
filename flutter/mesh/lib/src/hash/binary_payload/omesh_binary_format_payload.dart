@@ -1,6 +1,6 @@
-import 'package:binarize/binarize.dart' show ByteData, PayloadType;
+import 'package:binarize/binarize.dart'
+    show ByteReader, ByteWriter, Endian, PayloadType;
 import 'package:mesh/mesh.dart';
-import 'package:mesh/src/hash/binary_payload/omesh_payload_type.dart';
 import 'package:mesh/src/hash/binary_payload/omesh_rect_payload.dart';
 
 /// The whole information contained on a omesh binary file
@@ -18,12 +18,10 @@ class OMeshBinaryFormatPayloadType extends PayloadType<OMeshBinaryFormat> {
       OMeshBinaryFormatPayloadType._();
 
   @override
-  OMeshBinaryFormat get(ByteData data, int offset) {
-    final o = ByteOffset(offset);
+  OMeshBinaryFormat get(ByteReader reader, [Endian? endian]) {
+    final specVersion = reader.uint8();
 
-    final specVersion = data.getUint8(o.displace(1));
-
-    final mesh = OMeshRectPayloadType.instance.get(data, o);
+    final mesh = OMeshRectPayloadType.instance.get(reader, endian);
     return (
       specVersion: specVersion,
       mesh: mesh,
@@ -31,16 +29,8 @@ class OMeshBinaryFormatPayloadType extends PayloadType<OMeshBinaryFormat> {
   }
 
   @override
-  int length(OMeshBinaryFormat value) {
-    const metadataLength = 1;
-    final meshLength = OMeshRectPayloadType.instance.length(value.mesh);
-    return metadataLength + meshLength;
-  }
-
-  @override
-  void set(OMeshBinaryFormat value, ByteData data, int offset) {
-    final o = ByteOffset(offset);
-    data.setUint8(o.displace(1), value.specVersion);
-    OMeshRectPayloadType.instance.set(value.mesh, data, o);
+  void set(ByteWriter writer, OMeshBinaryFormat value, [Endian? endian]) {
+    writer.uint8(value.specVersion);
+    OMeshRectPayloadType.instance.set(writer, value.mesh, endian);
   }
 }

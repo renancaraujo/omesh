@@ -20,12 +20,10 @@ class OMeshBinaryFormatCodec extends Codec<OMeshRect, Uint8List> {
   final int specVersion;
 
   @override
-  Converter<Uint8List, OMeshRect> get decoder =>
-      _OMeshBinaryFormatDecoder();
+  Converter<Uint8List, OMeshRect> get decoder => _OMeshBinaryFormatDecoder();
 
   @override
-  Converter<OMeshRect, Uint8List> get encoder =>
-      _OMeshBinaryFormatEncoder(
+  Converter<OMeshRect, Uint8List> get encoder => _OMeshBinaryFormatEncoder(
         specVersion: specVersion,
       );
 }

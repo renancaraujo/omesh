@@ -7,6 +7,10 @@ import 'package:mesh/src/hash/omesh_codec.dart';
 
 const _kPrefix = 'OM:';
 
+/// A function that encodes a mesh gradient into a hash string.
+/// 
+/// Useful for sharing mesh gradients between different platforms, appllications
+///  and contexts without the need to share the entire mesh data.
 String getHashFromMesh(OMeshRect mesh) {
   final bytes = OMeshBinaryFormatCodec.v1.encoder.convert(mesh);
   final compressed = zlib.zlibCompress(Uint8List.fromList(bytes));
