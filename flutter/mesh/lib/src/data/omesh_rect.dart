@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:mesh/hash.dart';
 import 'package:mesh/mesh.dart';
 
 /// The maximum amount of vertices allowed along
@@ -41,6 +42,21 @@ class OMeshRect {
           colorSpace: colorSpace ?? OMeshColorSpace.lab,
           smoothColors: smoothColors ?? true,
         );
+
+
+
+  /// Creates a new [OMeshRect] from a hash string.
+  /// 
+  /// See also:
+  /// * [getHashFromMesh], to get the hash string from a mesh.
+  /// * [getMeshFromHash], to create a mesh from a hash.
+  /// * [getHash], to get the hash string from this mesh.
+  factory OMeshRect.fromHash({
+    required String hash,
+  }) {
+    final mesh = getMeshFromHash(hash);
+    return mesh;
+  }
 
   const OMeshRect._({
     required this.width,
@@ -182,6 +198,16 @@ class OMeshRect {
   /// Whether to interpolate colors smoothly. If false, colors will be
   /// interpolated in a linear fashion from the lines of the mesh.
   final bool smoothColors;
+
+  /// Returns a hash string that represents the mesh.
+  ///
+  ///
+  /// See also:
+  /// * [getMeshFromHash], to create a mesh from a hash.
+  /// * [OMeshRect.fromHash], to create a mesh from a hash.
+  String getHash() {
+    return getHashFromMesh(this);
+  }
 
   @override
   bool operator ==(Object other) {
