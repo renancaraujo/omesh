@@ -1,11 +1,11 @@
 # File spec for O'Mesh:
 
 - filespec version:1B
-- layers:R
+- mesh:R
 
-(R) Rectangular mesh layer:
-- (w)width:1B
-- (h)height:1B
+(R) "Rectangular mesh":
+- (w)width:4b
+- (h)height:4b
 - positions & control points (nulling for null control points):w*h*V
 - colors (nulling for undefined colors):O
 - color space:7b
@@ -28,10 +28,16 @@
 
 (C) Rectangular mesh vertex color:
 - color header (index, colorspace):2B
-- color value:[J]
+- color value:J|k
 
 (J) sRGB color value:
 - red:1B
 - green:1B
 - blue:1B
 - alpha:1B
+
+(K) display P3 color value:
+- red:4B
+- green:4B
+- blue:4B
+- alpha:4B

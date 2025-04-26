@@ -43,10 +43,8 @@ class OMeshRect {
           smoothColors: smoothColors ?? true,
         );
 
-
-
   /// Creates a new [OMeshRect] from a hash string.
-  /// 
+  ///
   /// See also:
   /// * [getHashFromMesh], to get the hash string from a mesh.
   /// * [getMeshFromHash], to create a mesh from a hash.
@@ -209,6 +207,30 @@ class OMeshRect {
     return getHashFromMesh(this);
   }
 
+
+  /// Returns a new [OMeshRect] with the given properties.
+  OMeshRect copyWith({
+    int? width,
+    int? height,
+    List<OVertex>? vertices,
+    List<Color?>? colors,
+    Color? fallbackColor,
+    Color? backgroundColor,
+    OMeshColorSpace? colorSpace,
+    bool? smoothColors,
+  }) {
+    return OMeshRect._(
+      width: width ?? this.width,
+      height: height ?? this.height,
+      vertices: vertices ?? this.vertices,
+      colors: colors ?? this.colors,
+      fallbackColor: fallbackColor ?? this.fallbackColor,
+      backgroundColor: backgroundColor ?? this.backgroundColor,
+      colorSpace: colorSpace ?? this.colorSpace,
+      smoothColors: smoothColors ?? this.smoothColors,
+    );
+  }
+
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -226,14 +248,16 @@ class OMeshRect {
 
   @override
   int get hashCode {
-    return width.hashCode ^
-        height.hashCode ^
-        fallbackColor.hashCode ^
-        backgroundColor.hashCode ^
-        vertices.hashCode ^
-        colors.hashCode ^
-        colorSpace.hashCode ^
-        smoothColors.hashCode;
+    return Object.hash(
+      width.hashCode,
+      height.hashCode,
+      fallbackColor.hashCode,
+      backgroundColor.hashCode,
+      vertices.hashCode,
+      colors.hashCode,
+      colorSpace.hashCode,
+      smoothColors.hashCode,
+    );
   }
 
   @override
