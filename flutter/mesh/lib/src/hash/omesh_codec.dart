@@ -8,15 +8,27 @@ import 'package:mesh/src/hash/binary_payload/omesh_binary_format_payload.dart'
 export 'package:mesh/src/hash/binary_payload/omesh_binary_format_payload.dart'
     show OMeshBinaryFormat, OMeshBinaryFormatPayloadType;
 
+/// a [Codec] for [OMeshRect] to/from binary format.
+///
+/// This codec is used to encode and decode the mesh data in a binary format
+/// that can be used to store the mesh data in a file or send it over the
+/// network.
+/// The binary format is a compact representation of the mesh data that
+/// can be easily serialized and deserialized.
+///
+/// The binary format is defined by the [OMeshBinaryFormatPayloadType]
+/// and is used to encode and decode the mesh data.
 class OMeshBinaryFormatCodec extends Codec<OMeshRect, Uint8List> {
   const OMeshBinaryFormatCodec._({
     required this.specVersion,
   });
 
+  /// The default codec for [OMeshRect] to/from binary format.
   static const v1 = OMeshBinaryFormatCodec._(
     specVersion: 1,
   );
 
+  /// The codec for [OMeshRect] to/from binary format.
   final int specVersion;
 
   @override

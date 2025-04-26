@@ -7,9 +7,13 @@ import 'package:mesh/mesh.dart';
 import 'package:mesh/src/hash/binary_payload/color_payload.dart';
 import 'package:mesh/src/hash/binary_payload/overtex_payload.dart';
 
+/// {@template omesh_rect_payload_type}
+/// A [PayloadType] for [OMeshRect].
+/// {@endtemplate}
 class OMeshRectPayloadType extends PayloadType<OMeshRect> {
   const OMeshRectPayloadType._();
 
+  /// {@macro omesh_rect_payload_type}
   static const OMeshRectPayloadType instance = OMeshRectPayloadType._();
 
   @override
@@ -23,7 +27,7 @@ class OMeshRectPayloadType extends PayloadType<OMeshRect> {
       verticesLength,
       (index) => OVertexPayloadType.instance.get(reader, endian),
     );
-    final colors = ColorListPayloadType(verticesLength).get(reader, endian);
+    final colors = ColorDictPayloadType(verticesLength).get(reader, endian);
     final metadata = _OMeshRectMetadataPayloadType.instance.get(reader, endian);
 
     return OMeshRect(
@@ -48,7 +52,7 @@ class OMeshRectPayloadType extends PayloadType<OMeshRect> {
       OVertexPayloadType.instance.set(writer, value.vertices[i], endian);
     }
 
-    ColorListPayloadType(value.width * value.height)
+    ColorDictPayloadType(value.width * value.height)
         .set(writer, value.colors, endian);
 
     _OMeshRectMetadataPayloadType.instance.set(

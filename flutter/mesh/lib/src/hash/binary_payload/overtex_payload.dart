@@ -3,15 +3,19 @@ import 'package:binarize/binarize.dart'
 import 'package:flutter/foundation.dart';
 import 'package:mesh/mesh.dart';
 
+/// {@template overtex_payload_type}
+/// A [PayloadType] for [OVertex].
+/// {@endtemplate}
 class OVertexPayloadType extends PayloadType<OVertex> {
   const OVertexPayloadType._();
 
+  /// {@macro overtex_payload_type}
   static const OVertexPayloadType instance = OVertexPayloadType._();
 
   @override
   OVertex get(ByteReader reader, [Endian? endian]) {
-    final x = reader.float64();
-    final y = reader.float64();
+    final x = reader.float64(endian);
+    final y = reader.float64(endian);
     final presenceOfControlPoints = reader.uint8();
 
     final north = presenceOfControlPoints & 0x1 != 0

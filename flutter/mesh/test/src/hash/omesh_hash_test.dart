@@ -1,4 +1,5 @@
-import 'package:flutter/widgets.dart';
+import 'dart:ui';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mesh/hash.dart';
 import 'package:mesh/mesh.dart';
@@ -243,5 +244,61 @@ OM:eJxlkDFMwkAUhl9pVaywwYorjsQZ3wguJqBOMDtj3HSVmcVFBxdZHCRxYzC5BOJixIgGjdEQawUxg
     final mesh = getMeshFromHash(hash);
 
     expect(mesh, complexOMesh);
+  });
+
+  test('encodes and decodes a mesh with colors with different color spaces',
+      () {
+    final meshRect = OMeshRect(
+      width: 3,
+      height: 3,
+      colorSpace: OMeshColorSpace.xyY,
+      fallbackColor: const Color(0xff0e0e0e),
+      vertices: [
+        (0.00, -0.08).v,
+        (0.58, -0.05).v,
+        (1.36, 0.04).v, // Row 1
+
+        (0.00, 0.31).v,
+        (0.44, 0.63).v,
+        (1.11, 0.4).v, // Row 2
+
+        (0.0, 1.01).v,
+        (1.0, 1.0).v,
+        (1.0, 0.73).v, // Row 3
+      ],
+      colors: [
+        const Color(0xffa52b68),
+        const Color(0xff4693a9).withValues(
+          colorSpace: ColorSpace.displayP3,
+        ),
+        const Color(0xff4693a9), // Row 1
+
+        const Color(0xffa52ba0),
+        null,
+        const Color(0xff4693a9).withValues(
+          colorSpace: ColorSpace.displayP3,
+        ), // Row 2
+
+        const Color(0xff9715a9),
+        null,
+        const Color(0xff4693a9).withValues(
+          colorSpace: ColorSpace.displayP3,
+        ), // Row 3
+      ],
+    );
+
+    final hash = getHashFromMesh(meshRect);
+
+    expect(
+      hash,
+      equals(
+        '''
+OM:eJxjNGaAgv1bqh66rxOpZrB_1B-j8fVQ__6VM0FgFoP910MgkcP2S6AqYMD-8nUu24LF1xns74A0xGjaP4HQDPYfoVpuQs2Aa_kAU_EBJsCAyrB_DrY9hoGVYal2xn8m-5u7Atz-_vpu_-iU9WdPjjf2T9b7Cm64tgqu0W3yyv8MS7UX_GeYLrryPyMTMwsDEysDEysjAx8f338A1ddSJw''',
+      ),
+    );
+
+    final mesh = getMeshFromHash(hash);
+
+    expect(mesh, meshRect);
   });
 }
