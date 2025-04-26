@@ -207,7 +207,6 @@ class OMeshRect {
     return getHashFromMesh(this);
   }
 
-
   /// Returns a new [OMeshRect] with the given properties.
   OMeshRect copyWith({
     int? width,

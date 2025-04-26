@@ -5,7 +5,7 @@ import 'dart:ui';
 /// There are several ways to generate colors that are in between two colors.
 /// Each color space has its own way of doing this.
 ///
-/// Dont confure this with the [ColorSpace] in the [Color] class which
+/// Dont confuse this with the [ColorSpace] in the [Color] class which
 /// defines how colors are represented in memory.
 enum OMeshColorSpace {
   /// The most common way of interpolating colors, this performs linear
