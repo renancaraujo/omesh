@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:mesh/hash.dart';
 import 'package:mesh/mesh.dart';
 
 /// The maximum amount of vertices allowed along
@@ -36,11 +37,24 @@ class OMeshRect {
           height: height,
           vertices: vertices,
           colors: colors,
-          fallbackColor: fallbackColor ?? const Color(0x00000000),
+          fallbackColor: fallbackColor,
           backgroundColor: backgroundColor,
           colorSpace: colorSpace ?? OMeshColorSpace.lab,
           smoothColors: smoothColors ?? true,
         );
+
+  /// Creates a new [OMeshRect] from a hash string.
+  ///
+  /// See also:
+  /// * [getHashFromMesh], to get the hash string from a mesh.
+  /// * [getMeshFromHash], to create a mesh from a hash.
+  /// * [getHash], to get the hash string from this mesh.
+  factory OMeshRect.fromHash({
+    required String hash,
+  }) {
+    final mesh = getMeshFromHash(hash);
+    return mesh;
+  }
 
   const OMeshRect._({
     required this.width,
@@ -94,7 +108,7 @@ class OMeshRect {
         a.fallbackColor,
         b.fallbackColor,
         t,
-      )!,
+      ),
       backgroundColor: Color.lerp(
         a.backgroundColor,
         b.backgroundColor,
@@ -127,7 +141,7 @@ class OMeshRect {
   /// the mesh) does not have a color assigned.
   ///
   /// Defaults to black transparent.
-  final Color fallbackColor;
+  final Color? fallbackColor;
 
   /// The color to use as background of the painted area.
   ///
@@ -183,6 +197,39 @@ class OMeshRect {
   /// interpolated in a linear fashion from the lines of the mesh.
   final bool smoothColors;
 
+  /// Returns a hash string that represents the mesh.
+  ///
+  ///
+  /// See also:
+  /// * [getMeshFromHash], to create a mesh from a hash.
+  /// * [OMeshRect.fromHash], to create a mesh from a hash.
+  String getHash() {
+    return getHashFromMesh(this);
+  }
+
+  /// Returns a new [OMeshRect] with the given properties.
+  OMeshRect copyWith({
+    int? width,
+    int? height,
+    List<OVertex>? vertices,
+    List<Color?>? colors,
+    Color? fallbackColor,
+    Color? backgroundColor,
+    OMeshColorSpace? colorSpace,
+    bool? smoothColors,
+  }) {
+    return OMeshRect._(
+      width: width ?? this.width,
+      height: height ?? this.height,
+      vertices: vertices ?? this.vertices,
+      colors: colors ?? this.colors,
+      fallbackColor: fallbackColor ?? this.fallbackColor,
+      backgroundColor: backgroundColor ?? this.backgroundColor,
+      colorSpace: colorSpace ?? this.colorSpace,
+      smoothColors: smoothColors ?? this.smoothColors,
+    );
+  }
+
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -200,14 +247,30 @@ class OMeshRect {
 
   @override
   int get hashCode {
-    return width.hashCode ^
-        height.hashCode ^
-        fallbackColor.hashCode ^
-        backgroundColor.hashCode ^
-        vertices.hashCode ^
-        colors.hashCode ^
-        colorSpace.hashCode ^
-        smoothColors.hashCode;
+    return Object.hash(
+      width.hashCode,
+      height.hashCode,
+      fallbackColor.hashCode,
+      backgroundColor.hashCode,
+      vertices.hashCode,
+      colors.hashCode,
+      colorSpace.hashCode,
+      smoothColors.hashCode,
+    );
+  }
+
+  @override
+  String toString() {
+    return 'OMeshRect('
+        'width: $width, '
+        'height: $height, '
+        'fallbackColor: $fallbackColor, '
+        'backgroundColor: $backgroundColor, '
+        'vertices: $vertices, '
+        'colors: $colors, '
+        'colorSpace: $colorSpace, '
+        'smoothColors: $smoothColors'
+        ')';
   }
 
   /// Returns a new [OMeshRect] with the given [vertices].

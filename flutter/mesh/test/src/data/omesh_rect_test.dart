@@ -78,7 +78,7 @@ void main() {
         // Converted from Color(0x00000000)
         expect(
           mesh.fallbackColor,
-          const Color.from(alpha: 0, red: 0, green: 0, blue: 0),
+          null,
         );
         expect(mesh.backgroundColor, null);
         expect(mesh.colorSpace, OMeshColorSpace.lab);
