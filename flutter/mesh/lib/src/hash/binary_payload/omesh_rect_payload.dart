@@ -83,19 +83,18 @@ class _OMeshRectMetadataPayloadType extends PayloadType<_OMeshRectMetadata> {
 
   @override
   _OMeshRectMetadata get(ByteReader reader, [Endian? endian]) {
-    // first 7 bits: color space
+    // first 3 bits: color space
     // next bit: smooth colors boolean
-    final colorSpaceAndSmoothColors = reader.uint8();
+    // next bit: presence of fallback color
+    // next bit: presence of background color
+    final metadata = reader.uint8();
 
-    final colorSpace = OMeshColorSpace.values[colorSpaceAndSmoothColors >> 1];
-    final smoothColors = colorSpaceAndSmoothColors & 0x1 != 0;
-
-    // first bit: presence of fallback color
-    // second bit: presence of background color
-    final otherInfo = reader.uint8();
-
-    final isThereFallbackColor = otherInfo & 0x1 != 0;
-    final isThereBackgroundColor = otherInfo & 0x2 != 0;
+    final colorSpaceIndex = metadata >> 5; // first 3 bits (highest bits)
+    final colorSpace = OMeshColorSpace.values[colorSpaceIndex];
+    final smoothColors = ((metadata >> 4) & 0x1) == 1; // fourth bit
+    final isThereFallbackColor = ((metadata >> 3) & 0x1) == 1; // fifth bit
+    final isThereBackgroundColor =
+        ((metadata >> 2) & 0x1) == 1; // sixth bit
 
     final fallbackColor = isThereFallbackColor
         ? ColorPayloadType.instance.get(reader, endian)
@@ -115,18 +114,16 @@ class _OMeshRectMetadataPayloadType extends PayloadType<_OMeshRectMetadata> {
 
   @override
   void set(ByteWriter writer, _OMeshRectMetadata value, [Endian? endian]) {
-    // first 7 bits: color space
+    // first 3 bits: color space
     // next bit: smooth colors boolean
-    writer.uint8(
-      value.colorSpace.index << 1 | (value.smoothColors ? 1 : 0),
-    );
+    // next bit: presence of fallback color
+    // next bit: presence of background color
 
-    // first bit: presence of fallback color
-    // second bit: presence of background color
-    final otherInfo = (value.fallbackColor != null ? 0x1 : 0) |
-        (value.backgroundColor != null ? 0x2 : 0);
-
-    writer.uint8(otherInfo);
+    final commbinedValues = value.colorSpace.index << 5 |
+        (value.smoothColors ? 1 : 0) << 4 |
+        (value.fallbackColor != null ? 1 : 0) << 3 |
+        (value.backgroundColor != null ? 1 : 0) << 2;
+    writer.uint8(commbinedValues);
 
     if (value.fallbackColor != null) {
       ColorPayloadType.instance.set(writer, value.fallbackColor!, endian);
