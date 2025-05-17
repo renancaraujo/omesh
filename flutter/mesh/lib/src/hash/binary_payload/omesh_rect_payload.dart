@@ -93,8 +93,7 @@ class _OMeshRectMetadataPayloadType extends PayloadType<_OMeshRectMetadata> {
     final colorSpace = OMeshColorSpace.values[colorSpaceIndex];
     final smoothColors = ((metadata >> 4) & 0x1) == 1; // fourth bit
     final isThereFallbackColor = ((metadata >> 3) & 0x1) == 1; // fifth bit
-    final isThereBackgroundColor =
-        ((metadata >> 2) & 0x1) == 1; // sixth bit
+    final isThereBackgroundColor = ((metadata >> 2) & 0x1) == 1; // sixth bit
 
     final fallbackColor = isThereFallbackColor
         ? ColorPayloadType.instance.get(reader, endian)
