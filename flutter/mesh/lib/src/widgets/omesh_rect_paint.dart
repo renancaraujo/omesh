@@ -9,24 +9,6 @@ import 'package:flutter_shaders/flutter_shaders.dart';
 import 'package:mesh/internal_stuff.dart';
 import 'package:mesh/mesh.dart';
 
-/// Global flag that defines if O'Mesh will try to be compatible with
-/// the Impeller rendering engine.
-@Deprecated('Impeller compatibility modes are not necessary anymore.'
-    ' Setting this value wont have any effect.')
-bool enableOMeshImpellerCompatibility = true;
-
-/// Global flag that defines if O'Mesh will try to be compatible with
-/// the Impeller rendering engine.
-@Deprecated('Impeller compatibility modes are not necessary anymore.'
-    ' Setting this value wont have any effect.')
-bool enableOMeshImpellerCompatibilityOnMacOS = false;
-
-/// Global flag that defines if O'Mesh will try to be compatible with
-/// the Impeller rendering engine.
-@Deprecated('Impeller compatibility modes are not necessary anymore.'
-    ' Setting this value wont have any effect.')
-bool enableOMeshImpellerCompatibilityOnAndroid = false;
-
 /// A class that draws a [OMeshRect] into a [Canvas].
 ///
 /// Useful to render mesh gradients outside of widget contexts, such as
