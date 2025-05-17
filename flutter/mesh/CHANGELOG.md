@@ -1,3 +1,8 @@
+# v0.5.0
+
+- feat: **Breaking** remove deprecated impeller API [#28](https://github.com/renancaraujo/omesh/pull/28)
+- feat: introduce mesh hash [#20](https://github.com/renancaraujo/omesh/pull/20)
+
 # v0.4.3
 
 - feat: support wide gamut colors [#25](https://github.com/renancaraujo/omesh/pull/25)
