@@ -10,7 +10,7 @@ dependencies:
     sdk: flutter
   mesh:
     path: ../
-  mix: ^1.4.4
+  mix: ^2.0.1
   syntax_highlight: ^0.5.0
   url_launcher: ^6.3.0
   widget_mask: ^1.0.0+0
