@@ -1,0 +1,110 @@
+name: flutter release
+
+# Two steps, mirroring the manual process:
+#   1. "Run workflow" with the new version opens a release PR
+#      (version bump + changelog). Edit the changelog on the PR if needed.
+#   2. Merging that PR creates the `flutter-v<version>` tag and the GitHub
+#      release. Pushing the tag triggers the publish workflow.
+#
+# A `RELEASE_TOKEN` secret (a PAT or GitHub App token with contents and
+# pull-requests write access) is required. Events created with the default
+# GITHUB_TOKEN do not trigger other workflows, so neither CI on the release
+# PR nor the publish workflow would run without it.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (e.g. 0.6.0)"
+        required: true
+        type: string
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release_pr:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: prepare release
+        id: prepare
+        run: |
+          .github/scripts/prepare_flutter_release.sh "${{ inputs.version }}"
+          {
+            echo "changelog<<CHANGELOG_EOF"
+            sed -n '/^# v${{ inputs.version }}$/,/^# v/{/^# v/d;p;}' flutter/mesh/CHANGELOG.md
+            echo "CHANGELOG_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: open release pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.RELEASE_TOKEN }}
+          branch: release/flutter-v${{ inputs.version }}
+          commit-message: "chore: flutter-v${{ inputs.version }}"
+          title: "chore: flutter-v${{ inputs.version }}"
+          labels: release
+          body: |
+            ## Description
+
+            chore: flutter-v${{ inputs.version }}
+            ${{ steps.prepare.outputs.changelog }}
+            Review the changelog above and edit `flutter/mesh/CHANGELOG.md` on this branch if needed. Merging this PR tags and publishes the package.
+
+            ## (Required) Link to the issue
+
+            Link to the issue related to this contribution #
+
+  tag_release:
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.title, 'chore: flutter-v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+
+      - name: read version
+        id: version
+        run: |
+          version="$(sed -n 's/^version: //p' flutter/mesh/pubspec.yaml)"
+          expected="chore: flutter-v$version"
+          if [[ "${{ github.event.pull_request.title }}" != "$expected" ]]; then
+            echo "PR title '${{ github.event.pull_request.title }}' does not match pubspec version ($expected)" >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: write release notes
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          previous="$(git ls-remote --tags --sort=-v:refname origin 'flutter-v*' | sed -n 's|.*refs/tags/||p' | head -n 1)"
+          sed -n "/^# v$version\$/,/^# v/{/^# v/d;p;}" flutter/mesh/CHANGELOG.md > notes.md
+          if [[ -n "$previous" ]]; then
+            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$previous...flutter-v$version" >> notes.md
+          fi
+          cat notes.md
+
+      - name: create tag and github release
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          gh release create "flutter-v$version" \
+            --target "${{ github.event.pull_request.merge_commit_sha }}" \
+            --title "flutter-v$version" \
+            --notes-file notes.md

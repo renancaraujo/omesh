@@ -1,0 +1,37 @@
+name: flutter publish
+
+# Publishes flutter/mesh to pub.dev when a `flutter-v<version>` tag is pushed.
+#
+# Uses pub.dev automated publishing (OIDC, no credentials stored). On pub.dev,
+# the package admin page must have automated publishing enabled for this
+# repository with the tag pattern `flutter-v{{version}}` and, optionally,
+# the `pub.dev` GitHub Actions environment required.
+
+on:
+  push:
+    tags:
+      - "flutter-v*"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: tag matches pubspec version
+        run: |
+          version="$(sed -n 's/^version: //p' flutter/mesh/pubspec.yaml)"
+          if [[ "${GITHUB_REF_NAME}" != "flutter-v$version" ]]; then
+            echo "tag ${GITHUB_REF_NAME} does not match pubspec version $version" >&2
+            exit 1
+          fi
+
+  publish:
+    needs: verify
+    uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
+    with:
+      environment: pub.dev
+      working-directory: flutter/mesh
+    permissions:
+      id-token: write
