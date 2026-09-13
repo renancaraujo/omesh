@@ -264,23 +264,40 @@ class OMeshShaderProvider {
 
   static FragmentProgram? _programCache;
 
+  static OMeshShaderProvider? _loadFromCache() {
+    final program = _programCache;
+    if (program == null) {
+      return null;
+    }
+    return OMeshShaderProvider._(program);
+  }
+
+  static const _assetKeys = [
+    'packages/mesh/shaders/omesh.frag',
+    'shaders/omesh.frag',
+  ];
+
   static Future<FragmentProgram> _loadProgram() async {
     final p = _programCache;
     if (p != null) {
       return p;
     }
 
-    try {
-      final program =
-          await FragmentProgram.fromAsset('packages/mesh/shaders/omesh.frag');
-      _programCache = program;
-      return program;
-    } catch (error, stackTrace) {
-      FlutterError.reportError(
-        FlutterErrorDetails(exception: error, stack: stackTrace),
-      );
-      rethrow;
+    Object? firstError;
+    StackTrace? firstStackTrace;
+    for (final assetKey in _assetKeys) {
+      try {
+        return _programCache = await FragmentProgram.fromAsset(assetKey);
+      } catch (error, stackTrace) {
+        firstError ??= error;
+        firstStackTrace ??= stackTrace;
+      }
     }
+
+    FlutterError.reportError(
+      FlutterErrorDetails(exception: firstError!, stack: firstStackTrace),
+    );
+    Error.throwWithStackTrace(firstError, firstStackTrace!);
   }
 
   final FragmentProgram _program;
@@ -315,6 +332,13 @@ class _ShaderPreloaderState extends State<_ShaderPreloader> {
   @override
   void initState() {
     super.initState();
+
+    final cached = OMeshShaderProvider._loadFromCache();
+    if (cached != null) {
+      shaderProvider = cached;
+      return;
+    }
+
     OMeshShaderProvider.load().then((provider) {
       if (mounted) {
         setState(() {
