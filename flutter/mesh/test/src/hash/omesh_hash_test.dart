@@ -266,22 +266,34 @@ OM:eJxlkDFMwkAUhl-hKlbYYMUVR-IqvhFcTECdYHbGuOkqM4uLDi6yOEjixmByCcTFqBENGqMh1gpio
         (1.0, 1.0).v,
         (1.0, 0.73).v, // Row 3
       ],
-      colors: [
-        const Color(0xffa52b68),
-        const Color(0xff4693a9).withValues(
+      colors: const [
+        Color(0xffa52b68),
+        Color.from(
+          alpha: 1,
+          red: 0.4,
+          green: 0.59,
+          blue: 0.65,
           colorSpace: ColorSpace.displayP3,
         ),
-        const Color(0xff4693a9), // Row 1
+        Color(0xff4693a9), // Row 1
 
-        const Color(0xffa52ba0),
+        Color(0xffa52ba0),
         null,
-        const Color(0xff4693a9).withValues(
+        Color.from(
+          alpha: 1,
+          red: 0.4,
+          green: 0.59,
+          blue: 0.65,
           colorSpace: ColorSpace.displayP3,
         ), // Row 2
 
-        const Color(0xff9715a9),
+        Color(0xff9715a9),
         null,
-        const Color(0xff4693a9).withValues(
+        Color.from(
+          alpha: 1,
+          red: 0.4,
+          green: 0.59,
+          blue: 0.65,
           colorSpace: ColorSpace.displayP3,
         ), // Row 3
       ],
@@ -293,7 +305,7 @@ OM:eJxlkDFMwkAUhl-hKlbYYMUVR-IqvhFcTECdYHbGuOkqM4uLDi6yOEjixmByCcTFqBENGqMh1gpio
       hash,
       equals(
         '''
-OM:eJxjNGaAgv1bqh66rxOpZrB_1B-j8fVQ__6VM0FgFoP910MgkcP2S6AqYMD-8nUu24LF1xns74A0xGjaP4HQDPYfoVpuQs2Aa_kAU_EBJsCAyrB_DrY9hoGVYal2xn8m-5u7Atz-_vpu_-iU9WdPjjf2T9b7Cm64tgqu0W3yyv8MS7UX_GeYLrryPyMTMwsDEysDUwQDHx_ffwCGxlJ5''',
+OM:eJxjNGaAgv1bqh66rxOpZrB_1B-j8fVQ__6VM0FgFoP910MgkcP2S6AqYMD-8nUu24LF1xns74A0xGjaP4HQDPYfoVpuQs2Aa_kAU_EBJsCAyrB_DrY9hoGVYal2xn8mmBH2j0CWVz20f3IGBM7CNbpNXvmfYan2gv8M00VX_mdkYmZhYGJlYIpg4OPj-w8Ap0BTbg''',
       ),
     );
 
