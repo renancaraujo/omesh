@@ -1,3 +1,4 @@
+// Platform stub; the public API is documented in zlib.dart.
 // ignore_for_file: public_member_api_docs
 
 import 'dart:typed_data';

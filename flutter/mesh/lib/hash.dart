@@ -6,7 +6,7 @@
 ///
 /// To generate a hash from and to a hash String, use the
 /// [getHashFromMesh] and [getMeshFromHash] functions.
-library hash;
+library;
 
 import 'package:mesh/hash.dart';
 

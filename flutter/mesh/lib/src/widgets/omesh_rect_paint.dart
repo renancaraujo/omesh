@@ -72,7 +72,7 @@ class OMeshRectPaint {
   /// A [CachedValue] that holds the undistorted vertices of the mesh.
   ///
   /// It is dependent on the [meshRect]'s width and height.
-  late final _textureVerticesCache = CachedValue(
+  late final CachedValue<List<OVertex>> _textureVerticesCache = CachedValue(
     () {
       return List.generate(
         growable: false,
@@ -95,7 +95,7 @@ class OMeshRectPaint {
   /// of 4 that form a patch  of the mesh.
   ///
   /// It is dependent on the [meshRect]'s width and height.
-  late final _patchesCache = CachedValue(() {
+  late final CachedValue<List<List<int>>> _patchesCache = CachedValue(() {
     final mw = meshRect.width;
     final mh = meshRect.height;
     final nRectX = mw - 1;
@@ -124,7 +124,8 @@ class OMeshRectPaint {
   /// A [CachedValue] that holds the vertex colors of the mesh.
   ///
   /// It is dependent on the [meshRect].
-  late final _inferredColorsCache = CachedValue<(List<Color>, List<bool>)>(() {
+  late final CachedValue<(List<Color>, List<bool>)> _inferredColorsCache =
+      CachedValue<(List<Color>, List<bool>)>(() {
     final colorMixer = OMeshRectColorMixer(meshRect);
 
     final mw = meshRect.width;
@@ -139,13 +140,13 @@ class OMeshRectPaint {
       return acc;
     });
   })
-      .withDependency(() => meshRect.colors)
-      .withDependency(() => meshRect.smoothColors)
-      .withDependency(() => meshRect.colorSpace)
-      .withDependency(() => (meshRect.width, meshRect.height));
+          .withDependency(() => meshRect.colors)
+          .withDependency(() => meshRect.smoothColors)
+          .withDependency(() => meshRect.colorSpace)
+          .withDependency(() => (meshRect.width, meshRect.height));
 
   /// A [CachedValue] that holds the tessellated mesh.
-  late final _tessellatedMeshCache = CachedValue(
+  late final CachedValue<TessellatedMesh> _tessellatedMeshCache = CachedValue(
     () => TessellatedMesh(
       tessellation: tessellation,
     ),
@@ -292,8 +293,6 @@ extension on UniformsSetter {
   }
 
   void setColorsWide(List<Color> colors) {
-    for (final color in colors) {
-      setColor(color);
-    }
+    colors.forEach(setColor);
   }
 }

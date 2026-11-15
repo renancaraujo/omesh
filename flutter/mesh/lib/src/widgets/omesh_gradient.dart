@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/widgets.dart';
@@ -222,11 +223,11 @@ class AnimatedOMeshGradient extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RepaintBoundary(
-      child: TweenAnimationBuilder(
+      child: TweenAnimationBuilder<OMeshRect>(
         tween: OMeshRectTween(begin: mesh, end: mesh),
         duration: duration,
         curve: curve ?? Curves.linear,
-        builder: (context, OMeshRect mesh, _) {
+        builder: (context, mesh, _) {
           return OMeshGradient(
             size: size,
             mesh: mesh,
@@ -288,6 +289,9 @@ class OMeshShaderProvider {
     for (final assetKey in _assetKeys) {
       try {
         return _programCache = await FragmentProgram.fromAsset(assetKey);
+        // Failures vary per platform; any of them should fall through to the
+        // next asset key. The first one is rethrown if none of them load.
+        // ignore: avoid_catches_without_on_clauses
       } catch (error, stackTrace) {
         firstError ??= error;
         firstStackTrace ??= stackTrace;
@@ -339,13 +343,15 @@ class _ShaderPreloaderState extends State<_ShaderPreloader> {
       return;
     }
 
-    OMeshShaderProvider.load().then((provider) {
-      if (mounted) {
-        setState(() {
-          shaderProvider = provider;
-        });
-      }
-    });
+    unawaited(
+      OMeshShaderProvider.load().then((provider) {
+        if (mounted) {
+          setState(() {
+            shaderProvider = provider;
+          });
+        }
+      }),
+    );
   }
 
   @override
