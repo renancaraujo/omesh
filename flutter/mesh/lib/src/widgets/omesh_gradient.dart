@@ -185,7 +185,7 @@ class OMeshGradient extends StatelessWidget {
 /// * [OMeshRect], a class that describes a mesh of vertices with colors.
 /// * [OMeshRectTween], a class that interpolates between two [OMeshRect].
 /// * [AnimatedContainer], a widget that animates changes in its properties.
-class AnimatedOMeshGradient extends StatelessWidget {
+class AnimatedOMeshGradient extends StatefulWidget {
   /// Creates a new [AnimatedOMeshGradient] with the given [mesh].
   const AnimatedOMeshGradient({
     required this.mesh,
@@ -221,21 +221,68 @@ class AnimatedOMeshGradient extends StatelessWidget {
   final Size? size;
 
   @override
+  State<AnimatedOMeshGradient> createState() => _AnimatedOMeshGradientState();
+}
+
+/// Hands the animation to the painter instead of rebuilding on every tick.
+class _AnimatedOMeshGradientState extends State<AnimatedOMeshGradient>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: widget.duration,
+  );
+
+  late CurvedAnimation _curve = _curveFor(widget.curve);
+
+  late final OMeshRectTween _tween = OMeshRectTween(
+    begin: widget.mesh,
+    end: widget.mesh,
+  );
+
+  late Animation<OMeshRect> _mesh = _tween.animate(_curve);
+
+  CurvedAnimation _curveFor(Curve? curve) {
+    return CurvedAnimation(parent: _controller, curve: curve ?? Curves.linear);
+  }
+
+  @override
+  void didUpdateWidget(AnimatedOMeshGradient oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _controller.duration = widget.duration;
+
+    if (widget.curve != oldWidget.curve) {
+      _curve.dispose();
+      _curve = _curveFor(widget.curve);
+      _mesh = _tween.animate(_curve);
+    }
+
+    if (widget.mesh != _tween.end) {
+      _tween
+        ..begin = _mesh.value
+        ..end = widget.mesh;
+      _controller.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _curve.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return RepaintBoundary(
-      child: TweenAnimationBuilder<OMeshRect>(
-        tween: OMeshRectTween(begin: mesh, end: mesh),
-        duration: duration,
-        curve: curve ?? Curves.linear,
-        builder: (context, mesh, _) {
-          return OMeshGradient(
-            size: size,
-            mesh: mesh,
-            debugMode: debugMode,
-            tessellation: tessellation,
-            addRepaintBoundary: false,
-          );
-        },
+      child: _ShaderPreloader(
+        (context, shaderProvider) => _OMeshGradient(
+          shaderProvider: shaderProvider,
+          mesh: _mesh.value,
+          animation: _mesh,
+          debugMode: widget.debugMode,
+          tessellation: widget.tessellation ?? 12,
+          size: widget.size,
+        ),
       ),
     );
   }
@@ -372,11 +419,16 @@ class _OMeshGradient extends StatefulWidget {
     required this.tessellation,
     required this.debugMode,
     required this.shaderProvider,
+    this.animation,
     this.size,
   });
 
   final OMeshShaderProvider shaderProvider;
   final OMeshRect mesh;
+
+  /// Repainted on every tick when set; [mesh] is its value at build time.
+  final Animation<OMeshRect>? animation;
+
   final int tessellation;
   final DebugMode? debugMode;
   final Size? size;
@@ -408,9 +460,10 @@ class _OMeshGradientState extends State<_OMeshGradient> {
             ..meshRect = widget.mesh
             ..tessellation = widget.tessellation
             ..debugMode = widget.debugMode,
+          animation: widget.animation,
         ),
         isComplex: draw.tessellation > 2,
-        willChange: draw.needsRepaint,
+        willChange: widget.animation != null || draw.needsRepaint,
         size: widget.size ?? Size.infinite,
       ),
     );
@@ -420,17 +473,24 @@ class _OMeshGradientState extends State<_OMeshGradient> {
 class _OMeshRectPainter extends CustomPainter {
   _OMeshRectPainter({
     required this.draw,
-  });
+    this.animation,
+  }) : super(repaint: animation);
 
   final OMeshRectPaint draw;
 
+  final Animation<OMeshRect>? animation;
+
   @override
   void paint(Canvas canvas, Size size) {
+    final animation = this.animation;
+    if (animation != null) {
+      draw.meshRect = animation.value;
+    }
     draw.paint(canvas, Offset.zero & size);
   }
 
   @override
   bool shouldRepaint(_OMeshRectPainter oldDelegate) {
-    return draw.needsRepaint;
+    return draw.needsRepaint || animation != oldDelegate.animation;
   }
 }

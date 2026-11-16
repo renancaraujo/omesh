@@ -15,7 +15,21 @@ final _mesh = OMeshRect(
   ],
 );
 
+final OMeshRect _otherMesh =
+    _mesh.setColor(const Color(0xff00ffff), onIndex: 3);
+
 Widget _gradient() => OMeshGradient(mesh: _mesh, size: const Size(100, 100));
+
+Widget _animated(OMeshRect mesh) => AnimatedOMeshGradient(
+      mesh: mesh,
+      duration: const Duration(seconds: 1),
+      size: const Size(100, 100),
+    );
+
+Finder get _animatedPaint => find.descendant(
+      of: find.byType(AnimatedOMeshGradient),
+      matching: find.byType(CustomPaint),
+    );
 
 Finder get _meshPaint => find.descendant(
       of: find.byType(OMeshGradient),
@@ -110,6 +124,56 @@ void main() {
 
       await tester.pumpAndSettle();
       expect(_meshPaint, findsOneWidget);
+    });
+  });
+
+  group('$AnimatedOMeshGradient', () {
+    testWidgets('does not animate on the first build', (tester) async {
+      await tester.pumpWidget(_animated(_mesh));
+      await tester.pump();
+
+      expect(_animatedPaint, findsOneWidget);
+      expect(tester.binding.hasScheduledFrame, isFalse);
+    });
+
+    testWidgets('repaints on every tick without rebuilding', (tester) async {
+      await tester.pumpWidget(_animated(_mesh));
+      await tester.pump();
+      await tester.pumpWidget(_animated(_otherMesh));
+
+      final painter = tester.widget<CustomPaint>(_animatedPaint).painter!;
+      var repaints = 0;
+      void onRepaint() => repaints++;
+      painter.addListener(onRepaint);
+
+      for (var frame = 0; frame < 5; frame++) {
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(
+          tester.widget<CustomPaint>(_animatedPaint).painter,
+          same(painter),
+          reason: 'the widget should not rebuild while animating',
+        );
+      }
+      expect(repaints, 5);
+
+      painter.removeListener(onRepaint);
+      await tester.pumpAndSettle();
+      expect(tester.binding.hasScheduledFrame, isFalse);
+    });
+
+    testWidgets('restarts from the current value when the mesh changes',
+        (tester) async {
+      await tester.pumpWidget(_animated(_mesh));
+      await tester.pump();
+      await tester.pumpWidget(_animated(_otherMesh));
+      await tester.pump(const Duration(milliseconds: 500));
+
+      await tester.pumpWidget(_animated(_mesh));
+      await tester.pump(const Duration(milliseconds: 900));
+      expect(tester.binding.hasScheduledFrame, isTrue);
+
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(tester.binding.hasScheduledFrame, isFalse);
     });
   });
 }
