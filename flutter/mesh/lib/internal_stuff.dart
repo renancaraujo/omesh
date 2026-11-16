@@ -9,4 +9,5 @@ library;
 
 export 'src/internal_stuff/color_mixer.dart';
 export 'src/internal_stuff/rendered_omesh_rect.dart';
+export 'src/internal_stuff/shader_colors.dart';
 export 'src/internal_stuff/tessellated_mesh.dart';

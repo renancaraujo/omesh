@@ -1,9 +1,9 @@
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:cached_value/cached_value.dart';
 
-import 'package:flutter/rendering.dart'
-    show BlendMode, Canvas, Color, Paint, Rect;
+import 'package:flutter/rendering.dart' show BlendMode, Canvas, Paint, Rect;
 
 import 'package:flutter_shaders/flutter_shaders.dart';
 import 'package:mesh/internal_stuff.dart';
@@ -124,21 +124,21 @@ class OMeshRectPaint {
   /// A [CachedValue] that holds the vertex colors of the mesh.
   ///
   /// It is dependent on the [meshRect].
-  late final CachedValue<(List<Color>, List<bool>)> _inferredColorsCache =
-      CachedValue<(List<Color>, List<bool>)>(() {
+  late final CachedValue<(Float32List shaderColors, List<bool> biases)>
+      _inferredColorsCache =
+      CachedValue<(Float32List shaderColors, List<bool> biases)>(() {
     final colorMixer = OMeshRectColorMixer(meshRect);
+    final colorSpace = meshRect.colorSpace;
+    final length = meshRect.width * meshRect.height;
 
-    final mw = meshRect.width;
-    final mh = meshRect.height;
-
-    return Iterable.generate(
-      mw * mh,
-      colorMixer.getVertexColor,
-    ).fold(([], []), (acc, el) {
-      acc.$1.add(el.$1);
-      acc.$2.add(el.$2);
-      return acc;
-    });
+    final shaderColors = Float32List(length * 4);
+    final biases = List<bool>.filled(length, false);
+    for (var index = 0; index < length; index++) {
+      final (color, bias) = colorMixer.getVertexColor(index);
+      colorSpace.writeShaderColor(color, shaderColors, index * 4);
+      biases[index] = bias;
+    }
+    return (shaderColors, biases);
   })
           .withDependency(() => meshRect.colors)
           .withDependency(() => meshRect.smoothColors)
@@ -190,31 +190,25 @@ class OMeshRectPaint {
     for (final tuple in patches.reversed.indexed) {
       final (patchIndex, [index00, index01, index10, index11]) = tuple;
 
-      final (colors, biases) = vertexColors;
-      final patchColors = [
-        colors[index00], colors[index01], //
-        colors[index10], colors[index11], //
-      ];
-      final patchBiases = [
-        biases[index00], biases[index01], //
-        biases[index10], biases[index11], //
+      final (shaderColors, biases) = vertexColors;
+      final cornerIndices = [
+        index00, index01, //
+        index10, index11, //
       ];
 
       final gradientPaint = _getShaderPaint(
         patchIndex: patchIndex,
         textureTopLeft: textureVertices[index00],
         textureBottomRight: textureVertices[index11],
-        patchColors: patchColors,
-        patchBiases: patchBiases,
+        cornerIndices: cornerIndices,
+        shaderColors: shaderColors,
+        biases: biases,
         rect: rect,
       );
 
       final vertices =
           _tessellatedMeshCache.value.getTessellatedVerticesForPatch(
-        cornerIndices: [
-          index00, index01, //
-          index10, index11, //
-        ],
+        cornerIndices: cornerIndices,
         verticesMesh: verticesMesh,
         textureMesh: textureMesh,
         tessellation: tessellation,
@@ -233,8 +227,9 @@ class OMeshRectPaint {
     required int patchIndex,
     required OVertex textureTopLeft,
     required OVertex textureBottomRight,
-    required List<Color> patchColors,
-    required List<bool> patchBiases,
+    required List<int> cornerIndices,
+    required Float32List shaderColors,
+    required List<bool> biases,
     required Rect rect,
   }) {
     return Paint()
@@ -250,8 +245,8 @@ class OMeshRectPaint {
               textureBottomRight.x,
               textureBottomRight.y,
             ])
-            ..setColorsWide(patchColors)
-            ..setBools(patchBiases)
+            ..setShaderColors(shaderColors, cornerIndices)
+            ..setBools([for (final index in cornerIndices) biases[index]])
             ..setColorSpace(meshRect.colorSpace)
             ..setFloat(
               debugMode?.enableDots ?? false ? tessellation.toDouble() : 0.0,
@@ -283,16 +278,11 @@ extension on UniformsSetter {
     );
   }
 
-  void setColor(Color color) {
-    final multiplier = color.a;
-
-    setFloat(color.r * multiplier);
-    setFloat(color.g * multiplier);
-    setFloat(color.b * multiplier);
-    setFloat(color.a);
-  }
-
-  void setColorsWide(List<Color> colors) {
-    colors.forEach(setColor);
+  void setShaderColors(Float32List shaderColors, List<int> indices) {
+    for (final index in indices) {
+      for (var component = 0; component < 4; component++) {
+        setFloat(shaderColors[index * 4 + component]);
+      }
+    }
   }
 }
