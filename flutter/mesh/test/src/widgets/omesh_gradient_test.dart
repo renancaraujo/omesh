@@ -1,8 +1,6 @@
 import 'dart:async';
 
-// MaterialApp/MaterialPageRoute drive the hero flight under test.
-// ignore: deprecated_member_use
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mesh/mesh.dart';
 
@@ -26,6 +24,29 @@ Finder get _meshPaint => find.descendant(
       matching: find.byType(CustomPaint),
     );
 
+PageRoute<T> _route<T>(WidgetBuilder builder, {RouteSettings? settings}) {
+  return PageRouteBuilder<T>(
+    settings: settings,
+    pageBuilder: (context, animation, secondaryAnimation) => builder(context),
+  );
+}
+
+Widget _app({
+  required Widget home,
+  GlobalKey<NavigatorState>? navigatorKey,
+  List<NavigatorObserver> navigatorObservers = const [],
+}) {
+  return WidgetsApp(
+    color: const Color(0xff000000),
+    navigatorKey: navigatorKey,
+    navigatorObservers: navigatorObservers,
+    pageRouteBuilder: <T>(settings, builder) {
+      return _route<T>(builder, settings: settings);
+    },
+    home: home,
+  );
+}
+
 void _expectAllMeshesPainted({required String reason}) {
   final meshes = find.byType(OMeshGradient).evaluate().length;
   expect(meshes, greaterThan(0), reason: reason);
@@ -37,11 +58,11 @@ void main() {
     testWidgets(
       'paints on the first frame once the shader program is cached',
       (tester) async {
-        await tester.pumpWidget(MaterialApp(home: _gradient()));
+        await tester.pumpWidget(_app(home: _gradient()));
         await tester.pump();
         expect(_meshPaint, findsOneWidget);
 
-        await tester.pumpWidget(MaterialApp(home: Center(child: _gradient())));
+        await tester.pumpWidget(_app(home: Center(child: _gradient())));
 
         expect(find.byType(OMeshGradient), findsOneWidget);
         expect(_meshPaint, findsOneWidget);
@@ -51,10 +72,13 @@ void main() {
     testWidgets('does not flash during a hero flight', (tester) async {
       const tag = 'mesh';
       final navigatorKey = GlobalKey<NavigatorState>();
+      final heroController = HeroController();
+      addTearDown(heroController.dispose);
 
       await tester.pumpWidget(
-        MaterialApp(
+        _app(
           navigatorKey: navigatorKey,
+          navigatorObservers: [heroController],
           home: Hero(tag: tag, child: _gradient()),
         ),
       );
@@ -63,8 +87,8 @@ void main() {
 
       unawaited(
         navigatorKey.currentState!.push(
-          MaterialPageRoute<void>(
-            builder: (_) => Center(child: Hero(tag: tag, child: _gradient())),
+          _route<void>(
+            (_) => Center(child: Hero(tag: tag, child: _gradient())),
           ),
         ),
       );
