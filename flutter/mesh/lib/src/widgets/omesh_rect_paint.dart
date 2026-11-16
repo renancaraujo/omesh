@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:cached_value/cached_value.dart';
@@ -152,9 +153,36 @@ class OMeshRectPaint {
     ),
   ).withDependency(() => tessellation);
 
+  Rect _paintRect = Rect.zero;
+
+  /// A [CachedValue] that holds the texture coordinates of every patch.
+  late final CachedValue<Float32List> _textureGridCache = CachedValue(() {
+    final tessellated = _tessellatedMeshCache.value;
+    final floatsPerPatch = tessellated.floatsPerPatch;
+    final textureMesh = RenderedOMeshRect(
+      mesh: meshRect,
+      normalizedVerticesOverride: _textureVerticesCache.value,
+      rect: _paintRect,
+    );
+    final patches = _patchesCache.value;
+    final grid = Float32List(patches.length * floatsPerPatch);
+    for (final (index, cornerIndices) in patches.indexed) {
+      tessellated.writePatchGrid(
+        cornerIndices: cornerIndices,
+        mesh: textureMesh,
+        output: grid,
+        offset: index * floatsPerPatch,
+      );
+    }
+    return grid;
+  }).withDependency(
+    () => (meshRect.width, meshRect.height, _paintRect, tessellation),
+  );
+
   /// Paints the mesh into the given [canvas] and [rect].
   void paint(Canvas canvas, Rect rect) {
     _needsRepaint = false;
+    _paintRect = rect;
 
     // Background color
     if (meshRect.backgroundColor != null) {
@@ -175,11 +203,9 @@ class OMeshRectPaint {
       mesh: meshRect,
       rect: rect,
     );
-    final textureMesh = RenderedOMeshRect(
-      mesh: meshRect,
-      normalizedVerticesOverride: textureVertices,
-      rect: rect,
-    );
+    final tessellated = _tessellatedMeshCache.value;
+    final textureGrid = _textureGridCache.value;
+    final floatsPerPatch = tessellated.floatsPerPatch;
 
     canvas.saveLayer(
       rect,
@@ -209,15 +235,18 @@ class OMeshRectPaint {
         rect: rect,
       );
 
-      final vertices =
-          _tessellatedMeshCache.value.getTessellatedVerticesForPatch(
+      final gridOffset = (patches.length - 1 - patchIndex) * floatsPerPatch;
+      final vertices = tessellated.getVerticesForPatch(
         cornerIndices: [
           index00, index01, //
           index10, index11, //
         ],
         verticesMesh: verticesMesh,
-        textureMesh: textureMesh,
-        tessellation: tessellation,
+        textureCoordinates: Float32List.sublistView(
+          textureGrid,
+          gridOffset,
+          gridOffset + floatsPerPatch,
+        ),
       );
 
       canvas.drawVertices(
