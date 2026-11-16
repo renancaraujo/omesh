@@ -289,9 +289,6 @@ class OMeshShaderProvider {
     for (final assetKey in _assetKeys) {
       try {
         return _programCache = await FragmentProgram.fromAsset(assetKey);
-        // Failures vary per platform; any of them should fall through to the
-        // next asset key. The first one is rethrown if none of them load.
-        // ignore: avoid_catches_without_on_clauses
       } catch (error, stackTrace) {
         firstError ??= error;
         firstStackTrace ??= stackTrace;
