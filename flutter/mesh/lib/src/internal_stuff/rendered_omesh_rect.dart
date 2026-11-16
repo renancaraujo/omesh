@@ -124,7 +124,7 @@ class RenderedOVertex {
       final rotationRad = _angleBetween(relativeVertexOffset, positionOffset);
       final rotationRadLerp = _radiusLerp(rotationRad, ogRotationRad, 0.8);
 
-      final distance = positionOffset.distanceTo(relativeVertexOffset);
+      final distance = (relativeVertexOffset - positionOffset).distance;
 
       final rotatedRelativeVertex = ui.Offset(
         positionOffset.dx + cos(rotationRadLerp) * distance * distanceFactor,
@@ -258,13 +258,6 @@ extension on OVertex {
 
 extension type _DeNormalizedOVertex(BezierOVertex vertex)
     implements BezierOVertex {}
-
-extension on ui.Offset {
-  /// Compute the euclidian distance between [other] and this.
-  double distanceTo(ui.Offset other) {
-    return sqrt(pow(other.dx - dx, 2) + pow(other.dy - dy, 2));
-  }
-}
 
 extension on OVertex {
   OVertex withinV(ui.Rect rect) {
