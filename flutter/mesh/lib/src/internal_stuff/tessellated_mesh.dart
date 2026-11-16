@@ -27,6 +27,11 @@ class TessellatedMesh {
 
   int get floatsPerPatch => _positions.length;
 
+  int get pointsPerPatch => _positions.length ~/ 2;
+
+  /// Triangle indices into one patch's grid, null if 16 bits aren't enough.
+  Uint16List? get indices => _indices;
+
   /// Writes the grid of points of a patch into [output] as x, y pairs.
   void writePatchGrid({
     required List<int> cornerIndices,

@@ -3,11 +3,12 @@ import 'dart:ui';
 
 import 'package:cached_value/cached_value.dart';
 
-import 'package:flutter/rendering.dart' show BlendMode, Canvas, Paint, Rect;
-
 import 'package:flutter_shaders/flutter_shaders.dart';
 import 'package:mesh/internal_stuff.dart';
 import 'package:mesh/mesh.dart';
+
+/// Must match `MAX_VERTICES` in `shaders/omesh_batched.frag`.
+const int _kMaxBatchedVertices = 128;
 
 /// A class that draws a [OMeshRect] into a [Canvas].
 ///
@@ -178,6 +179,49 @@ class OMeshRectPaint {
     () => (meshRect.width, meshRect.height, _paintRect, tessellation),
   );
 
+  /// A [CachedValue] that holds the buffers for drawing the mesh in one call.
+  late final CachedValue<_Batch> _batchCache = CachedValue(() {
+    final tessellated = _tessellatedMeshCache.value;
+    final floatsPerPatch = tessellated.floatsPerPatch;
+    final pointsPerPatch = tessellated.pointsPerPatch;
+    final patchIndices = tessellated.indices!;
+    final textureGrid = _textureGridCache.value;
+    final patchCount = _patchesCache.value.length;
+
+    final textureCoordinates = Float32List(patchCount * floatsPerPatch);
+    final indices = Uint16List(patchCount * patchIndices.length);
+    for (var drawIndex = 0; drawIndex < patchCount; drawIndex++) {
+      final patchIndex = patchCount - 1 - drawIndex;
+      textureCoordinates.setRange(
+        drawIndex * floatsPerPatch,
+        (drawIndex + 1) * floatsPerPatch,
+        textureGrid,
+        patchIndex * floatsPerPatch,
+      );
+      final base = drawIndex * pointsPerPatch;
+      final offset = drawIndex * patchIndices.length;
+      for (var i = 0; i < patchIndices.length; i++) {
+        indices[offset + i] = base + patchIndices[i];
+      }
+    }
+    return (
+      positions: Float32List(patchCount * floatsPerPatch),
+      textureCoordinates: textureCoordinates,
+      indices: indices,
+    );
+  }).withDependency(
+    () => (meshRect.width, meshRect.height, _paintRect, tessellation),
+  );
+
+  bool get _canDrawInOneCall {
+    if (shaderProvider.batchedShader == null) return false;
+    if (meshRect.width * meshRect.height > _kMaxBatchedVertices) return false;
+    final tessellated = _tessellatedMeshCache.value;
+    if (tessellated.indices == null) return false;
+    final patchCount = (meshRect.width - 1) * (meshRect.height - 1);
+    return patchCount * tessellated.pointsPerPatch <= 1 << 16;
+  }
+
   /// Paints the mesh into the given [canvas] and [rect].
   void paint(Canvas canvas, Rect rect) {
     _needsRepaint = false;
@@ -189,6 +233,11 @@ class OMeshRectPaint {
         rect,
         Paint()..color = meshRect.backgroundColor!,
       );
+    }
+
+    if (_canDrawInOneCall) {
+      _paintInOneCall(canvas, rect);
+      return;
     }
 
     // Extract the current texture vertices, patches and vertex colors
@@ -244,6 +293,58 @@ class OMeshRectPaint {
       );
       vertices.dispose();
     }
+  }
+
+  void _paintInOneCall(Canvas canvas, Rect rect) {
+    final tessellated = _tessellatedMeshCache.value;
+    final floatsPerPatch = tessellated.floatsPerPatch;
+    final patches = _patchesCache.value;
+    final (shaderColors, biases) = _inferredColorsCache.value;
+    final batch = _batchCache.value;
+
+    final verticesMesh = RenderedOMeshRect(mesh: meshRect, rect: rect);
+    for (var drawIndex = 0; drawIndex < patches.length; drawIndex++) {
+      tessellated.writePatchGrid(
+        cornerIndices: patches[patches.length - 1 - drawIndex],
+        mesh: verticesMesh,
+        output: batch.positions,
+        offset: drawIndex * floatsPerPatch,
+      );
+    }
+
+    const biasesStart = _kMaxBatchedVertices * 4;
+    const scalarsStart = biasesStart + _kMaxBatchedVertices;
+    final colorSpaceIndex = switch (meshRect.colorSpace) {
+      OMeshColorSpace.lab => 0.0,
+      OMeshColorSpace.linear => 1.0,
+      OMeshColorSpace.xyY => 2.0,
+    };
+    final shader = shaderProvider.batchedShader!;
+    for (var i = 0; i < shaderColors.length; i++) {
+      shader.setFloat(i, shaderColors[i]);
+    }
+    for (var i = 0; i < biases.length; i++) {
+      shader.setFloat(biasesStart + i, biases[i] ? 1.0 : 0.0);
+    }
+    shader
+      ..setFloat(scalarsStart, rect.width)
+      ..setFloat(scalarsStart + 1, rect.height)
+      ..setFloat(scalarsStart + 2, meshRect.width.toDouble())
+      ..setFloat(scalarsStart + 3, meshRect.height.toDouble())
+      ..setFloat(scalarsStart + 4, colorSpaceIndex)
+      ..setFloat(
+        scalarsStart + 5,
+        debugMode?.enableDots ?? false ? tessellation.toDouble() : 0.0,
+      );
+
+    final vertices = Vertices.raw(
+      VertexMode.triangles,
+      batch.positions,
+      textureCoordinates: batch.textureCoordinates,
+      indices: batch.indices,
+    );
+    canvas.drawVertices(vertices, BlendMode.srcOver, Paint()..shader = shader);
+    vertices.dispose();
   }
 
   Paint _getShaderPaint({
@@ -309,3 +410,9 @@ extension on UniformsSetter {
     }
   }
 }
+
+typedef _Batch = ({
+  Float32List positions,
+  Float32List textureCoordinates,
+  Uint16List indices,
+});

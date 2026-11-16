@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/widgets.dart';
 import 'package:mesh/mesh.dart';
 
@@ -255,22 +256,50 @@ class AnimatedOMeshGradient extends StatelessWidget {
 /// Avoid sharing instances of this class between different
 /// mesh gradient areas.
 class OMeshShaderProvider {
-  OMeshShaderProvider._(this._program);
+  OMeshShaderProvider._(this._program, this._batchedProgram);
 
   /// Loads the shader provider. It will resolve after
   /// the [FragmentProgram] is loaded.
   static Future<OMeshShaderProvider> load() async {
-    return OMeshShaderProvider._(await _loadProgram());
+    final (program, batchedProgram) =
+        await (_loadProgram(), _loadBatchedProgram()).wait;
+    return OMeshShaderProvider._(program, batchedProgram);
   }
 
   static FragmentProgram? _programCache;
 
   static OMeshShaderProvider? _loadFromCache() {
     final program = _programCache;
-    if (program == null) {
+    if (program == null || !_batchedProgramLoaded) {
       return null;
     }
-    return OMeshShaderProvider._(program);
+    return OMeshShaderProvider._(program, _batchedProgramCache);
+  }
+
+  static const _batchedAssetKeys = [
+    'packages/mesh/shaders/omesh_batched.frag',
+    'shaders/omesh_batched.frag',
+  ];
+
+  static bool _batchedProgramLoaded = false;
+  static FragmentProgram? _batchedProgramCache;
+
+  /// Null on SkSL (web, Skia), which can't index uniform arrays per fragment.
+  static Future<FragmentProgram?> _loadBatchedProgram() async {
+    if (_batchedProgramLoaded) {
+      return _batchedProgramCache;
+    }
+    FragmentProgram? program;
+    if (!kIsWeb) {
+      for (final assetKey in _batchedAssetKeys) {
+        try {
+          program = await FragmentProgram.fromAsset(assetKey);
+          break;
+        } catch (_) {}
+      }
+    }
+    _batchedProgramLoaded = true;
+    return _batchedProgramCache = program;
   }
 
   static const _assetKeys = [
@@ -302,8 +331,14 @@ class OMeshShaderProvider {
   }
 
   final FragmentProgram _program;
+  final FragmentProgram? _batchedProgram;
 
   final Map<int, FragmentShader> _shaders = {};
+  FragmentShader? _batchedShader;
+
+  /// The shader that draws a whole mesh in one call, if supported.
+  FragmentShader? get batchedShader =>
+      _batchedShader ??= _batchedProgram?.fragmentShader();
 
   /// Returns the shader for the given patch index.
   FragmentShader getShaderFor(int index) {
@@ -315,6 +350,7 @@ class OMeshShaderProvider {
     for (final shader in _shaders.values) {
       shader.dispose();
     }
+    _batchedShader?.dispose();
   }
 }
 
