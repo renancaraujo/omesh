@@ -44,16 +44,28 @@ class OMeshRectPayloadType extends PayloadType<OMeshRect> {
 
   @override
   void set(ByteWriter writer, OMeshRect value, [Endian? endian]) {
+    // Width and height share a single byte, 4 bits each.
+    if (value.width > 15 || value.height > 15) {
+      throw ArgumentError.value(
+        '${value.width}x${value.height}',
+        'mesh',
+        'the v1 binary format supports up to 15 vertices in each dimension, '
+            'use OMeshBinaryFormatCodec.v2 instead',
+      );
+    }
+
     final widthHeight = value.width << 4 | value.height;
 
     writer.uint8(widthHeight);
 
-    for (var i = 0; i < value.vertices.length; i++) {
+    // Exactly width * height vertices and colors, which is what is read.
+    final count = value.width * value.height;
+    for (var i = 0; i < count; i++) {
       OVertexPayloadType.instance.set(writer, value.vertices[i], endian);
     }
 
-    ColorDictPayloadType(value.width * value.height)
-        .set(writer, value.colors, endian);
+    ColorDictPayloadType(count)
+        .set(writer, value.colors.sublist(0, count), endian);
 
     _OMeshRectMetadataPayloadType.instance.set(
       writer,
