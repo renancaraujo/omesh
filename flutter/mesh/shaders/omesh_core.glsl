@@ -6,8 +6,6 @@ Licensed under Mozilla Public License Version 2.0 - https://github.com/renancara
 Contains work from tobspr, Licensed under MIT https://github.com/tobspr/GLSL-Color-Spaces/blob/master/LICENSE
 */
 
-#version 460 core
-
 precision highp float;
 
 #include <flutter/runtime_effect.glsl>
@@ -23,7 +21,6 @@ uniform float uBias00;
 uniform float uBias01;
 uniform float uBias10;
 uniform float uBias11;
-uniform float uInterpolationMode;
 uniform float uDebugMode;
 
 out vec4 fragColor;
@@ -110,12 +107,13 @@ vec3 lab_to_rgb(vec3 lab) {
 }
 
 vec3 toRgb(vec3 color) {
-    if(uInterpolationMode == 2.0) {
-        return xyY_to_rgb(color);
-    } else if(uInterpolationMode == 1.0) {
-        return color;
-    }
+#if defined(OMESH_COLOR_SPACE_XYY)
+    return xyY_to_rgb(color);
+#elif defined(OMESH_COLOR_SPACE_LINEAR)
+    return color;
+#else
     return lab_to_rgb(color);
+#endif
 }
 
 float ssteppow(float x, float p) {

@@ -28,4 +28,6 @@ dev_dependencies:
   mocktail: ^1.0.0
 flutter:
   shaders:
-    - shaders/omesh.frag
+    - shaders/omesh_lab.frag
+    - shaders/omesh_linear.frag
+    - shaders/omesh_xyy.frag

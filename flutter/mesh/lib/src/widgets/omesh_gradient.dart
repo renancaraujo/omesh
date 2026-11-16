@@ -255,40 +255,53 @@ class AnimatedOMeshGradient extends StatelessWidget {
 /// Avoid sharing instances of this class between different
 /// mesh gradient areas.
 class OMeshShaderProvider {
-  OMeshShaderProvider._(this._program);
+  OMeshShaderProvider._(this._programs);
 
   /// Loads the shader provider. It will resolve after
-  /// the [FragmentProgram] is loaded.
+  /// the [FragmentProgram]s are loaded.
   static Future<OMeshShaderProvider> load() async {
-    return OMeshShaderProvider._(await _loadProgram());
+    return OMeshShaderProvider._(await _loadPrograms());
   }
 
-  static FragmentProgram? _programCache;
+  static Map<OMeshColorSpace, FragmentProgram>? _programsCache;
 
   static OMeshShaderProvider? _loadFromCache() {
-    final program = _programCache;
-    if (program == null) {
+    final programs = _programsCache;
+    if (programs == null) {
       return null;
     }
-    return OMeshShaderProvider._(program);
+    return OMeshShaderProvider._(programs);
   }
 
-  static const _assetKeys = [
-    'packages/mesh/shaders/omesh.frag',
-    'shaders/omesh.frag',
+  static const Map<OMeshColorSpace, String> _shaderFiles = {
+    OMeshColorSpace.lab: 'omesh_lab.frag',
+    OMeshColorSpace.linear: 'omesh_linear.frag',
+    OMeshColorSpace.xyY: 'omesh_xyy.frag',
+  };
+
+  static const _assetDirectories = [
+    'packages/mesh/shaders',
+    'shaders',
   ];
 
-  static Future<FragmentProgram> _loadProgram() async {
-    final p = _programCache;
-    if (p != null) {
-      return p;
+  static Future<Map<OMeshColorSpace, FragmentProgram>> _loadPrograms() async {
+    final cached = _programsCache;
+    if (cached != null) {
+      return cached;
     }
 
+    final programs = await Future.wait([
+      for (final file in _shaderFiles.values) _loadProgram(file),
+    ]);
+    return _programsCache = Map.fromIterables(_shaderFiles.keys, programs);
+  }
+
+  static Future<FragmentProgram> _loadProgram(String file) async {
     Object? firstError;
     StackTrace? firstStackTrace;
-    for (final assetKey in _assetKeys) {
+    for (final directory in _assetDirectories) {
       try {
-        return _programCache = await FragmentProgram.fromAsset(assetKey);
+        return await FragmentProgram.fromAsset('$directory/$file');
       } catch (error, stackTrace) {
         firstError ??= error;
         firstStackTrace ??= stackTrace;
@@ -301,13 +314,17 @@ class OMeshShaderProvider {
     Error.throwWithStackTrace(firstError, firstStackTrace!);
   }
 
-  final FragmentProgram _program;
+  final Map<OMeshColorSpace, FragmentProgram> _programs;
 
-  final Map<int, FragmentShader> _shaders = {};
+  final Map<(int, OMeshColorSpace), FragmentShader> _shaders = {};
 
-  /// Returns the shader for the given patch index.
-  FragmentShader getShaderFor(int index) {
-    return _shaders[index] = _shaders[index] ?? _program.fragmentShader();
+  /// Returns the shader for the given patch index and [colorSpace].
+  FragmentShader getShaderFor(
+    int index, {
+    OMeshColorSpace colorSpace = OMeshColorSpace.lab,
+  }) {
+    return _shaders[(index, colorSpace)] ??=
+        _programs[colorSpace]!.fragmentShader();
   }
 
   /// Disposes the shader provider and all the shaders.

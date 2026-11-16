@@ -256,8 +256,10 @@ class OMeshRectPaint {
     required Rect rect,
   }) {
     return Paint()
-      ..shader = (shaderProvider.getShaderFor(patchIndex)
-        ..setFloatUniforms(
+      ..shader = (shaderProvider.getShaderFor(
+        patchIndex,
+        colorSpace: meshRect.colorSpace,
+      )..setFloatUniforms(
           (s) => s
             ..setSize(rect.size)
             ..setFloats([
@@ -270,7 +272,6 @@ class OMeshRectPaint {
             ])
             ..setShaderColors(shaderColors, cornerIndices)
             ..setBools([for (final index in cornerIndices) biases[index]])
-            ..setColorSpace(meshRect.colorSpace)
             ..setFloat(
               debugMode?.enableDots ?? false ? tessellation.toDouble() : 0.0,
             ),
@@ -289,16 +290,6 @@ extension on UniformsSetter {
     for (final b in bools) {
       setFloat(b ? 1.0 : 0.0);
     }
-  }
-
-  void setColorSpace(OMeshColorSpace colorSpace) {
-    setFloat(
-      switch (colorSpace) {
-        OMeshColorSpace.lab => 0.0,
-        OMeshColorSpace.linear => 1.0,
-        OMeshColorSpace.xyY => 2.0,
-      },
-    );
   }
 
   void setShaderColors(Float32List shaderColors, List<int> indices) {
