@@ -3,16 +3,76 @@
 
 import 'dart:typed_data';
 import 'dart:ui' show VertexMode, Vertices;
-import 'dart:ui' as ui show Offset;
 
 import 'package:mesh/internal_stuff.dart';
 
+/// Splits the patches of a mesh into indexed triangles.
 class TessellatedMesh {
   TessellatedMesh({
-    required int tessellation,
-  }) : _vertexData = Float32List((tessellation * tessellation) * 24);
+    required this.tessellation,
+  })  : assert(tessellation > 0, 'tessellation must be positive'),
+        _weights = _BernsteinWeights(tessellation),
+        _indices = _gridIndices(tessellation),
+        _positions = Float32List((tessellation + 1) * (tessellation + 1) * 2),
+        _textureCoordinates =
+            Float32List((tessellation + 1) * (tessellation + 1) * 2);
 
-  final Float32List _vertexData;
+  /// Number of quads along each side of a patch.
+  final int tessellation;
+
+  final _BernsteinWeights _weights;
+  final Uint16List? _indices;
+  final Float32List _positions;
+  final Float32List _textureCoordinates;
+
+  int get floatsPerPatch => _positions.length;
+
+  /// Writes the grid of points of a patch into [output] as x, y pairs.
+  void writePatchGrid({
+    required List<int> cornerIndices,
+    required RenderedOMeshRect mesh,
+    required Float32List output,
+    int offset = 0,
+  }) {
+    final vertices = mesh.vertices;
+    _writeGrid(
+      vertices[cornerIndices[0]],
+      vertices[cornerIndices[1]],
+      vertices[cornerIndices[2]],
+      vertices[cornerIndices[3]],
+      output,
+      offset,
+    );
+  }
+
+  /// The triangles of a patch, textured with a grid from [writePatchGrid].
+  Vertices getVerticesForPatch({
+    required List<int> cornerIndices,
+    required RenderedOMeshRect verticesMesh,
+    required Float32List textureCoordinates,
+  }) {
+    writePatchGrid(
+      cornerIndices: cornerIndices,
+      mesh: verticesMesh,
+      output: _positions,
+    );
+
+    final indices = _indices;
+    if (indices != null) {
+      return Vertices.raw(
+        VertexMode.triangles,
+        _positions,
+        textureCoordinates: textureCoordinates,
+        indices: indices,
+      );
+    }
+
+    return Vertices.raw(
+      VertexMode.triangles,
+      _expandTriangles(_positions),
+      textureCoordinates: _expandTriangles(textureCoordinates),
+    );
+  }
 
   /// Returns a [Vertices] object with the given
   /// [cornerIndices], [verticesMesh], [textureMesh],
@@ -23,161 +83,155 @@ class TessellatedMesh {
     required RenderedOMeshRect textureMesh,
     required int tessellation,
   }) {
-    final lengthInF32 = _vertexData.length ~/ 2;
-    final offsetInBytes = lengthInF32 * 4;
-    final verticesTriangles = Float32List.view(
-      _vertexData.buffer,
-      0,
-      lengthInF32,
+    assert(
+      tessellation == this.tessellation,
+      'tessellation must match the one this mesh was created with',
     );
-    final textureTriangles = Float32List.view(
-      _vertexData.buffer,
-      offsetInBytes,
-      lengthInF32,
+    writePatchGrid(
+      cornerIndices: cornerIndices,
+      mesh: textureMesh,
+      output: _textureCoordinates,
     );
-
-    _writeTriangles(
-      cornerIndices,
-      verticesMesh,
-      tessellation,
-      verticesTriangles,
-    );
-
-    _writeTriangles(
-      cornerIndices,
-      textureMesh,
-      tessellation,
-      textureTriangles,
-    );
-
-    return Vertices.raw(
-      VertexMode.triangles,
-      verticesTriangles,
-      textureCoordinates: textureTriangles,
+    return getVerticesForPatch(
+      cornerIndices: cornerIndices,
+      verticesMesh: verticesMesh,
+      textureCoordinates: _textureCoordinates,
     );
   }
 
-  void _writeTriangles(
-    List<int> cornerIndices,
-    RenderedOMeshRect renderedOMeshRect,
-    int tessellation,
+  // This is the hottest function in the animated mesh gradient example.
+  void _writeGrid(
+    RenderedOVertex topLeft,
+    RenderedOVertex topRight,
+    RenderedOVertex bottomLeft,
+    RenderedOVertex bottomRight,
     Float32List output,
+    int offset,
   ) {
-    final surface = _BezierPatch(
-      topLeft: renderedOMeshRect.vertices[cornerIndices[0]],
-      topRight: renderedOMeshRect.vertices[cornerIndices[1]],
-      bottomLeft: renderedOMeshRect.vertices[cornerIndices[2]],
-      bottomRight: renderedOMeshRect.vertices[cornerIndices[3]],
-    );
+    // Thanks mr Paul de Casteljau
+    final tlx = topLeft.p.dx;
+    final tly = topLeft.p.dy;
+    final trx = topRight.p.dx;
+    final try_ = topRight.p.dy;
+    final blx = bottomLeft.p.dx;
+    final bly = bottomLeft.p.dy;
+    final brx = bottomRight.p.dx;
+    final bry = bottomRight.p.dy;
 
-    var offset = 0;
-    for (var tRow = 0; tRow < tessellation; tRow++) {
-      for (var tCol = 0; tCol < tessellation; tCol++) {
-        final uLeft = tCol / tessellation;
-        final uRight = (tCol + 1) / tessellation;
-        final vTop = tRow / tessellation;
-        final vBottom = (tRow + 1) / tessellation;
+    final tlex = topLeft.east.dx;
+    final tley = topLeft.east.dy;
+    final trwx = topRight.west.dx;
+    final trwy = topRight.west.dy;
+    final blex = bottomLeft.east.dx;
+    final bley = bottomLeft.east.dy;
+    final brwx = bottomRight.west.dx;
+    final brwy = bottomRight.west.dy;
 
-        final topLeft = surface.getPoint(uLeft, vTop);
-        final topRight = surface.getPoint(uRight, vTop);
-        final bottomLeft = surface.getPoint(uLeft, vBottom);
-        final bottomRight = surface.getPoint(uRight, vBottom);
+    final tlsx = topLeft.south.dx - tlx;
+    final tlsy = topLeft.south.dy - tly;
+    final trsx = topRight.south.dx - trx;
+    final trsy = topRight.south.dy - try_;
+    final blnx = bottomLeft.north.dx - blx;
+    final blny = bottomLeft.north.dy - bly;
+    final brnx = bottomRight.north.dx - brx;
+    final brny = bottomRight.north.dy - bry;
 
-        output[offset++] = topLeft.dx;
-        output[offset++] = topLeft.dy;
-        output[offset++] = topRight.dx;
-        output[offset++] = topRight.dy;
-        output[offset++] = bottomRight.dx;
-        output[offset++] = bottomRight.dy;
+    final w = _weights;
+    final side = tessellation + 1;
+    for (var col = 0; col < side; col++) {
+      final u = w.t[col];
+      final mu = 1.0 - u;
+      final u0 = w.b0[col];
+      final u1 = w.b1[col];
+      final u2 = w.b2[col];
+      final u3 = w.b3[col];
 
-        output[offset++] = topLeft.dx;
-        output[offset++] = topLeft.dy;
-        output[offset++] = bottomLeft.dx;
-        output[offset++] = bottomLeft.dy;
-        output[offset++] = bottomRight.dx;
-        output[offset++] = bottomRight.dy;
+      final topX = u0 * tlx + u1 * tlex + u2 * trwx + u3 * trx;
+      final topY = u0 * tly + u1 * tley + u2 * trwy + u3 * try_;
+      final bottomX = u0 * blx + u1 * blex + u2 * brwx + u3 * brx;
+      final bottomY = u0 * bly + u1 * bley + u2 * brwy + u3 * bry;
+      final topControlX = tlsx * mu + trsx * u + topX;
+      final topControlY = tlsy * mu + trsy * u + topY;
+      final bottomControlX = blnx * mu + brnx * u + bottomX;
+      final bottomControlY = blny * mu + brny * u + bottomY;
+
+      for (var row = 0; row < side; row++) {
+        final v0 = w.b0[row];
+        final v1 = w.b1[row];
+        final v2 = w.b2[row];
+        final v3 = w.b3[row];
+        final i = offset + (row * side + col) * 2;
+        output[i] =
+            v0 * topX + v1 * topControlX + v2 * bottomControlX + v3 * bottomX;
+        output[i + 1] =
+            v0 * topY + v1 * topControlY + v2 * bottomControlY + v3 * bottomY;
       }
     }
   }
+
+  Float32List _expandTriangles(Float32List grid) {
+    final side = tessellation + 1;
+    final output = Float32List(tessellation * tessellation * 12);
+    var o = 0;
+    for (var row = 0; row < tessellation; row++) {
+      for (var col = 0; col < tessellation; col++) {
+        final topLeft = row * side + col;
+        for (final point in [
+          topLeft, topLeft + 1, topLeft + side + 1, //
+          topLeft, topLeft + side, topLeft + side + 1, //
+        ]) {
+          output[o++] = grid[point * 2];
+          output[o++] = grid[point * 2 + 1];
+        }
+      }
+    }
+    return output;
+  }
+
+  /// Null if the grid has more points than 16 bit indices can address.
+  static Uint16List? _gridIndices(int tessellation) {
+    final side = tessellation + 1;
+    if (side * side > 1 << 16) return null;
+
+    final indices = Uint16List(tessellation * tessellation * 6);
+    var i = 0;
+    for (var row = 0; row < tessellation; row++) {
+      for (var col = 0; col < tessellation; col++) {
+        final topLeft = row * side + col;
+        indices
+          ..[i++] = topLeft
+          ..[i++] = topLeft + 1
+          ..[i++] = topLeft + side + 1
+          ..[i++] = topLeft
+          ..[i++] = topLeft + side
+          ..[i++] = topLeft + side + 1;
+      }
+    }
+    return indices;
+  }
 }
 
-class _BezierPatch {
-  _BezierPatch({
-    required this.topLeft,
-    required this.topRight,
-    required this.bottomLeft,
-    required this.bottomRight,
-  });
-
-  final RenderedOVertex topLeft;
-  final RenderedOVertex topRight;
-  final RenderedOVertex bottomLeft;
-  final RenderedOVertex bottomRight;
-
-  /// Linearly interpolate between two doubles.
-  static ui.Offset _lerpDouble(ui.Offset a, ui.Offset b, double t) {
-    return a * (1.0 - t) + b * t;
+class _BernsteinWeights {
+  _BernsteinWeights(int tessellation)
+      : t = Float64List(tessellation + 1),
+        b0 = Float64List(tessellation + 1),
+        b1 = Float64List(tessellation + 1),
+        b2 = Float64List(tessellation + 1),
+        b3 = Float64List(tessellation + 1) {
+    for (var i = 0; i <= tessellation; i++) {
+      final step = i / tessellation;
+      final mt = 1.0 - step;
+      t[i] = step;
+      b0[i] = mt * mt * mt;
+      b1[i] = mt * mt * step * 3;
+      b2[i] = mt * step * step * 3;
+      b3[i] = step * step * step;
+    }
   }
 
-  // This is the hottest function in the animated mesh gradient
-  // example
-  ui.Offset getPoint(double u, double v) {
-    // Thanks mr Paul de Casteljau
-    final topEdge = _bezierInterpolation(
-      point1: topLeft.p,
-      point2: topRight.p,
-      controlPoint1: topLeft.east,
-      controlPoint2: topRight.west,
-      t: u,
-    );
-
-    final bottomEdge = _bezierInterpolation(
-      point1: bottomLeft.p,
-      point2: bottomRight.p,
-      controlPoint1: bottomLeft.east,
-      controlPoint2: bottomRight.west,
-      t: u,
-    );
-
-    final vcptl = topLeft.south - topLeft.p;
-    final vcptr = topRight.south - topRight.p;
-
-    final vcpt = _lerpDouble(vcptl, vcptr, u) + topEdge;
-
-    final vcpbl = bottomLeft.north - bottomLeft.p;
-    final vcpbr = bottomRight.north - bottomRight.p;
-
-    final vcpb = _lerpDouble(vcpbl, vcpbr, u) + bottomEdge;
-
-    return _bezierInterpolation(
-      point1: topEdge,
-      point2: bottomEdge,
-      controlPoint1: vcpt,
-      controlPoint2: vcpb,
-      t: v,
-    );
-  }
-
-  ui.Offset _bezierInterpolation({
-    required ui.Offset point1,
-    required ui.Offset controlPoint1,
-    required ui.Offset controlPoint2,
-    required ui.Offset point2,
-    required double t,
-  }) {
-    final mt = 1.0 - t;
-    final mt2 = mt * mt;
-    final mt3 = mt2 * mt;
-    final t3 = t * t * t;
-    final dx = (mt3 * point1.dx) +
-        (controlPoint1.dx * mt2 * t * 3) +
-        (controlPoint2.dx * mt * t * t * 3) +
-        (point2.dx * t3);
-    final dy = (mt3 * point1.dy) +
-        (controlPoint1.dy * mt2 * t * 3) +
-        (controlPoint2.dy * mt * t * t * 3) +
-        (point2.dy * t3);
-
-    return ui.Offset(dx, dy);
-  }
+  final Float64List t;
+  final Float64List b0;
+  final Float64List b1;
+  final Float64List b2;
+  final Float64List b3;
 }
