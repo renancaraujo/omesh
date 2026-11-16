@@ -206,11 +206,6 @@ class OMeshRectPaint {
     final textureGrid = _textureGridCache.value;
     final floatsPerPatch = tessellated.floatsPerPatch;
 
-    canvas.saveLayer(
-      rect,
-      Paint(),
-    );
-
     // Draw each patch one at a time.
     for (final tuple in patches.reversed.indexed) {
       final (patchIndex, [index00, index01, index10, index11]) = tuple;
@@ -248,7 +243,6 @@ class OMeshRectPaint {
         gradientPaint,
       );
     }
-    canvas.restore();
   }
 
   Paint _getShaderPaint({
