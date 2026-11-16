@@ -242,6 +242,7 @@ class OMeshRectPaint {
         BlendMode.srcOver,
         gradientPaint,
       );
+      vertices.dispose();
     }
   }
 
