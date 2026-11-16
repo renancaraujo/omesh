@@ -1,0 +1,14 @@
+# Flutter/Dart/Pub related
+/build/
+.dart_tool/
+pubspec.lock
+pubspec_overrides.yaml
+
+# Platform directories (generate with `flutter create --platforms=macos .`)
+ios/
+android/
+macos/
+windows/
+linux/
+web/
+.metadata
