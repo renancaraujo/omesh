@@ -313,4 +313,47 @@ OM:eJxjNGaAgv1bqh66rxOpZrB_1B-j8fVQ__6VM0FgFoP910MgkcP2S6AqYMD-8nUu24LF1xns74A0x
 
     expect(mesh, meshRect);
   });
+
+  test('returns a separate mesh every time the same hash is decoded', () {
+    final hash = getHashFromMesh(
+      OMeshRect(
+        width: 2,
+        height: 2,
+        vertices: [
+          (0.0, 0.0).v, (1.0, 0.0).v, //
+          (0.0, 1.0).v, (1.0, 1.0).v, //
+        ],
+        colors: const [
+          Color(0xffff0000), Color(0xff00ff00), //
+          Color(0xff0000ff), Color(0xffffff00), //
+        ],
+      ),
+    );
+
+    final first = getMeshFromHash(hash);
+    final second = getMeshFromHash(hash);
+    expect(second, first);
+    expect(identical(second, first), isFalse);
+
+    first.vertices[3].x = 0.5;
+    expect(getMeshFromHash(hash).vertices[3].x, 1.0);
+  });
+
+  test('decodes more distinct hashes than it caches', () {
+    final meshes = [
+      for (var i = 0; i < 40; i++)
+        OMeshRect(
+          width: 2,
+          height: 2,
+          vertices: [
+            (0.0, 0.0).v, (1.0, 0.0).v, //
+            (0.0, 1.0).v, (1.0, i / 40).v, //
+          ],
+          colors: List.filled(4, const Color(0xff4693a9)),
+        ),
+    ];
+    for (final mesh in [...meshes, ...meshes.reversed]) {
+      expect(getMeshFromHash(getHashFromMesh(mesh)), mesh);
+    }
+  });
 }

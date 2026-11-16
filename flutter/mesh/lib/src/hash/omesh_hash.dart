@@ -46,14 +46,33 @@ String getHashFromMesh(OMeshRect mesh) {
 /// data using zlib compression, and finally encoding the compressed data
 /// into a unpadded base64 string.
 OMeshRect getMeshFromHash(String hash) {
+  final layers = OMeshBinaryFormatCodec.v1.decoder.convert(
+    _decompressedBytes(hash),
+  );
+  return layers;
+}
+
+const _kDecompressedCacheSize = 16;
+
+final _decompressedCache = <String, Uint8List>{};
+
+Uint8List _decompressedBytes(String hash) {
+  final cached = _decompressedCache.remove(hash);
+  if (cached != null) {
+    _decompressedCache[hash] = cached;
+    return cached;
+  }
+
   final unprefixied = hash.substring(_kPrefix.length);
   final paddedHash = _addPadding(unprefixied);
   final compressed = base64Url.decode(paddedHash);
-  final bytes = zlib.zlibDecompress(compressed);
-  final layers = OMeshBinaryFormatCodec.v1.decoder.convert(
-    Uint8List.fromList(bytes),
-  );
-  return layers;
+  final bytes = Uint8List.fromList(zlib.zlibDecompress(compressed));
+
+  _decompressedCache[hash] = bytes;
+  if (_decompressedCache.length > _kDecompressedCacheSize) {
+    _decompressedCache.remove(_decompressedCache.keys.first);
+  }
+  return bytes;
 }
 
 String _removePadding(String base64String) {
