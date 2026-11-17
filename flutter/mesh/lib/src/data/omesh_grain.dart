@@ -18,6 +18,32 @@ import 'package:flutter/foundation.dart';
 /// full-size pass per paint. [scatter] runs inside the mesh shader and costs
 /// almost nothing.
 ///
+/// Pass it to the `grain` option of `OMeshGradient`,
+/// `AnimatedOMeshGradient` or `OMeshRectPaint`:
+///
+/// ```dart
+/// // Both effects, with the default strength.
+/// OMeshGradient(mesh: mesh, grain: const OMeshGrain());
+///
+/// // Heavy grain only.
+/// OMeshGradient(
+///   mesh: mesh,
+///   grain: const OMeshGrain(amount: 0.15, scatter: 0),
+/// );
+///
+/// // Scatter only, with no extra pass.
+/// OMeshGradient(
+///   mesh: mesh,
+///   grain: const OMeshGrain(amount: 0, scatter: 24),
+/// );
+///
+/// // Grain mostly in the shadows.
+/// OMeshGradient(
+///   mesh: mesh,
+///   grain: const OMeshGrain(shadows: 1, midtones: 0.5, highlights: 0),
+/// );
+/// ```
+///
 /// To remove banding, use the `dither` option of the gradient widgets or of
 /// `OMeshRectPaint` instead.
 ///
