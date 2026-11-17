@@ -22,7 +22,11 @@ final _darkMesh = OMeshRect(
 
 const _size = Size(120, 120);
 
-Future<Uint8List> _render(WidgetTester tester, OMeshGrain? grain) async {
+Future<Uint8List> _render(
+  WidgetTester tester,
+  OMeshGrain? grain, {
+  bool dither = false,
+}) async {
   final key = GlobalKey();
   await tester.pumpWidget(
     Directionality(
@@ -30,7 +34,12 @@ Future<Uint8List> _render(WidgetTester tester, OMeshGrain? grain) async {
       child: Center(
         child: RepaintBoundary(
           key: key,
-          child: OMeshGradient(mesh: _darkMesh, size: _size, grain: grain),
+          child: OMeshGradient(
+            mesh: _darkMesh,
+            size: _size,
+            grain: grain,
+            dither: dither,
+          ),
         ),
       ),
     ),
@@ -71,7 +80,7 @@ void main() {
 
     testWidgets('dither changes pixels by at most one step', (t) async {
       final plain = await _render(t, null);
-      final dithered = await _render(t, OMeshGrain.ditherOnly);
+      final dithered = await _render(t, null, dither: true);
       expect(_differingBytes(plain, dithered), greaterThan(0));
       for (var i = 0; i < plain.length; i++) {
         expect((plain[i] - dithered[i]).abs(), lessThanOrEqualTo(2));
@@ -82,18 +91,18 @@ void main() {
       final plain = await _render(t, null);
       final scattered = await _render(
         t,
-        const OMeshGrain(amount: 0, scatter: 12, dither: false),
+        const OMeshGrain(amount: 0),
       );
       final grainy = await _render(
         t,
-        const OMeshGrain(amount: 0.2, scatter: 0, dither: false),
+        const OMeshGrain(amount: 0.2, scatter: 0),
       );
       expect(_differingBytes(plain, scattered), greaterThan(0));
       expect(_differingBytes(plain, grainy), greaterThan(0));
     });
 
-    testWidgets('the default grain paints without errors', (t) async {
-      await _render(t, const OMeshGrain());
+    testWidgets('default grain with dither paints without errors', (t) async {
+      await _render(t, const OMeshGrain(), dither: true);
       expect(t.takeException(), isNull);
     });
   });
@@ -106,6 +115,7 @@ void main() {
       tessellation: 4,
       debugMode: null,
       grain: const OMeshGrain(),
+      dither: true,
       devicePixelRatio: 2,
     ).dispose();
     provider.dispose();

@@ -3,20 +3,17 @@ import 'package:mesh/mesh.dart';
 
 void main() {
   group('$OMeshGrain', () {
-    test('default turns every effect on', () {
+    test('default turns both effects on', () {
       const grain = OMeshGrain();
       expect(grain.amount, greaterThan(0));
       expect(grain.scatter, greaterThan(0));
-      expect(grain.dither, isTrue);
       expect(grain.isActive, isTrue);
     });
 
-    test('none is inactive and ditherOnly only dithers', () {
+    test('none is inactive', () {
       expect(OMeshGrain.none.isActive, isFalse);
-      expect(OMeshGrain.ditherOnly.isActive, isTrue);
-      expect(OMeshGrain.ditherOnly.amount, 0);
-      expect(OMeshGrain.ditherOnly.scatter, 0);
-      expect(OMeshGrain.ditherOnly.dither, isTrue);
+      expect(OMeshGrain.none.amount, 0);
+      expect(OMeshGrain.none.scatter, 0);
     });
 
     test('equality and hashCode', () {
@@ -30,9 +27,9 @@ void main() {
 
     test('copyWith replaces only the given fields', () {
       const grain = OMeshGrain();
-      final copy = grain.copyWith(amount: 0.2, dither: false);
+      final copy = grain.copyWith(amount: 0.2, shadows: 0.3);
       expect(copy.amount, 0.2);
-      expect(copy.dither, isFalse);
+      expect(copy.shadows, 0.3);
       expect(copy.scatter, grain.scatter);
       expect(copy.seed, grain.seed);
     });
@@ -41,15 +38,13 @@ void main() {
       const a = OMeshGrain.none;
       const b = OMeshGrain(amount: 0.2, scatter: 10, seed: 5);
 
-      test('interpolates amounts and switches discrete fields halfway', () {
+      test('interpolates amounts and switches the seed halfway', () {
         final early = OMeshGrain.lerp(a, b, 0.25)!;
         expect(early.amount, closeTo(0.05, 1e-9));
         expect(early.scatter, closeTo(2.5, 1e-9));
-        expect(early.dither, isFalse);
         expect(early.seed, 0);
 
         final late = OMeshGrain.lerp(a, b, 0.75)!;
-        expect(late.dither, isTrue);
         expect(late.seed, 5);
       });
 

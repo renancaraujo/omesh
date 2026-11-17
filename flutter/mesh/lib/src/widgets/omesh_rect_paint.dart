@@ -19,11 +19,13 @@ class OMeshRectPaint {
     required int tessellation,
     required DebugMode? debugMode,
     OMeshGrain? grain,
+    bool dither = false,
     double devicePixelRatio = 1.0,
   })  : _debugMode = debugMode,
         _tessellation = tessellation,
         _meshRect = meshRect,
         _grain = grain,
+        _dither = dither,
         _devicePixelRatio = devicePixelRatio;
 
   /// The shader provider instance associated with this paint.
@@ -61,7 +63,7 @@ class OMeshRectPaint {
 
   DebugMode? _debugMode;
 
-  /// The grain, scatter and dither applied to the mesh.
+  /// The grain and scatter applied to the mesh.
   ///
   /// Null, or [OMeshGrain.none], draws the mesh exactly as without grain.
   OMeshGrain? get grain => _grain;
@@ -72,6 +74,19 @@ class OMeshRectPaint {
   }
 
   OMeshGrain? _grain;
+
+  /// Whether to add a plus or minus one color step dither that removes
+  /// banding.
+  ///
+  /// {@macro omesh-dither}
+  bool get dither => _dither;
+  set dither(bool value) {
+    if (value == _dither) return;
+    _dither = value;
+    _needsRepaint = true;
+  }
+
+  bool _dither;
 
   /// The number of physical pixels per logical pixel of the target canvas.
   ///
@@ -244,7 +259,7 @@ class OMeshRectPaint {
     // dithered patches are blended onto it before the only rounding to
     // 8 bits. Drawn under the layer, the layer's restore rounds a second
     // time without dither and the bands come back.
-    final backgroundInLayer = grain?.dither ?? false;
+    final backgroundInLayer = dither;
     final backgroundColor = meshRect.backgroundColor;
     if (backgroundColor != null && !backgroundInLayer) {
       canvas.drawRect(rect, Paint()..color = backgroundColor);
@@ -347,7 +362,7 @@ class OMeshRectPaint {
             )
             // Grain uniforms, in omesh.frag order: scatter, dither, seed.
             ..setFloat(grain?.scatter ?? 0)
-            ..setFloat(grain?.dither ?? false ? 1.0 : 0.0)
+            ..setFloat(dither ? 1.0 : 0.0)
             ..setFloat(((grain?.seed ?? 0) % 997).toDouble()),
         ));
   }

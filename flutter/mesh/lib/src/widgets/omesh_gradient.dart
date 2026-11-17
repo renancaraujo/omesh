@@ -52,9 +52,11 @@ import 'package:mesh/mesh.dart';
 /// mesh gradient.
 ///
 /// {@template omesh-grain}
-/// Use [grain] to add film grain, scatter or a dither that removes banding.
-/// See [OMeshGrain]. Null draws the mesh without any of them.
+/// Use [grain] to add film grain or scatter. See [OMeshGrain]. Null draws
+/// the mesh without either.
 /// {@endtemplate}
+///
+/// Use [dither] to remove banding.
 ///
 /// As for sizing, the widget has a default expanding behavior, meaning that if
 /// no size is provided via the [size] parameter, the widget will expand to the
@@ -77,15 +79,31 @@ class OMeshGradient extends StatelessWidget {
     this.size,
     this.addRepaintBoundary,
     this.grain,
+    this.dither = false,
   });
 
   /// The mesh that will be rendered.
   final OMeshRect mesh;
 
-  /// Grain, scatter and dither applied to the mesh.
+  /// Grain and scatter applied to the mesh.
   ///
   /// {@macro omesh-grain}
   final OMeshGrain? grain;
+
+  /// Whether to add a plus or minus one color step dither that removes
+  /// banding.
+  ///
+  /// {@template omesh-dither}
+  /// The dither is added in the mesh shader before colors are rounded to
+  /// 8 bits, so it is invisible at normal contrast but breaks up the
+  /// stair-steps of slow, dark gradients. While it is on, the background
+  /// color is drawn inside the mesh layer.
+  ///
+  /// On Impeller it removes banding on opaque meshes but not on translucent
+  /// ones: Impeller rounds each translucent patch to 8 bits before blending
+  /// it over the background.
+  /// {@endtemplate}
+  final bool dither;
 
   /// The number of vertices that will be interpolated between each
   /// passed vertex.
@@ -120,6 +138,7 @@ class OMeshGradient extends StatelessWidget {
           tessellation: tessellation ?? 12,
           size: size,
           grain: grain,
+          dither: dither,
         );
 
         if (addRepaintBoundary ?? true) {
@@ -207,13 +226,20 @@ class AnimatedOMeshGradient extends StatelessWidget {
     this.debugMode,
     this.size,
     this.grain,
+    this.dither = false,
     super.key,
   });
 
-  /// Grain, scatter and dither applied to the mesh.
+  /// Grain and scatter applied to the mesh.
   ///
   /// {@macro omesh-grain}
   final OMeshGrain? grain;
+
+  /// Whether to add a plus or minus one color step dither that removes
+  /// banding.
+  ///
+  /// {@macro omesh-dither}
+  final bool dither;
 
   /// The mesh that will be rendered.
   final OMeshRect mesh;
@@ -253,6 +279,7 @@ class AnimatedOMeshGradient extends StatelessWidget {
             tessellation: tessellation,
             addRepaintBoundary: false,
             grain: grain,
+            dither: dither,
           );
         },
       ),
@@ -448,10 +475,12 @@ class _OMeshGradient extends StatefulWidget {
     required this.shaderProvider,
     this.size,
     this.grain,
+    this.dither = false,
   });
 
   final OMeshShaderProvider shaderProvider;
   final OMeshGrain? grain;
+  final bool dither;
   final OMeshRect mesh;
   final int tessellation;
   final DebugMode? debugMode;
@@ -468,6 +497,7 @@ class _OMeshGradientState extends State<_OMeshGradient> {
     debugMode: widget.debugMode,
     tessellation: widget.tessellation,
     grain: widget.grain,
+    dither: widget.dither,
   );
 
   @override
@@ -492,6 +522,7 @@ class _OMeshGradientState extends State<_OMeshGradient> {
             ..tessellation = widget.tessellation
             ..debugMode = widget.debugMode
             ..grain = widget.grain
+            ..dither = widget.dither
             ..devicePixelRatio = MediaQuery.maybeDevicePixelRatioOf(context) ??
                 View.maybeOf(context)?.devicePixelRatio ??
                 1.0,
