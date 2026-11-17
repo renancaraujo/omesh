@@ -1,3 +1,7 @@
+# v0.5.1
+
+- fix: avoid blank frame on hero transitions [#36](https://github.com/renancaraujo/omesh/pull/36)
+
 # v0.5.0
 
 - feat: **Breaking** remove deprecated impeller API [#28](https://github.com/renancaraujo/omesh/pull/28)
