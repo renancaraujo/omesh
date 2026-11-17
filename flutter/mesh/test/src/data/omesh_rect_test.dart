@@ -134,6 +134,36 @@ void main() {
         expect(mesh == mesh2, true);
       });
 
+      test('has the same hashCode as an equal mesh', () {
+        final copy = mesh.clone();
+
+        expect(identical(copy.vertices, mesh.vertices), isFalse);
+        expect(copy, mesh);
+        expect(copy.hashCode, mesh.hashCode);
+        expect({mesh, copy}, hasLength(1));
+      });
+
+      test('has the same hashCode for equal vertices and colors', () {
+        OMeshRect build() => OMeshRect(
+              width: 2,
+              height: 2,
+              vertices: [
+                OVertex(0, 0),
+                OVertex(1, 0),
+                OVertex(0, 1),
+                OVertex(1, 1).bezier(north: OVertex(1, 0.5)),
+              ],
+              colors: const [
+                Color(0xFFFF0000),
+                null,
+                Color(0xFF00FF00),
+                Color(0xFF0000FF),
+              ],
+            );
+
+        expect(build().hashCode, build().hashCode);
+      });
+
       test('returns false if the meshes are not equal', () {
         final mesh2 = OMeshRect(
           width: 2,

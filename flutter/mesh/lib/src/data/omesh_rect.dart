@@ -248,14 +248,14 @@ class OMeshRect {
   @override
   int get hashCode {
     return Object.hash(
-      width.hashCode,
-      height.hashCode,
-      fallbackColor.hashCode,
-      backgroundColor.hashCode,
-      vertices.hashCode,
-      colors.hashCode,
-      colorSpace.hashCode,
-      smoothColors.hashCode,
+      width,
+      height,
+      fallbackColor,
+      backgroundColor,
+      Object.hashAll(vertices),
+      Object.hashAll(colors),
+      colorSpace,
+      smoothColors,
     );
   }
 

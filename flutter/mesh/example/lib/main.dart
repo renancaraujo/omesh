@@ -5,7 +5,7 @@ import 'package:example/examples/basic.dart';
 import 'package:example/examples/custom_animation.dart';
 import 'package:example/examples/instrinsic_animation.dart';
 import 'package:example/examples/masking.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:mix/mix.dart';
 import 'package:syntax_highlight/syntax_highlight.dart';
 import 'package:url_launcher/url_launcher.dart';
