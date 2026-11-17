@@ -384,21 +384,53 @@ class _MyWidgetState extends State<MyWidget> with SingleTickerProviderStateMixin
 
 ```
 
-### 5. Grain and dither
+### 5. Grain
 
-Add `grain` for film grain and scatter, and `dither` to remove banding. Both work on `OMeshGradient`, `AnimatedOMeshGradient` and `OMeshRectPaint`:
+Add film grain with `OMeshGrain`. It works on `OMeshGradient`, `AnimatedOMeshGradient` and `OMeshRectPaint`.
+
+Result:
+
+<img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/grain_example.png" width="500">
+
+Code:
 
 ```dart
 OMeshGradient(
   mesh: myMesh,
-  grain: const OMeshGrain(), // grain 0.05, scatter 12 px
+  grain: const OMeshGrain(
+    amount: 0.05, // visible grain; 0 turns it off
+    scatter: 12, // random lookup offset in logical pixels; 0 turns it off
+  ),
+)
+```
+
+| Parameter | Default | What it does |
+| --- | --- | --- |
+| `amount` | `0.05` | Visible grain, as a fraction of full scale. Around 0.05 is subtle, 0.2 is heavy. The mesh is first drawn into an offscreen image, so it costs one extra image and pass per paint. |
+| `scatter` | `12` | Moves each pixel's color lookup by up to this many logical pixels, for a sandy edge between colors. Runs in the mesh shader and costs almost nothing. |
+| `shadows`, `midtones`, `highlights` | `0.6`, `1`, `0.5` | How strong the grain is in dark, middle and bright areas. |
+| `seed` | `0` | Picks a different random pattern. |
+
+`OMeshGrain.none`, or a null `grain`, draws the mesh with no grain.
+
+### 6. Dither
+
+Slow, dark gradients can show bands, because each color channel has only 256 levels. `dither: true` adds plus or minus one color level before colors are rounded, which breaks up the bands. At normal brightness you can't see the dither itself.
+
+Result (brightened 4× to show the bands):
+
+<img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/dither_example.png" width="500">
+
+Code:
+
+```dart
+OMeshGradient(
+  mesh: myMesh,
   dither: true,
 )
 ```
 
-- `dither`: adds plus or minus one color step before colors are rounded. Invisible, and removes banding on slow, dark gradients. On Impeller it works on opaque meshes but not on translucent ones.
-- `OMeshGrain.scatter`: moves each pixel's color lookup by up to this many logical pixels, giving a sandy edge between colors. 0 turns it off.
-- `OMeshGrain.amount`: visible film grain, weighted by brightness with `shadows`, `midtones` and `highlights`. It renders the mesh into an offscreen image first, so it costs an extra image and pass per paint. 0 turns it off.
+Dither and grain are separate, so you can use either one or both. On Impeller, dither removes bands on opaque meshes but not on translucent ones.
 
 ## About impeller
 
@@ -428,6 +460,8 @@ The number of triangles in a mesh can be described by `(width-1) * (height-1) * 
 The default tessellation factor is 12, consider lowering that value for small-sized containers or
 meshes with too many vertices. See below the visual impacts of a change in the tessellation factor.
 
+A grain `amount` above 0 also draws the mesh into an offscreen image on every paint. For animated meshes on slow devices, try `amount: 0` and keep only `scatter`.
+
 ### I see some artifacts when the mesh is distorted
 
 Visible triangles may be caused by not enough tessellation in the mesh. A high tessellation factor gives more
@@ -443,6 +477,12 @@ See below the differences between different tessellation factors (3 and 30):
     <img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/tess_1.png" width="200"> 
     <img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/tess_2.png" width="200">
 </p>
+
+### I see bands in my dark gradient
+
+Turn on `dither: true`. See [Dither](#6-dither).
+
+On Impeller, dither cannot remove bands from translucent meshes, because Impeller rounds each translucent patch to 8 bits before blending it over the background. Use opaque colors (alpha `ff`) where bands show.
 
 ---
 

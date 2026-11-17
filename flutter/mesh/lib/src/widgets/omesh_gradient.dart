@@ -56,7 +56,17 @@ import 'package:mesh/mesh.dart';
 /// the mesh without either.
 /// {@endtemplate}
 ///
-/// Use [dither] to remove banding.
+/// Use [dither] to remove banding. The two work apart or together:
+///
+/// ```dart
+/// OMeshGradient(
+///   mesh: mesh,
+///   // Grain of 5% and a scatter of up to 12 logical pixels.
+///   grain: const OMeshGrain(amount: 0.05, scatter: 12),
+///   // No bands on slow, dark gradients.
+///   dither: true,
+/// )
+/// ```
 ///
 /// As for sizing, the widget has a default expanding behavior, meaning that if
 /// no size is provided via the [size] parameter, the widget will expand to the

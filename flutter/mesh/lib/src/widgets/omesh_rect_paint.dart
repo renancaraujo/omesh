@@ -10,6 +10,29 @@ import 'package:mesh/mesh.dart';
 ///
 /// Useful to render mesh gradients outside of widget contexts, such as
 /// custom paints, flame engine components, and render objects.
+///
+/// Grain and dither work as on [OMeshGradient]. Grain cells follow
+/// physical pixels, so pass the device pixel ratio of the target canvas,
+/// and call [dispose] when done to free the offscreen image the grain uses:
+///
+/// ```dart
+/// final provider = await OMeshShaderProvider.load();
+/// final meshPaint = OMeshRectPaint(
+///   shaderProvider: provider,
+///   meshRect: mesh,
+///   tessellation: 12,
+///   debugMode: null,
+///   grain: const OMeshGrain(),
+///   dither: true,
+///   devicePixelRatio: 2,
+/// );
+///
+/// // In a paint method:
+/// meshPaint.paint(canvas, Offset.zero & size);
+///
+/// // When done:
+/// meshPaint.dispose();
+/// ```
 class OMeshRectPaint {
   /// Creates a new [OMeshRectPaint] with the given [shaderProvider]
   /// and [meshRect],
