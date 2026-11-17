@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mesh/mesh.dart';
@@ -85,11 +83,9 @@ void main() {
       await tester.pump();
       expect(_meshPaint, findsOneWidget);
 
-      unawaited(
-        navigatorKey.currentState!.push(
-          _route<void>(
-            (_) => Center(child: Hero(tag: tag, child: _gradient())),
-          ),
+      navigatorKey.currentState!.push(
+        _route<void>(
+          (_) => Center(child: Hero(tag: tag, child: _gradient())),
         ),
       );
 

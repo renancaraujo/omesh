@@ -5,7 +5,7 @@
 /// the normal ones.
 ///
 /// Have fun.
-library internal_stuff;
+library;
 
 export 'src/internal_stuff/color_mixer.dart';
 export 'src/internal_stuff/rendered_omesh_rect.dart';

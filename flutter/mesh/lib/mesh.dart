@@ -1,5 +1,5 @@
 /// Fast and highly customizable animated mesh gradients for flutter apps
-library mesh;
+library;
 
 export 'src/data/color_space.dart';
 export 'src/data/omesh_rect.dart';

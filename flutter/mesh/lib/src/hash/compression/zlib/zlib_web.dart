@@ -1,3 +1,5 @@
+// archive only exposes its web zlib decoder through src/, and the public
+// API of this platform implementation is documented in zlib.dart.
 // ignore_for_file: implementation_imports, public_member_api_docs
 
 import 'dart:typed_data';

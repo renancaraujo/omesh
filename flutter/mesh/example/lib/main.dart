@@ -367,7 +367,7 @@ class CodeBlock extends StatefulWidget {
 class _CodeBlockState extends State<CodeBlock> {
   static final Future<HighlighterTheme> theme = (() async {
     await Highlighter.initialize(['dart']);
-    return HighlighterTheme.loadDarkTheme();
+    return await HighlighterTheme.loadDarkTheme();
   })();
 
   @override
