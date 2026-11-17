@@ -417,7 +417,7 @@ OMeshGradient(
 
 Slow, dark gradients can show bands, because each color channel has only 256 levels. `dither: true` adds plus or minus one color level before colors are rounded, which breaks up the bands. At normal brightness you can't see the dither itself.
 
-Result (brightened 4× to show the bands):
+Result on a dark, fully opaque mesh. Top: as drawn. Bottom: brightened 4× to show the bands.
 
 <img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/dither_example.png" width="500">
 

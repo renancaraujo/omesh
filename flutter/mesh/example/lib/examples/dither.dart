@@ -9,21 +9,17 @@ OMeshGradient(
   // Removes the bands of slow, dark gradients.
   dither: true,
   mesh: OMeshRect(
-    width: 3,
-    height: 3,
+    width: 2,
+    height: 2,
     vertices: [
-      (0.0, 0.0).v, (0.5, 0.0).v, (1.0, 0.0).v, // Row 1
+      (0.0, 0.0).v, (1.0, 0.0).v, // Row 1
 
-      (0.0, 0.5).v, (0.62, 0.46).v, (1.0, 0.5).v, // Row 2
-
-      (0.0, 1.0).v, (0.5, 1.0).v, (1.0, 1.0).v, // Row 3
+      (0.0, 1.0).v, (1.0, 1.0).v, // Row 2
     ],
     colors: const [
-      Color(0xff07080f), Color(0xff0c0b1c), Color(0xff07080f), // Row 1
+      Color(0xff16141f), Color(0xff1f1a2e), // Row 1
 
-      Color(0xff120d26), Color(0xff2b1a45), Color(0xff160f2c), // Row 2
-
-      Color(0xff07080f), Color(0xff0f0b20), Color(0xff07080f), // Row 3
+      Color(0xff1a1730), Color(0xff2a1f3a), // Row 2
     ],
   ),
 );
@@ -34,15 +30,59 @@ OMeshGradient(
 }
 
 class _DitherUsageState extends State<DitherUsage> {
-  bool dither = false;
+  /// Where the split between the two halves is, from 0 (left) to 1 (right).
+  double split = 0.5;
   bool boost = true;
 
   @override
   Widget build(BuildContext context) {
-    final gradient = OMeshGradient(
-      tessellation: 30,
-      dither: dither,
-      mesh: ditherExampleMesh,
+    final comparison = LayoutBuilder(
+      builder: (context, constraints) {
+        void moveSplit(Offset position) {
+          setState(() {
+            split = (position.dx / constraints.maxWidth).clamp(0.0, 1.0);
+          });
+        }
+
+        return GestureDetector(
+          onTapDown: (details) => moveSplit(details.localPosition),
+          onHorizontalDragUpdate: (details) => moveSplit(details.localPosition),
+          child: MouseRegion(
+            cursor: SystemMouseCursors.resizeColumn,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                OMeshGradient(
+                  tessellation: 20,
+                  mesh: ditherExampleMesh,
+                ),
+                ClipRect(
+                  clipper: _RightOf(split),
+                  child: OMeshGradient(
+                    tessellation: 20,
+                    dither: true,
+                    mesh: ditherExampleMesh,
+                  ),
+                ),
+                Align(
+                  alignment: Alignment(split * 2 - 1, 0),
+                  child: Container(width: 2, color: Colors.white),
+                ),
+                const Positioned(
+                  left: 12,
+                  top: 12,
+                  child: _Label('dither: false'),
+                ),
+                const Positioned(
+                  right: 12,
+                  top: 12,
+                  child: _Label('dither: true'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
 
     return SizedBox(
@@ -53,19 +93,28 @@ class _DitherUsageState extends State<DitherUsage> {
             child: boost
                 ? ColorFiltered(
                     colorFilter: const ColorFilter.matrix(_boost4x),
-                    child: gradient,
+                    child: comparison,
                   )
-                : gradient,
+                : comparison,
           ),
-          _Toggle(
-            label: 'dither',
-            value: dither,
-            onChanged: (value) => setState(() => dither = value),
-          ),
-          _Toggle(
-            label: 'Brighten 4× to show the bands (not part of the API)',
-            value: boost,
-            onChanged: (value) => setState(() => boost = value),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Row(
+              children: [
+                Switch(
+                  value: boost,
+                  onChanged: (value) => setState(() => boost = value),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    'Brighten 4× to show the bands (not part of the API). '
+                    'Drag across the image to compare.',
+                    style: TextStyle(color: Colors.white, fontSize: 14),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -82,53 +131,55 @@ const _boost4x = <double>[
   0, 0, 0, 1, 0, //
 ];
 
-/// A dark, opaque mesh with slow color changes: the case where 8-bit
-/// colors show bands.
+/// A dark, fully opaque mesh with slow color changes: the case where
+/// 8-bit colors show bands.
 final ditherExampleMesh = OMeshRect(
-  width: 3,
-  height: 3,
+  width: 2,
+  height: 2,
   vertices: [
-    (0.0, 0.0).v, (0.5, 0.0).v, (1.0, 0.0).v, // Row 1
+    (0.0, 0.0).v, (1.0, 0.0).v, // Row 1
 
-    (0.0, 0.5).v, (0.62, 0.46).v, (1.0, 0.5).v, // Row 2
-
-    (0.0, 1.0).v, (0.5, 1.0).v, (1.0, 1.0).v, // Row 3
+    (0.0, 1.0).v, (1.0, 1.0).v, // Row 2
   ],
   colors: const [
-    Color(0xff07080f), Color(0xff0c0b1c), Color(0xff07080f), // Row 1
+    Color(0xff16141f), Color(0xff1f1a2e), // Row 1
 
-    Color(0xff120d26), Color(0xff2b1a45), Color(0xff160f2c), // Row 2
-
-    Color(0xff07080f), Color(0xff0f0b20), Color(0xff07080f), // Row 3
+    Color(0xff1a1730), Color(0xff2a1f3a), // Row 2
   ],
 );
 
-class _Toggle extends StatelessWidget {
-  const _Toggle({
-    required this.label,
-    required this.value,
-    required this.onChanged,
-  });
+/// Clips to the part of the box right of [fraction] of its width.
+class _RightOf extends CustomClipper<Rect> {
+  const _RightOf(this.fraction);
 
-  final String label;
-  final bool value;
-  final ValueChanged<bool> onChanged;
+  final double fraction;
+
+  @override
+  Rect getClip(Size size) =>
+      Rect.fromLTRB(size.width * fraction, 0, size.width, size.height);
+
+  @override
+  bool shouldReclip(_RightOf oldClipper) => oldClipper.fraction != fraction;
+}
+
+class _Label extends StatelessWidget {
+  const _Label(this.text);
+
+  final String text;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: Row(
-        children: [
-          Switch(value: value, onChanged: onChanged),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(color: Colors.white, fontSize: 14),
-            ),
-          ),
-        ],
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.black.withAlpha(150),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Text(
+          text,
+          style: const TextStyle(color: Colors.white, fontSize: 13),
+        ),
       ),
     );
   }
