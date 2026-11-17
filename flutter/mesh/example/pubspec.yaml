@@ -8,6 +8,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  material_ui: ^1.11.1
   mesh:
     path: ../
   mix: ^1.4.4
