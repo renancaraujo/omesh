@@ -1,3 +1,8 @@
+# v0.5.2
+
+- fix: render xyY meshes with black or transparent corners [#61](https://github.com/renancaraujo/omesh/pull/61)
+- fix: make OMeshRect.hashCode consistent with == [#58](https://github.com/renancaraujo/omesh/pull/58)
+
 # v0.5.1
 
 - fix: avoid blank frame on hero transitions [#36](https://github.com/renancaraujo/omesh/pull/36)
