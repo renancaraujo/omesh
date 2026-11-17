@@ -30,10 +30,11 @@ if [[ -n "$previous_tag" ]]; then
 fi
 
 # One line per squash-merged PR touching the package, newest first.
-# Dependency bumps and previous release PRs are left out.
+# Changes that do not reach package users (chores, dependency bumps, previous
+# release PRs, CI and test only changes) are left out.
 entries="$(
   git log "$range" --no-merges --format='%s' -- "$package_dir" \
-    | grep -Ev '^chore\(deps\)|^chore: flutter-v' \
+    | grep -Ev '^(chore|ci|test|build|style)(\([^)]*\))?!?: ' \
     | sed -E "s|^(.*) \(#([0-9]+)\)$|- \1 [#\2]($repo_url/pull/\2)|" \
     || true
 )"

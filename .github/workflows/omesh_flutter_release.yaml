@@ -3,6 +3,8 @@ name: flutter release
 # Two steps, mirroring the manual process:
 #   1. "Run workflow" with the new version opens a release PR
 #      (version bump + changelog). Edit the changelog on the PR if needed.
+#      The same PR can be opened from your machine with
+#      `.github/scripts/open_flutter_release_pr.sh <version>`.
 #   2. Merging that PR creates the `flutter-v<version>` tag and the GitHub
 #      release. Pushing the tag triggers the publish workflow.
 #
