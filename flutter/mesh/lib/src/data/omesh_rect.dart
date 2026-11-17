@@ -199,12 +199,16 @@ class OMeshRect {
 
   /// Returns a hash string that represents the mesh.
   ///
+  /// The mesh is encoded with [codec], see [getHashFromMesh] for the
+  /// available options.
   ///
   /// See also:
   /// * [getMeshFromHash], to create a mesh from a hash.
   /// * [OMeshRect.fromHash], to create a mesh from a hash.
-  String getHash() {
-    return getHashFromMesh(this);
+  String getHash({
+    OMeshBinaryFormatCodec codec = OMeshBinaryFormatCodec.v2,
+  }) {
+    return getHashFromMesh(this, codec: codec);
   }
 
   /// Returns a new [OMeshRect] with the given properties.
