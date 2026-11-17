@@ -428,24 +428,6 @@ See below the differences between different tessellation factors (3 and 30):
     <img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/tess_2.png" width="200">
 </p>
 
-### Issues with color space xyY
-
-When using the xyY colorspace you may face issues when setting at least one of the vertices
-to complete black. Like in the second image below:
-
-<p float="left">
-    <img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/xyy_issue1.png" width="200"> 
-    <img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/xyy_issue2.png" width="200">
-</p>
-
-This is expected behavior, as the xyY color space relies on illumination to interpolate colors, black cannot be interpolated.
-
-As a workaround, try to set a minimal value to at least one of the color channels (R, G, or B).
-
-In other words:
-
-`#000000 -> #010101`
-
 ---
 
 If you still have issues, feel free to report them in the Issues tab on [Github](https://github.com/renancaraujo/omesh).

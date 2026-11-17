@@ -23,9 +23,7 @@ enum OMeshColorSpace {
 
   /// Interpolates colors in the CIE xyY color space.
   ///
-  /// This colorspace is very reliant on luminance. Interpolating to and from
-  /// black causes artifacts. Try adding at least a value of 1 to any of the
-  /// color channels (R, G, or B) to avoid this.
+  /// This colorspace is very reliant on luminance.
   ///
   /// https://en.wikipedia.org/wiki/CIE_1931_color_space#CIE_xy_chromaticity_diagram_and_the_CIE_xyY_color_space
   xyY

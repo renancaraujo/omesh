@@ -136,11 +136,17 @@ vec3 xyz_to_rgb(vec3 xyz) {
     return XYZ_2_RGB * xyz;
 }
 
+const vec2 D65_WHITE = vec2(0.3127, 0.3290);
+
 // Converts a color from XYZ to xyY space (Y is luminosity)
 vec3 xyz_to_xyY(vec3 xyz) {
     float Y = xyz.y;
-    float x = xyz.x / (xyz.x + xyz.y + xyz.z);
-    float y = xyz.y / (xyz.x + xyz.y + xyz.z);
+    float sum = xyz.x + xyz.y + xyz.z;
+    if(sum == 0.0) {
+        return vec3(D65_WHITE, Y);
+    }
+    float x = xyz.x / sum;
+    float y = xyz.y / sum;
     return vec3(x, y, Y);
 }
 
