@@ -384,6 +384,25 @@ class _MyWidgetState extends State<MyWidget> with SingleTickerProviderStateMixin
 
 ```
 
+### 5. Grain and dither
+
+Pass an `OMeshGrain` to `OMeshGradient`, `AnimatedOMeshGradient` or `OMeshRectPaint`:
+
+```dart
+OMeshGradient(
+  mesh: myMesh,
+  grain: const OMeshGrain(), // grain 0.05, scatter 12 px, dither on
+)
+```
+
+Each effect is independent and turned off by its zero value:
+
+- `dither`: adds plus or minus one color step before colors are rounded. Invisible, and removes banding on slow, dark gradients. Use `OMeshGrain.ditherOnly` for just this.
+- `scatter`: moves each pixel's color lookup by up to this many logical pixels, giving a sandy edge between colors.
+- `amount`: visible film grain, weighted by brightness with `shadows`, `midtones` and `highlights`. It renders the mesh into an offscreen image first, so it costs an extra image and pass per paint.
+
+On Impeller, `dither` removes banding on opaque meshes but not on translucent ones.
+
 ## About impeller
 
 O'Mesh has had issues when running on the [Impeller Rendering Engine](https://docs.flutter.dev/perf/impeller) in previous versions.

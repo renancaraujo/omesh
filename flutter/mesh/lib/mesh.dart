@@ -2,6 +2,7 @@
 library;
 
 export 'src/data/color_space.dart';
+export 'src/data/omesh_grain.dart';
 export 'src/data/omesh_rect.dart';
 export 'src/data/overtex.dart';
 export 'src/widgets/debug_mode.dart';

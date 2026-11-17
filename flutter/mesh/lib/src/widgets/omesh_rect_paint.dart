@@ -2,9 +2,6 @@ import 'dart:ui';
 
 import 'package:cached_value/cached_value.dart';
 
-import 'package:flutter/rendering.dart'
-    show BlendMode, Canvas, Color, Paint, Rect;
-
 import 'package:flutter_shaders/flutter_shaders.dart';
 import 'package:mesh/internal_stuff.dart';
 import 'package:mesh/mesh.dart';
@@ -21,9 +18,13 @@ class OMeshRectPaint {
     required OMeshRect meshRect,
     required int tessellation,
     required DebugMode? debugMode,
+    OMeshGrain? grain,
+    double devicePixelRatio = 1.0,
   })  : _debugMode = debugMode,
         _tessellation = tessellation,
-        _meshRect = meshRect;
+        _meshRect = meshRect,
+        _grain = grain,
+        _devicePixelRatio = devicePixelRatio;
 
   /// The shader provider instance associated with this paint.
   final OMeshShaderProvider shaderProvider;
@@ -59,6 +60,43 @@ class OMeshRectPaint {
   }
 
   DebugMode? _debugMode;
+
+  /// The grain, scatter and dither applied to the mesh.
+  ///
+  /// Null, or [OMeshGrain.none], draws the mesh exactly as without grain.
+  OMeshGrain? get grain => _grain;
+  set grain(OMeshGrain? value) {
+    if (value == _grain) return;
+    _grain = value;
+    _needsRepaint = true;
+  }
+
+  OMeshGrain? _grain;
+
+  /// The number of physical pixels per logical pixel of the target canvas.
+  ///
+  /// Used to draw [OMeshGrain.amount] grain at one cell per physical pixel.
+  /// A canvas does not carry this value, so widgets pass
+  /// `MediaQuery.devicePixelRatioOf(context)`. Defaults to 1.
+  double get devicePixelRatio => _devicePixelRatio;
+  set devicePixelRatio(double value) {
+    if (value == _devicePixelRatio) return;
+    _devicePixelRatio = value;
+    _needsRepaint = true;
+  }
+
+  double _devicePixelRatio;
+
+  /// The offscreen image of the mesh used to draw grain over it.
+  Image? _grainImage;
+
+  /// Releases the offscreen image used for grain.
+  ///
+  /// Call it when this paint is no longer used.
+  void dispose() {
+    _grainImage?.dispose();
+    _grainImage = null;
+  }
 
   /// Whether the mesh needs to be repainted.
   bool get needsRepaint => _needsRepaint;
@@ -154,14 +192,62 @@ class OMeshRectPaint {
 
   /// Paints the mesh into the given [canvas] and [rect].
   void paint(Canvas canvas, Rect rect) {
+    final grain = this.grain;
+    final grainShader = shaderProvider.grainShader;
+    final dpr = devicePixelRatio;
+    final width = (rect.width * dpr).ceil();
+    final height = (rect.height * dpr).ceil();
+    if (grain == null ||
+        grain.amount <= 0 ||
+        grainShader == null ||
+        width <= 0 ||
+        height <= 0) {
+      _paintMesh(canvas, rect);
+      return;
+    }
+
+    // Visible grain: render the mesh into an image at physical resolution,
+    // then draw that image through the grain shader.
+    final recorder = PictureRecorder();
+    _paintMesh(Canvas(recorder)..scale(dpr), Offset.zero & rect.size);
+    final picture = recorder.endRecording();
+    final image = picture.toImageSync(width, height);
+    picture.dispose();
+    _grainImage?.dispose();
+    _grainImage = image;
+
+    grainShader
+      ..setFloat(0, rect.width)
+      ..setFloat(1, rect.height)
+      ..setFloat(2, rect.left)
+      ..setFloat(3, rect.top)
+      ..setFloat(4, dpr)
+      ..setFloat(5, grain.amount)
+      ..setFloat(6, grain.shadows)
+      ..setFloat(7, grain.midtones)
+      ..setFloat(8, grain.highlights)
+      ..setFloat(9, (grain.seed % 997).toDouble())
+      ..setImageSampler(0, image);
+    canvas.drawRect(
+      rect,
+      Paint()
+        ..shader = grainShader
+        ..isAntiAlias = false,
+    );
+  }
+
+  /// Paints the mesh itself, without visible grain, into [canvas] at [rect].
+  void _paintMesh(Canvas canvas, Rect rect) {
     _needsRepaint = false;
 
-    // Background color
-    if (meshRect.backgroundColor != null) {
-      canvas.drawRect(
-        rect,
-        Paint()..color = meshRect.backgroundColor!,
-      );
+    // With dither on, the background is drawn inside the layer, so the
+    // dithered patches are blended onto it before the only rounding to
+    // 8 bits. Drawn under the layer, the layer's restore rounds a second
+    // time without dither and the bands come back.
+    final backgroundInLayer = grain?.dither ?? false;
+    final backgroundColor = meshRect.backgroundColor;
+    if (backgroundColor != null && !backgroundInLayer) {
+      canvas.drawRect(rect, Paint()..color = backgroundColor);
     }
 
     // Extract the current texture vertices, patches and vertex colors
@@ -185,6 +271,9 @@ class OMeshRectPaint {
       rect,
       Paint(),
     );
+    if (backgroundColor != null && backgroundInLayer) {
+      canvas.drawRect(rect, Paint()..color = backgroundColor);
+    }
 
     // Draw each patch one at a time.
     for (final tuple in patches.reversed.indexed) {
@@ -255,7 +344,11 @@ class OMeshRectPaint {
             ..setColorSpace(meshRect.colorSpace)
             ..setFloat(
               debugMode?.enableDots ?? false ? tessellation.toDouble() : 0.0,
-            ),
+            )
+            // Grain uniforms, in omesh.frag order: scatter, dither, seed.
+            ..setFloat(grain?.scatter ?? 0)
+            ..setFloat(grain?.dither ?? false ? 1.0 : 0.0)
+            ..setFloat(((grain?.seed ?? 0) % 997).toDouble()),
         ));
   }
 }
