@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:archive/archive.dart' show Deflate, DeflateLevel, Inflate;
+import 'package:archive/archive.dart'
+    show Deflate, DeflateLevel, Inflate, ZLibDecoderWeb, ZLibEncoderWeb;
 import 'package:mesh/mesh.dart';
-import 'package:mesh/src/hash/compression/zlib/zlib.dart' as zlib;
 import 'package:mesh/src/hash/omesh_codec.dart';
 
 const _kPrefix = 'OM:';
@@ -60,12 +60,23 @@ OMeshRect getMeshFromHash(String hash) {
 }
 
 /// v1 hashes are the whole binary format, zlib compressed.
+///
+/// Compression always uses the pure Dart implementation from `archive`, even
+/// where `dart:io` is available, so that the same mesh yields the same hash
+/// on every platform. The native zlib bundled with the Dart VM is optimized
+/// differently than the reference algorithm, so its output cannot be
+/// reproduced on the web, and may vary across CPUs and SDK versions.
 Uint8List _packV1(Uint8List bytes) {
-  return Uint8List.fromList(zlib.zlibCompress(bytes));
+  return const ZLibEncoderWeb().encodeBytes(bytes);
 }
 
+/// Accepts any valid zlib stream, including the ones written by the native
+/// zlib of previous versions of this package.
+///
+/// The checksum is verified so that corrupted hashes throw a
+/// [FormatException] on every platform.
 Uint8List _unpackV1(Uint8List packed) {
-  return Uint8List.fromList(zlib.zlibDecompress(packed));
+  return const ZLibDecoderWeb().decodeBytes(packed, verify: true);
 }
 
 /// v2 and later hashes have a header byte with the spec version in the

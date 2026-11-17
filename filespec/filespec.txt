@@ -24,6 +24,11 @@ Legacy hashes (spec version 1) are instead:
 - base64url without padding of the whole v1 binary format, zlib (RFC 1950)
   compressed
 
+Different DEFLATE implementations compress the same data to different bytes,
+so decoders accept any valid stream. To produce the same hash on every
+platform, the Dart encoder always uses the pure Dart DEFLATE from the archive
+package (bestCompression for v2 and level 6 for v1), never the native zlib.
+
 Decoders tell them apart by the first byte: a legacy hash starts with a zlib
 header (low nibble is 8 and (byte0 * 256 + byte1) % 31 == 0), which a v2 (H)
 never matches. Spec versions whose low nibble is 8 are reserved for that
