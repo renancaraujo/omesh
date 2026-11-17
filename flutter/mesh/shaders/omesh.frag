@@ -25,6 +25,9 @@ uniform float uBias10;
 uniform float uBias11;
 uniform float uInterpolationMode;
 uniform float uDebugMode;
+uniform float uGrainScatter; // max color-lookup jitter in px (0 = off)
+uniform float uDitherLsb;    // TPDF dither in 8-bit steps, not scaled by alpha (0 = off)
+uniform float uGrainSeed;    // [0, 1000)
 
 out vec4 fragColor;
 
@@ -245,6 +248,10 @@ float smoothOperator(float x) {
 void fragment(vec2 uv, vec2 pos, inout vec4 color) {
     float hasSoroundingBias = uBias00 + uBias01 + uBias10 + uBias11;
     vec2 uvInSquare = (uv - uv00) / (uv11 - uv00);
+    if(uGrainScatter > 0.0) {
+        // Jittered lookups near a patch edge must not extrapolate past it.
+        uvInSquare = clamp(uvInSquare, 0.0, 1.0);
+    }
 
     vec4 a;
     vec4 b;
@@ -283,14 +290,41 @@ void debugMode(vec2 uv, vec2 pos, inout vec4 color) {
     }
 }
 
+// Dave Hoskins, "Hash without Sine" (MIT). Float-only: SkSL / GLES 1.00 safe.
+vec3 grainHash33(vec3 p3) {
+    p3 = fract(p3 * vec3(0.1031, 0.1030, 0.0973));
+    p3 += dot(p3, p3.yxz + 33.33);
+    return fract((p3.xxy + p3.yxx) * p3.zyx);
+}
+// Jorge Jimenez, Interleaved Gradient Noise (SIGGRAPH 2014).
+float grainIgn(vec2 p) {
+    return fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715))));
+}
+// Uniform [0,1) -> triangular PDF [-1,1].
+float toTriangular(float v) {
+    float o = v * 2.0 - 1.0;
+    return sign(o) * (1.0 - sqrt(1.0 - abs(o)));
+}
+
 void main() {
     vec2 pos = FlutterFragCoord().xy;
-    vec2 uv = pos / uSize;
+    vec2 lookup = pos;
+    if(uGrainScatter > 0.0) {
+        vec3 h = grainHash33(vec3(mod(floor(pos), 4096.0), uGrainSeed + 0.5));
+        lookup += vec2(toTriangular(h.x), toTriangular(h.y)) * uGrainScatter;
+    }
+    vec2 uv = lookup / uSize;
     vec4 color;
 
-    fragment(uv, pos, color);
+    fragment(uv, lookup, color);
     if(uDebugMode > 0.0) {
         debugMode(uv, pos, color);
+    }
+    if(uDitherLsb > 0.0) {
+        // Last, and not scaled by alpha: it targets the 8-bit premultiplied store.
+        vec2 dcell = mod(floor(pos), 4096.0) + 5.588238 * mod(uGrainSeed, 64.0);
+        float d = toTriangular(grainIgn(dcell));
+        color.rgb = clamp(color.rgb + d * uDitherLsb / 255.0, vec3(0.0), vec3(color.a));
     }
     fragColor = color;
 }
