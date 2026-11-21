@@ -4,24 +4,35 @@
 import 'dart:typed_data';
 import 'dart:ui' show VertexMode, Vertices;
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:mesh/internal_stuff.dart';
 
 class TessellatedMesh {
   TessellatedMesh({
-    required this.tessellation,
-  })  : assert(tessellation > 0, 'tessellation must be positive'),
+    required int tessellation,
+  })  : tessellation = RangeError.checkValueInInterval(
+          tessellation,
+          minTessellation,
+          maxTessellation,
+          'tessellation',
+        ),
         _weights = _BernsteinWeights(tessellation),
         _indices = _gridIndices(tessellation),
-        _positions = Float32List((tessellation + 1) * (tessellation + 1) * 2),
-        _textureCoordinates =
-            Float32List((tessellation + 1) * (tessellation + 1) * 2);
+        _positions = Float32List((tessellation + 1) * (tessellation + 1) * 2);
+
+  static const minTessellation = 1;
+
+  static const maxTessellation = 254;
 
   final int tessellation;
 
   final _BernsteinWeights _weights;
-  final Uint16List? _indices;
+  final Uint16List _indices;
   final Float32List _positions;
-  final Float32List _textureCoordinates;
+  Float32List? _textureCoordinates;
+
+  @visibleForTesting
+  Uint16List get debugIndices => _indices;
 
   int get floatsPerPatch => _positions.length;
 
@@ -53,26 +64,18 @@ class TessellatedMesh {
       output: _positions,
     );
 
-    final indices = _indices;
-    if (indices != null) {
-      return Vertices.raw(
-        VertexMode.triangles,
-        _positions,
-        textureCoordinates: textureCoordinates,
-        indices: indices,
-      );
-    }
-
     return Vertices.raw(
       VertexMode.triangles,
-      _expandTriangles(_positions),
-      textureCoordinates: _expandTriangles(textureCoordinates),
+      _positions,
+      textureCoordinates: textureCoordinates,
+      indices: _indices,
     );
   }
 
   /// Returns a [Vertices] object with the given
-  /// [cornerIndices], [verticesMesh], [textureMesh],
-  /// and [tessellation].
+  /// [cornerIndices], [verticesMesh] and [textureMesh].
+  ///
+  /// [tessellation] must match the one this mesh was created with.
   Vertices getTessellatedVerticesForPatch({
     required List<int> cornerIndices,
     required RenderedOMeshRect verticesMesh,
@@ -83,15 +86,17 @@ class TessellatedMesh {
       tessellation == this.tessellation,
       'tessellation must match the one this mesh was created with',
     );
+    final textureCoordinates =
+        _textureCoordinates ??= Float32List(_positions.length);
     writePatchGrid(
       cornerIndices: cornerIndices,
       mesh: textureMesh,
-      output: _textureCoordinates,
+      output: textureCoordinates,
     );
     return getVerticesForPatch(
       cornerIndices: cornerIndices,
       verticesMesh: verticesMesh,
-      textureCoordinates: _textureCoordinates,
+      textureCoordinates: textureCoordinates,
     );
   }
 
@@ -165,29 +170,8 @@ class TessellatedMesh {
     }
   }
 
-  Float32List _expandTriangles(Float32List grid) {
+  static Uint16List _gridIndices(int tessellation) {
     final side = tessellation + 1;
-    final output = Float32List(tessellation * tessellation * 12);
-    var o = 0;
-    for (var row = 0; row < tessellation; row++) {
-      for (var col = 0; col < tessellation; col++) {
-        final topLeft = row * side + col;
-        for (final point in [
-          topLeft, topLeft + 1, topLeft + side + 1, //
-          topLeft, topLeft + side, topLeft + side + 1, //
-        ]) {
-          output[o++] = grid[point * 2];
-          output[o++] = grid[point * 2 + 1];
-        }
-      }
-    }
-    return output;
-  }
-
-  static Uint16List? _gridIndices(int tessellation) {
-    final side = tessellation + 1;
-    if (side * side > 1 << 16) return null;
-
     final indices = Uint16List(tessellation * tessellation * 6);
     var i = 0;
     for (var row = 0; row < tessellation; row++) {

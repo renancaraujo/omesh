@@ -38,7 +38,7 @@ class MaskingUsage extends StatelessWidget {
       child: SizedBox(
         height: 500,
         child: OMeshGradient(
-          tessellation: 30,
+          tessellation: 20,
           addRepaintBoundary: false,
           mesh: OMeshRect(
             width: 3,

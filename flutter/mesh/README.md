@@ -410,7 +410,7 @@ This may be caused by too many triangles in your mesh
 The number of triangles in a mesh can be described by `(width-1) * (height-1) * (tessellationFactor ^ 2) * 2`.
 
 The default tessellation factor is 12, consider lowering that value for small-sized containers or
-meshes with too many vertices. See below the visual impacts of a change in the tessellation factor.
+meshes with too many vertices. It must be at least 1, and values above 20 are painted with 20. See below the visual impacts of a change in the tessellation factor.
 
 ### I see some artifacts when the mesh is distorted
 
@@ -421,7 +421,7 @@ This, of course, may not be true for all mesh gradient designs and screen sizes.
 curves, consider raising the tessellation factor, if the target devices can take the extra performance toll when
 animation.
 
-See below the differences between different tessellation factors (3 and 30):
+See below the differences between a low and a high tessellation factor:
 
 <p float="left">
     <img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/tess_1.png" width="200"> 

@@ -105,19 +105,51 @@ void main() {
       expect(grid[tessellated.floatsPerPatch], rendered.vertices[0].p.dx);
     });
 
-    test('builds vertices with and without 16 bit indices', () {
-      for (final tessellation in [12, 300]) {
-        final tessellated = TessellatedMesh(tessellation: tessellation);
-        expect(
-          () => tessellated.getTessellatedVerticesForPatch(
-            cornerIndices: const [0, 1, 3, 4],
-            verticesMesh: rendered,
-            textureMesh: rendered,
-            tessellation: tessellation,
-          ).dispose(),
-          returnsNormally,
-        );
-      }
+    test('draws each quad as two triangles sharing its main diagonal', () {
+      expect(TessellatedMesh(tessellation: 1).debugIndices, [0, 1, 3, 0, 2, 3]);
+      expect(TessellatedMesh(tessellation: 2).debugIndices, [
+        0, 1, 4, 0, 3, 4, //
+        1, 2, 5, 1, 4, 5, //
+        3, 4, 7, 3, 6, 7, //
+        4, 5, 8, 4, 7, 8, //
+      ]);
+    });
+
+    test('accepts tessellations from 1 to 254', () {
+      expect(() => TessellatedMesh(tessellation: 0), throwsRangeError);
+      expect(() => TessellatedMesh(tessellation: -1), throwsRangeError);
+      expect(() => TessellatedMesh(tessellation: 255), throwsRangeError);
+
+      final indices = TessellatedMesh(tessellation: 254).debugIndices;
+      expect(indices.length, 254 * 254 * 6);
+      expect(indices.reduce((a, b) => a > b ? a : b), 255 * 255 - 1);
+      expect(indices, isNot(contains(0xFFFF)));
+    });
+
+    test('the legacy method builds vertices', () {
+      final tessellated = TessellatedMesh(tessellation: 12);
+      expect(
+        () => tessellated.getTessellatedVerticesForPatch(
+          cornerIndices: const [0, 1, 3, 4],
+          verticesMesh: rendered,
+          textureMesh: rendered,
+          tessellation: 12,
+        ).dispose(),
+        returnsNormally,
+      );
+    });
+
+    test('the legacy method rejects another tessellation', () {
+      final tessellated = TessellatedMesh(tessellation: 12);
+      expect(
+        () => tessellated.getTessellatedVerticesForPatch(
+          cornerIndices: const [0, 1, 3, 4],
+          verticesMesh: rendered,
+          textureMesh: rendered,
+          tessellation: 8,
+        ),
+        throwsAssertionError,
+      );
     });
   });
 }
