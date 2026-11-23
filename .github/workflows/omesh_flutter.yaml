@@ -51,5 +51,7 @@ jobs:
         run: flutter analyze lib test
       - name: test
         run: flutter test
+      - name: test hashes on the web
+        run: flutter test --platform chrome test/src/hash
       - name: format
         run: dart format --set-exit-if-changed .

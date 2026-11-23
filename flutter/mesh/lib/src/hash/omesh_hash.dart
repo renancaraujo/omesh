@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:archive/archive.dart' show ZLibDecoderWeb, ZLibEncoderWeb;
 import 'package:mesh/mesh.dart';
-import 'package:mesh/src/hash/compression/zlib/zlib.dart' as zlib;
 import 'package:mesh/src/hash/omesh_codec.dart';
 
 const _kPrefix = 'OM:';
@@ -22,7 +22,7 @@ const _kPrefix = 'OM:';
 /// into a unpadded base64 string.
 String getHashFromMesh(OMeshRect mesh) {
   final bytes = OMeshBinaryFormatCodec.v1.encoder.convert(mesh);
-  final compressed = zlib.zlibCompress(Uint8List.fromList(bytes));
+  final compressed = _packV1(bytes);
   final hash = base64Url.encode(compressed);
   final unpaded = _removePadding(hash);
   final prefixed = '$_kPrefix$unpaded';
@@ -49,11 +49,29 @@ OMeshRect getMeshFromHash(String hash) {
   final unprefixied = hash.substring(_kPrefix.length);
   final paddedHash = _addPadding(unprefixied);
   final compressed = base64Url.decode(paddedHash);
-  final bytes = zlib.zlibDecompress(compressed);
-  final layers = OMeshBinaryFormatCodec.v1.decoder.convert(
-    Uint8List.fromList(bytes),
-  );
+  final bytes = _unpackV1(compressed);
+  final layers = OMeshBinaryFormatCodec.v1.decoder.convert(bytes);
   return layers;
+}
+
+/// v1 hashes are the whole binary format, zlib compressed.
+///
+/// Compression always uses the pure Dart implementation from `archive`, even
+/// where `dart:io` is available, so that the same mesh yields the same hash
+/// on every platform. The native zlib bundled with the Dart VM is optimized
+/// differently than the reference algorithm, so its output cannot be
+/// reproduced on the web, and may vary across CPUs and SDK versions.
+Uint8List _packV1(Uint8List bytes) {
+  return const ZLibEncoderWeb().encodeBytes(bytes);
+}
+
+/// Accepts any valid zlib stream, including the ones written by the native
+/// zlib of previous versions of this package.
+///
+/// The checksum is verified so that corrupted hashes throw a
+/// [FormatException] on every platform.
+Uint8List _unpackV1(Uint8List packed) {
+  return const ZLibDecoderWeb().decodeBytes(packed, verify: true);
 }
 
 String _removePadding(String base64String) {

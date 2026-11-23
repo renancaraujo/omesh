@@ -41,3 +41,14 @@
 - green:4B
 - blue:4B
 - alpha:4B
+
+# Hash
+
+- prefix:"OM:"
+- base64url without padding of the whole binary format, zlib (RFC 1950)
+  compressed
+
+Different DEFLATE implementations compress the same data to different bytes,
+so decoders accept any valid stream. To produce the same hash on every
+platform, the Dart encoder always uses the pure Dart DEFLATE from the archive
+package (level 6), never the native zlib.
