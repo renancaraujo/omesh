@@ -60,6 +60,19 @@ import 'package:mesh/mesh.dart';
 /// OMeshGradient(mesh: mesh, dither: false)
 /// ```
 ///
+/// {@template omesh-grain}
+/// Use [grain] to add film grain or scatter. See [OMeshGrain]. Null draws
+/// the mesh without either.
+/// {@endtemplate}
+///
+/// ```dart
+/// OMeshGradient(
+///   mesh: mesh,
+///   // Grain of 5% and a scatter of up to 12 logical pixels.
+///   grain: const OMeshGrain(amount: 0.05, scatter: 12),
+/// )
+/// ```
+///
 /// As for sizing, the widget has a default expanding behavior, meaning that if
 /// no size is provided via the [size] parameter, the widget will expand to the
 /// maximum size of the parent constraints. To change to a growing behavior,
@@ -81,6 +94,7 @@ class OMeshGradient extends StatelessWidget {
     this.size,
     this.addRepaintBoundary,
     this.dither = true,
+    this.grain,
   }) : assert(
           tessellation == null || tessellation >= 1,
           'tessellation must be at least 1',
@@ -105,6 +119,11 @@ class OMeshGradient extends StatelessWidget {
   /// it over the background.
   /// {@endtemplate}
   final bool dither;
+
+  /// Grain and scatter applied to the mesh.
+  ///
+  /// {@macro omesh-grain}
+  final OMeshGrain? grain;
 
   /// The number of vertices that will be interpolated between each
   /// passed vertex.
@@ -139,6 +158,7 @@ class OMeshGradient extends StatelessWidget {
           tessellation: tessellation ?? 12,
           size: size,
           dither: dither,
+          grain: grain,
         );
 
         if (addRepaintBoundary ?? true) {
@@ -226,11 +246,17 @@ class AnimatedOMeshGradient extends StatelessWidget {
     this.debugMode,
     this.size,
     this.dither = true,
+    this.grain,
     super.key,
   }) : assert(
           tessellation == null || tessellation >= 1,
           'tessellation must be at least 1',
         );
+
+  /// Grain and scatter applied to the mesh.
+  ///
+  /// {@macro omesh-grain}
+  final OMeshGrain? grain;
 
   /// The mesh that will be rendered.
   final OMeshRect mesh;
@@ -276,6 +302,7 @@ class AnimatedOMeshGradient extends StatelessWidget {
             tessellation: tessellation,
             addRepaintBoundary: false,
             dither: dither,
+            grain: grain,
           );
         },
       ),
@@ -297,22 +324,66 @@ class AnimatedOMeshGradient extends StatelessWidget {
 /// Avoid sharing instances of this class between different
 /// mesh gradient areas.
 class OMeshShaderProvider {
-  OMeshShaderProvider._(this._program);
+  OMeshShaderProvider._(this._program, this._grainProgram);
 
   /// Loads the shader provider. It will resolve after
   /// the [FragmentProgram] is loaded.
   static Future<OMeshShaderProvider> load() async {
-    return OMeshShaderProvider._(await _loadProgram());
+    final program = await _loadProgram();
+    final grainProgram = await _loadGrainProgram();
+    return OMeshShaderProvider._(program, grainProgram);
   }
 
   static FragmentProgram? _programCache;
 
+  static FragmentProgram? _grainProgramCache;
+  static bool _grainProgramLoaded = false;
+
   static OMeshShaderProvider? _loadFromCache() {
     final program = _programCache;
-    if (program == null) {
+    if (program == null || !_grainProgramLoaded) {
       return null;
     }
-    return OMeshShaderProvider._(program);
+    return OMeshShaderProvider._(program, _grainProgramCache);
+  }
+
+  static const _grainAssetKeys = [
+    'packages/mesh/shaders/omesh_grain_post.frag',
+    'shaders/omesh_grain_post.frag',
+  ];
+
+  /// Loads the grain shader. A failure is reported once and disables
+  /// visible grain; the mesh itself still draws.
+  static Future<FragmentProgram?> _loadGrainProgram() async {
+    if (_grainProgramLoaded) {
+      return _grainProgramCache;
+    }
+
+    Object? firstError;
+    StackTrace? firstStackTrace;
+    for (final assetKey in _grainAssetKeys) {
+      try {
+        _grainProgramCache = await FragmentProgram.fromAsset(assetKey);
+        _grainProgramLoaded = true;
+        return _grainProgramCache;
+      } catch (error, stackTrace) {
+        firstError ??= error;
+        firstStackTrace ??= stackTrace;
+      }
+    }
+
+    _grainProgramLoaded = true;
+    FlutterError.reportError(
+      FlutterErrorDetails(
+        exception: firstError!,
+        stack: firstStackTrace,
+        library: 'mesh',
+        context: ErrorDescription(
+          'while loading the grain shader; OMeshGrain.amount is ignored',
+        ),
+      ),
+    );
+    return null;
   }
 
   static const _assetKeys = [
@@ -345,7 +416,16 @@ class OMeshShaderProvider {
 
   final FragmentProgram _program;
 
+  final FragmentProgram? _grainProgram;
+
   final Map<int, FragmentShader> _shaders = {};
+
+  FragmentShader? _grainShader;
+
+  /// The shader that draws grain over the finished mesh, or null if it
+  /// could not be loaded.
+  FragmentShader? get grainShader =>
+      _grainShader ??= _grainProgram?.fragmentShader();
 
   /// Returns the shader for the given patch index.
   FragmentShader getShaderFor(int index) {
@@ -357,6 +437,8 @@ class OMeshShaderProvider {
     for (final shader in _shaders.values) {
       shader.dispose();
     }
+    _grainShader?.dispose();
+    _grainShader = null;
   }
 }
 
@@ -416,10 +498,12 @@ class _OMeshGradient extends StatefulWidget {
     required this.shaderProvider,
     required this.dither,
     this.size,
+    this.grain,
   });
 
   final OMeshShaderProvider shaderProvider;
   final bool dither;
+  final OMeshGrain? grain;
   final OMeshRect mesh;
   final int tessellation;
   final DebugMode? debugMode;
@@ -436,12 +520,19 @@ class _OMeshGradientState extends State<_OMeshGradient> {
     debugMode: widget.debugMode,
     tessellation: widget.tessellation,
     dither: widget.dither,
+    grain: widget.grain,
   );
 
   @override
   void reassemble() {
     super.reassemble();
     draw.markNeedsRepaint();
+  }
+
+  @override
+  void dispose() {
+    draw.dispose();
+    super.dispose();
   }
 
   @override
@@ -453,7 +544,11 @@ class _OMeshGradientState extends State<_OMeshGradient> {
             ..meshRect = widget.mesh
             ..tessellation = widget.tessellation
             ..debugMode = widget.debugMode
-            ..dither = widget.dither,
+            ..dither = widget.dither
+            ..grain = widget.grain
+            ..devicePixelRatio = MediaQuery.maybeDevicePixelRatioOf(context) ??
+                View.maybeOf(context)?.devicePixelRatio ??
+                1.0,
         ),
         isComplex: draw.tessellation > 2,
         willChange: draw.needsRepaint,
