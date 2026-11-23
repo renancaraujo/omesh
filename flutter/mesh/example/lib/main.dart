@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:example/examples/advanced.dart';
 import 'package:example/examples/basic.dart';
 import 'package:example/examples/custom_animation.dart';
+import 'package:example/examples/dither.dart';
 import 'package:example/examples/instrinsic_animation.dart';
 import 'package:example/examples/masking.dart';
 import 'package:material_ui/material_ui.dart';
@@ -51,6 +52,13 @@ An example to illustrate animation from an animation controller.''',
     title: 'Masking Usage',
     description: 'A simple example how to apply WidgetMask to OMeshGradient',
     code: MaskingUsage.code,
+  ),
+  dither(
+    view: DitherUsage(),
+    title: 'Dither',
+    description: '''
+dither: true removes the bands of slow, dark gradients. It adds plus or minus one color step before colors are rounded to 8 bits, so it is invisible at normal brightness. Drag across the image to compare dither off (left) and on (right). On Impeller, dither removes banding on opaque meshes but not on translucent ones.''',
+    code: DitherUsage.code,
   ),
   ;
 
@@ -103,7 +111,7 @@ class _MainState extends State<Main> {
                 style: Style(
                   $box.alignment.center(),
                   $box.width(145),
-                  $box.maxHeight(180),
+                  $box.maxHeight(216),
                   $box.borderRadius.topRight(16),
                   $box.borderRadius.bottomRight(16),
                   $box.padding(8),

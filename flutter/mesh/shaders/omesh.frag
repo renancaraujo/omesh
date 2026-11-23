@@ -25,6 +25,7 @@ uniform float uBias10;
 uniform float uBias11;
 uniform float uInterpolationMode;
 uniform float uDebugMode;
+uniform float uDitherLsb; // TPDF dither in 8-bit steps, not scaled by alpha (0 = off)
 
 out vec4 fragColor;
 
@@ -283,6 +284,16 @@ void debugMode(vec2 uv, vec2 pos, inout vec4 color) {
     }
 }
 
+// Jorge Jimenez, Interleaved Gradient Noise (SIGGRAPH 2014).
+float ditherIgn(vec2 p) {
+    return fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715))));
+}
+// Uniform [0,1) -> triangular PDF [-1,1].
+float toTriangular(float v) {
+    float o = v * 2.0 - 1.0;
+    return sign(o) * (1.0 - sqrt(1.0 - abs(o)));
+}
+
 void main() {
     vec2 pos = FlutterFragCoord().xy;
     vec2 uv = pos / uSize;
@@ -291,6 +302,11 @@ void main() {
     fragment(uv, pos, color);
     if(uDebugMode > 0.0) {
         debugMode(uv, pos, color);
+    }
+    if(uDitherLsb > 0.0) {
+        // Last, and not scaled by alpha: it targets the 8-bit premultiplied store.
+        float d = toTriangular(ditherIgn(mod(floor(pos), 4096.0)));
+        color.rgb = clamp(color.rgb + d * uDitherLsb / 255.0, vec3(0.0), vec3(color.a));
     }
     fragColor = color;
 }
