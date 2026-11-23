@@ -1,43 +1,120 @@
 # File spec for O'Mesh:
 
-- filespec version:1B
+Notation:
+- B: bytes, b: bits.
+- Multi-byte numbers are big-endian. Floats are IEEE 754.
+- varint: unsigned LEB128, 7 bits per byte, least significant group first,
+  highest bit set on every byte but the last.
+- zz: signed integer, zigzag mapped (0, -1, 1, -2, 2 => 0, 1, 2, 3, 4) and
+  written as a varint.
+- Vertices are listed row by row, from the top-left corner.
+
+# Binary format v2
+
+- spec version:1B (2)
+- mesh:R2
+
+(R2) Rectangular mesh:
+- (w)width:1B (2..40)
+- (h)height:1B (2..40)
+- flags:1B
+  - bits 0-2: mesh color space (0 linear, 1 lab, 2 xyY)
+  - bit 3: smoothColors
+  - bit 4: presence of fallback color
+  - bit 5: presence of background color
+  - bits 6-7: reserved (0)
+- (k)number mode:1B
+  - 0..9: coordinates are decimals with k fractional digits
+  - 0xFF: coordinates are float64
+- (n,e,s,w)presence of control points:ceil(w*h/2)B
+  - 4b per vertex: bit 0 north, bit 1 east, bit 2 south, bit 3 west
+  - vertex 2i in the low nibble, vertex 2i+1 in the high nibble
+- positions & control points:w*h*V2
+- (p)palette length:varint
+- palette:p*C2
+- color indices:w*h*varint (0 for no color, i for palette[i-1])
+- fallback color:C2 (if present)
+- background color:C2 (if present)
+
+(V2) Rectangular mesh vertex, at column c and row r:
+- decimal mode, with X = round(x * 10^k) and Y = round(y * 10^k):
+  - x:zz of X - floor((2 * c * 10^k + (w - 1)) / (2 * (w - 1)))
+  - y:zz of Y - floor((2 * r * 10^k + (h - 1)) / (2 * (h - 1)))
+  - north, east, south, west (if present):
+    - x:zz of round(control point x * 10^k) - X
+    - y:zz of round(control point y * 10^k) - Y
+  - every value decodes as integer / 10^k
+- float64 mode:
+  - x:8B
+  - y:8B
+  - north, east, south, west (if present):
+    - x:8B
+    - y:8B
+
+(C2) Color:
+- header:1B
+  - bits 0-2: color space (0 sRGB, 1 extendedSRGB, 2 displayP3)
+  - bits 3-7: encoding
+- value, by encoding:
+  - 0: red, green, blue, alpha:4*1B (n / 255)
+  - 1: red, green, blue:3*1B (n / 255), alpha is 1
+  - 2: red, green, blue, alpha:4*8B float64
+  - 3..12: red, green, blue, alpha:4*zz (n / 10^(encoding - 3))
+
+Encoders are lossless by default: they pick the smallest k for which every
+coordinate decodes to the exact same value, or float64 when there is none.
+Each color uses the first lossless encoding out of 1/0, decimal and float64.
+A rounding encoder may pick a k that is not exact for coordinates.
+
+# Binary format v1 (legacy)
+
+- spec version:1B (1)
 - mesh:R
 
-(R) "Rectangular mesh":
-- (w)width:4b
-- (h)height:4b
-- positions & control points (nulling for null control points):w*h*V
-- colors (nulling for undefined colors):O
-- color space:7b
-- smoothcolors:1b
-- fallback color (optional):1b+{C}
-- background color (optional):1b+{C}
+(R) Rectangular mesh:
+- (w)width:4b (high nibble)
+- (h)height:4b (low nibble)
+- positions & control points:w*h*V
+- colors:O
+- metadata:1B
+  - bits 5-7: mesh color space (0 linear, 1 lab, 2 xyY)
+  - bit 4: smoothColors
+  - bit 3: presence of fallback color
+  - bit 2: presence of background color
+  - bits 0-1: unused (0)
+- fallback color:C (if present)
+- background color:C (if present)
 
 (V) Rectangular mesh vertex:
 - x:8B
 - y:8B
 - (n,e,s,w)presence of control points:1B
+  - bit 0 north, bit 1 east, bit 2 south, bit 3 west
 - north:n{16B}
 - east:e{16B}
 - south:s{16B}
 - west:w{16B}
+  - control points are absolute x:8B, y:8B
 
 (O) Rectangular mesh color list:
-- (n)length:2B
-- color values:n*C
+- (p)palette length:1B
+- palette:p*C
+- color indices:w*h*1B (0 for no color, i for palette[i-1])
 
 (C) Rectangular mesh vertex color:
-- color header (index, colorspace):2B
-- color value:J|k
+- color header:1B
+  - bits 0-2: color space (0 sRGB, 1 extendedSRGB, 2 displayP3)
+- color value:J for sRGB and extendedSRGB, K for displayP3
 
-(J) sRGB color value:
+(J) 8-bit color value:
 - red:1B
 - green:1B
 - blue:1B
 - alpha:1B
+  - each n / 255, clamped to 0..255 when encoding
 
 (K) display P3 color value:
-- red:4B
-- green:4B
-- blue:4B
-- alpha:4B
+- red:8B
+- green:8B
+- blue:8B
+- alpha:8B

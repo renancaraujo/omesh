@@ -183,7 +183,7 @@ class _DisplayP3ColorPayloadType extends PayloadType<Color> {
 }
 
 extension on double {
-  int get toUint8 => (this * 255).round() & 0xFF;
+  int get toUint8 => (this * 255).round().clamp(0, 255);
 }
 
 extension on List<Color?> {
