@@ -372,6 +372,28 @@ void main() {
       expect(getMeshFromHash(hash), mesh);
     });
 
+    test('of meshes that compress well are the same on every platform', () {
+      // Repetitive data is where a compression level other than 6 writes
+      // different bytes. Small, medium and large payloads.
+      const pinned = {
+        4: (97, 671319480),
+        10: (402, 497707824),
+        15: (797, 271513937),
+      };
+
+      for (final MapEntry(key: size, value: expected) in pinned.entries) {
+        final mesh = _grid(
+          size,
+          size,
+          colors: List.filled(size * size, const Color(0xff4693a9)),
+        );
+        final hash = getHashFromMesh(mesh);
+
+        expect((hash.length, _digest(hash)), expected, reason: 'size $size');
+        expect(getMeshFromHash(hash), mesh);
+      }
+    });
+
     test('throw a FormatException when corrupted', () {
       for (final fixture in _fixtures) {
         for (final hash in [fixture.v1Hash, fixture.legacyV1Hash]) {

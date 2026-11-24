@@ -48,7 +48,15 @@
 - base64url without padding of the whole binary format, zlib (RFC 1950)
   compressed
 
-Different DEFLATE implementations compress the same data to different bytes,
-so decoders accept any valid stream. To produce the same hash on every
-platform, the Dart encoder always uses the pure Dart DEFLATE from the archive
-package (level 6), never the native zlib.
+Decoders read a zlib stream from any writer, since different DEFLATE
+implementations compress the same data to different bytes. They verify the
+Adler-32 checksum. Streams with a preset dictionary are not supported.
+
+A decoder may accept more than this section describes, such as padding or
+another prefix. Such a hash is still not valid.
+
+The Dart encoder writes the same hash on every platform. It never uses the
+native zlib: it uses the pure Dart DEFLATE of the archive package, with level
+6 and a 32K window. The stream starts with the bytes 78 01, and the DEFLATE
+data is what zlib writes at level 6 with memLevel 8. Other encoders do not
+have to write the same bytes.

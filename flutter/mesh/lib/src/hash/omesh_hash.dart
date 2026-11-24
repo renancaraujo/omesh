@@ -45,6 +45,8 @@ String getHashFromMesh(OMeshRect mesh) {
 /// format using the [OMeshBinaryFormatCodec], then compressing the binary
 /// data using zlib compression, and finally encoding the compressed data
 /// into a unpadded base64 string.
+///
+/// Throws a [FormatException] if the compressed data in the hash is damaged.
 OMeshRect getMeshFromHash(String hash) {
   final unprefixied = hash.substring(_kPrefix.length);
   final paddedHash = _addPadding(unprefixied);
@@ -54,21 +56,33 @@ OMeshRect getMeshFromHash(String hash) {
   return layers;
 }
 
+/// The zlib compression level of v1 hashes.
+///
+/// Passed explicitly, since a different level changes the hash of a mesh.
+const _kV1CompressionLevel = 6;
+
+/// The base-2 logarithm of the zlib window size of v1 hashes.
+const _kV1WindowBits = 15;
+
 /// v1 hashes are the whole binary format, zlib compressed.
 ///
 /// Compression always uses the pure Dart implementation from `archive`, even
 /// where `dart:io` is available, so that the same mesh yields the same hash
 /// on every platform. The native zlib bundled with the Dart VM is optimized
 /// differently than the reference algorithm, so its output cannot be
-/// reproduced on the web, and may vary across CPUs and SDK versions.
+/// reproduced on the web.
 Uint8List _packV1(Uint8List bytes) {
-  return const ZLibEncoderWeb().encodeBytes(bytes);
+  return const ZLibEncoderWeb().encodeBytes(
+    bytes,
+    level: _kV1CompressionLevel,
+    windowBits: _kV1WindowBits,
+  );
 }
 
-/// Accepts any valid zlib stream, including the ones written by the native
-/// zlib of previous versions of this package.
+/// Reads zlib streams from any writer, including the native zlib of previous
+/// versions of this package.
 ///
-/// The checksum is verified so that corrupted hashes throw a
+/// The checksum is verified so that a damaged stream throws a
 /// [FormatException] on every platform.
 Uint8List _unpackV1(Uint8List packed) {
   return const ZLibDecoderWeb().decodeBytes(packed, verify: true);
