@@ -41,8 +41,6 @@ Future<ByteData> _paint(
   return bytes!;
 }
 
-/// Paints [mesh] at the origin and at an offset, and expects the same pixels
-/// in both, give or take one step per channel.
 Future<void> _expectSameAtOffset(
   WidgetTester tester,
   OMeshRect mesh, {
@@ -70,7 +68,6 @@ Future<void> _expectSameAtOffset(
     debugMode: debugMode,
   );
 
-  // The mesh was painted.
   const center = (_side ~/ 2 * _canvasWidth + _side ~/ 2) * 4;
   expect(atOrigin.getUint8(center + 3), 255);
 
@@ -82,7 +79,6 @@ Future<void> _expectSameAtOffset(
       for (var channel = 0; channel < 4; channel++) {
         final expected = atOrigin.getUint8(a + channel);
         final actual = atOffset.getUint8(b + channel);
-        // Rounding may differ by one step between the two positions.
         if ((expected - actual).abs() > 1) {
           mismatches.add(
             '($x, $y) channel $channel: $expected at the origin, '

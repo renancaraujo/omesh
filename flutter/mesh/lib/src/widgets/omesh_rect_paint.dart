@@ -175,8 +175,6 @@ class OMeshRectPaint {
       mesh: meshRect,
       rect: rect,
     );
-    // The shader divides the texture coordinates by the size alone, so the
-    // texture mesh must not carry the origin of the rect.
     final textureMesh = RenderedOMeshRect(
       mesh: meshRect,
       normalizedVerticesOverride: textureVertices,
