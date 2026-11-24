@@ -178,7 +178,7 @@ class OMeshRectPaint {
     final textureMesh = RenderedOMeshRect(
       mesh: meshRect,
       normalizedVerticesOverride: textureVertices,
-      rect: rect,
+      rect: Rect.fromLTWH(0, 0, rect.width, rect.height),
     );
 
     canvas.saveLayer(
