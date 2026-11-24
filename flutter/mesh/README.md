@@ -386,18 +386,20 @@ class _MyWidgetState extends State<MyWidget> with SingleTickerProviderStateMixin
 
 ### 5. Dither
 
-Slow, dark gradients can show bands, because each color channel has only 256 levels. `dither: true` adds plus or minus one color level before colors are rounded, which breaks up the bands. At normal brightness you can't see the dither itself.
+Slow, dark gradients can show bands, because each color channel has only 256 levels. Dither adds plus or minus one color level before colors are rounded, which breaks up the bands. At normal brightness you can't see the dither itself.
+
+Dither is on by default in `OMeshGradient`, `AnimatedOMeshGradient` and `OMeshRectPaint`.
 
 Result on a dark, fully opaque mesh. Top: as drawn. Bottom: brightened 4× to show the bands.
 
 <img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/dither_example.png" width="500">
 
-Code:
+To turn it off:
 
 ```dart
 OMeshGradient(
   mesh: myMesh,
-  dither: true,
+  dither: false,
 )
 ```
 
@@ -449,7 +451,7 @@ See below the differences between different tessellation factors (3 and 30):
 
 ### I see bands in my dark gradient
 
-Turn on `dither: true`. See [Dither](#5-dither).
+Check that `dither` isn't set to `false`. See [Dither](#5-dither).
 
 On Impeller, dither cannot remove bands from translucent meshes, because Impeller rounds each translucent patch to 8 bits before blending it over the background. Use opaque colors (alpha `ff`) where bands show.
 

@@ -57,7 +57,7 @@ An example to illustrate animation from an animation controller.''',
     view: DitherUsage(),
     title: 'Dither',
     description: '''
-dither: true removes the bands of slow, dark gradients. It adds plus or minus one color step before colors are rounded to 8 bits, so it is invisible at normal brightness. Drag across the image to compare dither off (left) and on (right). On Impeller, dither removes banding on opaque meshes but not on translucent ones.''',
+Dither is on by default and removes the bands of slow, dark gradients. It adds plus or minus one color step before colors are rounded to 8 bits, so it is invisible at normal brightness. Set dither: false to turn it off. Drag across the image to compare dither off (left) and on (right). On Impeller, dither removes banding on opaque meshes but not on translucent ones.''',
     code: DitherUsage.code,
   ),
   ;

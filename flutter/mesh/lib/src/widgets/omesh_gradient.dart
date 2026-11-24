@@ -53,10 +53,11 @@ import 'package:mesh/mesh.dart';
 /// Use [debugMode] to enable visual cues to assist the visualization of a
 /// mesh gradient.
 ///
-/// Use [dither] to remove the bands of slow, dark gradients:
+/// The mesh is dithered by default, which removes the bands of slow, dark
+/// gradients. Set [dither] to false to turn it off:
 ///
 /// ```dart
-/// OMeshGradient(mesh: mesh, dither: true)
+/// OMeshGradient(mesh: mesh, dither: false)
 /// ```
 ///
 /// As for sizing, the widget has a default expanding behavior, meaning that if
@@ -79,7 +80,7 @@ class OMeshGradient extends StatelessWidget {
     this.tessellation,
     this.size,
     this.addRepaintBoundary,
-    this.dither = false,
+    this.dither = true,
   }) : assert(
           tessellation == null || tessellation >= 1,
           'tessellation must be at least 1',
@@ -92,6 +93,8 @@ class OMeshGradient extends StatelessWidget {
   /// banding.
   ///
   /// {@template omesh-dither}
+  /// Defaults to true. Set it to false to draw the mesh as without dither.
+  ///
   /// The dither is added in the mesh shader before colors are rounded to
   /// 8 bits, so it is invisible at normal contrast but breaks up the
   /// stair-steps of slow, dark gradients. While it is on, the background
@@ -222,7 +225,7 @@ class AnimatedOMeshGradient extends StatelessWidget {
     this.tessellation,
     this.debugMode,
     this.size,
-    this.dither = false,
+    this.dither = true,
     super.key,
   }) : assert(
           tessellation == null || tessellation >= 1,

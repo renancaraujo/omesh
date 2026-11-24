@@ -22,7 +22,8 @@ import 'package:mesh/mesh.dart';
 /// [maxTessellation] is painted with [maxTessellation], and warns once per
 /// value in debug mode.
 ///
-/// Dither works as on [OMeshGradient]:
+/// As on [OMeshGradient], the mesh is dithered by default. Pass
+/// `dither: false` to turn it off:
 ///
 /// ```dart
 /// final provider = await OMeshShaderProvider.load();
@@ -31,7 +32,7 @@ import 'package:mesh/mesh.dart';
 ///   meshRect: mesh,
 ///   tessellation: 12,
 ///   debugMode: null,
-///   dither: true,
+///   dither: false,
 /// );
 ///
 /// // In a paint method:
@@ -45,7 +46,7 @@ class OMeshRectPaint {
     required OMeshRect meshRect,
     required int tessellation,
     required DebugMode? debugMode,
-    bool dither = false,
+    bool dither = true,
   })  : assert(
           tessellation >= minTessellation,
           'tessellation must be at least $minTessellation',

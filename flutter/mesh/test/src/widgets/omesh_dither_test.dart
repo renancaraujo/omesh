@@ -185,14 +185,14 @@ void main() {
           );
   }
 
-  test('dither is off by default', () {
+  test('dither is on by default', () {
     final mesh = _flat(const Color(0xff808080));
-    expect(OMeshGradient(mesh: mesh).dither, isFalse);
+    expect(OMeshGradient(mesh: mesh).dither, isTrue);
     expect(
       AnimatedOMeshGradient(mesh: mesh, duration: Duration.zero).dither,
-      isFalse,
+      isTrue,
     );
-    expect(meshPaint(mesh).dither, isFalse);
+    expect(meshPaint(mesh).dither, isTrue);
   });
 
   group('paint order', () {
@@ -243,10 +243,10 @@ void main() {
     recorder.endRecording().dispose();
     expect(paint.needsRepaint, isFalse);
 
-    paint.dither = false;
+    paint.dither = true;
     expect(paint.needsRepaint, isFalse);
 
-    paint.dither = true;
+    paint.dither = false;
     expect(paint.needsRepaint, isTrue);
   });
 
