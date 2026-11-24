@@ -22,7 +22,7 @@ const _kPrefix = 'OM:';
 /// into a unpadded base64 string.
 String getHashFromMesh(OMeshRect mesh) {
   final bytes = OMeshBinaryFormatCodec.v1.encoder.convert(mesh);
-  final compressed = _packV1(bytes);
+  final compressed = _compress(bytes);
   final hash = base64Url.encode(compressed);
   final unpaded = _removePadding(hash);
   final prefixed = '$_kPrefix$unpaded';
@@ -51,41 +51,41 @@ OMeshRect getMeshFromHash(String hash) {
   final unprefixied = hash.substring(_kPrefix.length);
   final paddedHash = _addPadding(unprefixied);
   final compressed = base64Url.decode(paddedHash);
-  final bytes = _unpackV1(compressed);
+  final bytes = _decompress(compressed);
   final layers = OMeshBinaryFormatCodec.v1.decoder.convert(bytes);
   return layers;
 }
 
-/// The zlib compression level of v1 hashes.
+/// The zlib compression level of hashes.
 ///
 /// Passed explicitly, since a different level changes the hash of a mesh.
-const _kV1CompressionLevel = 6;
+const _kCompressionLevel = 6;
 
-/// The base-2 logarithm of the zlib window size of v1 hashes.
-const _kV1WindowBits = 15;
+/// The base-2 logarithm of the zlib window size of hashes.
+const _kWindowBits = 15;
 
-/// v1 hashes are the whole binary format, zlib compressed.
+/// Compresses [bytes] with zlib.
 ///
-/// Compression uses the pure Dart implementation from `archive`, so that the
-/// same mesh yields the same hash on every platform.
+/// Uses the pure Dart implementation from `archive`, so that the same mesh
+/// yields the same hash on every platform.
 ///
 /// The stream starts with the bytes 78 01, and the DEFLATE data is what the
 /// reference zlib writes at level 6 with memLevel 8.
-Uint8List _packV1(Uint8List bytes) {
+Uint8List _compress(Uint8List bytes) {
   return const ZLibEncoderWeb().encodeBytes(
     bytes,
-    level: _kV1CompressionLevel,
-    windowBits: _kV1WindowBits,
+    level: _kCompressionLevel,
+    windowBits: _kWindowBits,
   );
 }
 
-/// Reads zlib streams from any writer, including the native zlib of previous
-/// versions of this package.
+/// Decompresses a zlib stream from any writer, including the native zlib of
+/// previous versions of this package.
 ///
 /// The checksum is verified so that a damaged stream throws a
 /// [FormatException] on every platform.
-Uint8List _unpackV1(Uint8List packed) {
-  return const ZLibDecoderWeb().decodeBytes(packed, verify: true);
+Uint8List _decompress(Uint8List compressed) {
+  return const ZLibDecoderWeb().decodeBytes(compressed, verify: true);
 }
 
 String _removePadding(String base64String) {
