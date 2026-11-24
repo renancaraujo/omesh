@@ -66,11 +66,8 @@ const _kV1WindowBits = 15;
 
 /// v1 hashes are the whole binary format, zlib compressed.
 ///
-/// Compression always uses the pure Dart implementation from `archive`, even
-/// where `dart:io` is available, so that the same mesh yields the same hash
-/// on every platform. The native zlib bundled with the Dart VM is optimized
-/// differently than the reference algorithm, so its output cannot be
-/// reproduced on the web.
+/// Compression uses the pure Dart implementation from `archive`, so that the
+/// same mesh yields the same hash on every platform.
 ///
 /// The stream starts with the bytes 78 01, and the DEFLATE data is what the
 /// reference zlib writes at level 6 with memLevel 8.
