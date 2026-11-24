@@ -44,7 +44,7 @@ class BasicUsage extends StatelessWidget {
     return SizedBox(
       height: 500,
       child: OMeshGradient(
-        tessellation: 20,
+        tessellation: 30,
         mesh: OMeshRect(
           width: 3,
           height: 3,

@@ -47,7 +47,7 @@ import 'package:mesh/mesh.dart';
 /// Lower values will result in a more blocky gradient, but with better
 /// performance. The default value is 12.
 ///
-/// It must be at least 1. Values above 20 are painted with 20.
+/// It must be at least 1. Values above 30 are painted with 30.
 /// {@endtemplate}
 ///
 /// Use [debugMode] to enable visual cues to assist the visualization of a

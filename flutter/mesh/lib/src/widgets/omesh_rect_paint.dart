@@ -16,6 +16,11 @@ import 'package:mesh/mesh.dart';
 ///
 /// Useful to render mesh gradients outside of widget contexts, such as
 /// custom paints, flame engine components, and render objects.
+///
+/// A tessellation below [minTessellation] fails an assertion in debug mode.
+/// In release mode it is painted with [minTessellation]. A tessellation above
+/// [maxTessellation] is painted with [maxTessellation], and warns once per
+/// value in debug mode.
 class OMeshRectPaint {
   /// Creates a new [OMeshRectPaint] with the given [shaderProvider]
   /// and [meshRect],
@@ -39,7 +44,7 @@ class OMeshRectPaint {
 
   /// The largest tessellation a mesh is painted with. Higher values are
   /// painted with this one.
-  static const maxTessellation = 20;
+  static const maxTessellation = 30;
 
   /// The tessellation a mesh is painted with when given [tessellation].
   @visibleForTesting

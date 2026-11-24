@@ -11,7 +11,12 @@ const _white = Color(0xffffffff);
 const _black = Color(0xff000000);
 const _yellow = Color(0xffffff00);
 
-OMeshRect _grid(int width, int height, List<Color> colors) {
+OMeshRect _grid(
+  int width,
+  int height,
+  List<Color> colors, {
+  double extent = 1,
+}) {
   return OMeshRect(
     width: width,
     height: height,
@@ -20,7 +25,7 @@ OMeshRect _grid(int width, int height, List<Color> colors) {
     vertices: [
       for (var row = 0; row < height; row++)
         for (var col = 0; col < width; col++)
-          (col / (width - 1), row / (height - 1)).v,
+          (col / (width - 1) * extent, row / (height - 1) * extent).v,
     ],
     colors: colors,
   );
@@ -33,6 +38,20 @@ final OMeshRect _mesh3x3 = _grid(3, 3, const [
 ]);
 
 final OMeshRect _mesh2x2 = _grid(2, 2, const [_red, _green, _blue, _white]);
+
+final OMeshRect _bentMesh = OMeshRect(
+  width: 2,
+  height: 2,
+  colorSpace: OMeshColorSpace.linear,
+  smoothColors: false,
+  vertices: [
+    (0.1, 0.1).v.bezier(east: (0.4, 0.6).v, south: (0.5, 0.4).v),
+    (0.9, 0.1).v.bezier(west: (0.6, -0.3).v, south: (0.5, 0.5).v),
+    (0.1, 0.9).v.bezier(east: (0.4, 0.4).v, north: (0.4, 0.6).v),
+    (0.9, 0.9).v.bezier(west: (0.6, 1.2).v, north: (1.2, 0.6).v),
+  ],
+  colors: const [_red, _green, _blue, _white],
+);
 
 class _RecordingCanvas implements Canvas {
   final vertices = <Vertices>[];
@@ -135,12 +154,12 @@ void main() {
   });
 
   group('tessellation range', () {
-    test('clamps to 1..20', () {
+    test('clamps to 1..30', () {
       expect(OMeshRectPaint.clampTessellation(-3), 1);
       expect(OMeshRectPaint.clampTessellation(1), 1);
       expect(OMeshRectPaint.clampTessellation(12), 12);
-      expect(OMeshRectPaint.clampTessellation(20), 20);
-      expect(OMeshRectPaint.clampTessellation(21), 20);
+      expect(OMeshRectPaint.clampTessellation(30), 30);
+      expect(OMeshRectPaint.clampTessellation(31), 30);
     });
 
     test('rejects values below 1', () {
@@ -164,7 +183,7 @@ void main() {
       );
     });
 
-    test('warns once for each value above 20', () {
+    test('warns once for each value above 30', () {
       final messages = <String>[];
       final original = debugPrint;
       debugPrint = (message, {wrapWidth}) => messages.add(message!);
@@ -174,31 +193,28 @@ void main() {
         ..tessellation = 42
         ..tessellation = 41
         ..tessellation = 42
-        ..tessellation = 20;
+        ..tessellation = 30;
 
       expect(messages, hasLength(2));
       expect(messages.first, contains('41'));
       expect(messages.last, contains('42'));
     });
 
-    test('paints values above 20 as 20', () {
-      final high = _RecordingCanvas();
-      painter(_mesh2x2, tessellation: 30)
-          .paint(high, Offset.zero & const Size(64, 64));
-      final max = _RecordingCanvas();
-      painter(_mesh2x2, tessellation: 20)
-          .paint(max, Offset.zero & const Size(64, 64));
-      expect(high.vertices, hasLength(1));
-      expect(max.vertices, hasLength(1));
-    });
+    testWidgets('renders a bent mesh at 40 like 30, unlike 12', (tester) async {
+      const rect = Rect.fromLTWH(0, 0, 200, 200);
+      Future<List<int>> at(int tessellation) async {
+        final bytes = await _render(
+          tester,
+          painter(_bentMesh, tessellation: tessellation),
+          rect,
+          size: rect.size,
+        );
+        return bytes.buffer.asUint8List();
+      }
 
-    testWidgets('renders values above 20 like 20', (tester) async {
-      const rect = Rect.fromLTWH(0, 0, 64, 64);
-      final high =
-          await _render(tester, painter(_mesh3x3, tessellation: 30), rect);
-      final max =
-          await _render(tester, painter(_mesh3x3, tessellation: 20), rect);
-      expect(high.buffer.asUint8List(), max.buffer.asUint8List());
+      final max = await at(30);
+      expect(await at(40), max);
+      expect(await at(12), isNot(max));
     });
   });
 
@@ -257,10 +273,10 @@ void main() {
       expect(paint.debugTextureGridBuilds, 2);
     });
 
-    test('is not rebuilt between tessellations above 20', () {
-      final paint = painter(_mesh3x3, tessellation: 25)
+    test('is not rebuilt between tessellations above 30', () {
+      final paint = painter(_mesh3x3, tessellation: 35)
         ..paint(_RecordingCanvas(), rect)
-        ..tessellation = 31
+        ..tessellation = 45
         ..paint(_RecordingCanvas(), rect);
       expect(paint.debugTextureGridBuilds, 1);
     });
@@ -271,6 +287,32 @@ void main() {
       const rect = Rect.fromLTWH(0, 0, 64, 64);
       final bytes = await _render(tester, painter(_mesh3x3), rect);
       _expectMatches(bytes, _mesh3x3, rect);
+    });
+
+    testWidgets('a mesh smaller than the rect keeps its colors',
+        (tester) async {
+      final mesh = _grid(3, 3, _mesh3x3.colors.cast(), extent: 0.5);
+      final bytes = await _render(
+        tester,
+        painter(mesh),
+        const Rect.fromLTWH(0, 0, 64, 64),
+      );
+      _expectMatches(bytes, mesh, const Rect.fromLTWH(0, 0, 32, 32));
+    });
+
+    testWidgets('translucent colors are blended once', (tester) async {
+      final mesh = _grid(2, 2, List.filled(4, const Color(0x80ff0000)));
+      final bytes = await _render(
+        tester,
+        painter(mesh),
+        const Rect.fromLTWH(0, 0, 64, 64),
+      );
+      for (var y = 2; y < 62; y += 5) {
+        for (var x = 2; x < 62; x += 5) {
+          final alpha = bytes.getUint8((y * 64 + x) * 4 + 3);
+          expect(alpha, closeTo(128, 2), reason: 'pixel ($x, $y)');
+        }
+      }
     });
 
     testWidgets('follows the rect on a reused painter', (tester) async {
