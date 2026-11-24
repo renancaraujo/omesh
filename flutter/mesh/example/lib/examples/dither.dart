@@ -33,6 +33,7 @@ class _DitherUsageState extends State<DitherUsage> {
   /// Where the split between the two halves is, from 0 (left) to 1 (right).
   double split = 0.5;
   bool boost = true;
+  _Sample sample = _Sample.opaque;
 
   @override
   Widget build(BuildContext context) {
@@ -52,16 +53,22 @@ class _DitherUsageState extends State<DitherUsage> {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                OMeshGradient(
-                  tessellation: 20,
-                  mesh: ditherExampleMesh,
+                ColoredBox(
+                  color: _parentColor,
+                  child: OMeshGradient(
+                    tessellation: 20,
+                    mesh: sample.mesh,
+                  ),
                 ),
                 ClipRect(
                   clipper: _RightOf(split),
-                  child: OMeshGradient(
-                    tessellation: 20,
-                    dither: true,
-                    mesh: ditherExampleMesh,
+                  child: ColoredBox(
+                    color: _parentColor,
+                    child: OMeshGradient(
+                      tessellation: 20,
+                      dither: true,
+                      mesh: sample.mesh,
+                    ),
                   ),
                 ),
                 Align(
@@ -86,7 +93,7 @@ class _DitherUsageState extends State<DitherUsage> {
     );
 
     return SizedBox(
-      height: 500,
+      height: 560,
       child: Column(
         children: [
           Expanded(
@@ -96,6 +103,26 @@ class _DitherUsageState extends State<DitherUsage> {
                     child: comparison,
                   )
                 : comparison,
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final option in _Sample.values)
+                  ChoiceChip(
+                    label: Text(option.label),
+                    selected: option == sample,
+                    onSelected: (_) => setState(() {
+                      sample = option;
+                      // Brightening suits the dark opaque mesh only; the
+                      // translucent ones would turn white.
+                      boost = option == _Sample.opaque;
+                    }),
+                  ),
+              ],
+            ),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -109,7 +136,8 @@ class _DitherUsageState extends State<DitherUsage> {
                 const Expanded(
                   child: Text(
                     'Brighten 4× to show the bands (not part of the API). '
-                    'Drag across the image to compare.',
+                    'Drag across the image to compare. With dither on, '
+                    'colors should look the same; only the bands change.',
                     style: TextStyle(color: Colors.white, fontSize: 14),
                   ),
                 ),
@@ -147,6 +175,48 @@ final ditherExampleMesh = OMeshRect(
     Color(0xff1a1730), Color(0xff2a1f3a), // Row 2
   ],
 );
+
+/// The color under the meshes, so translucent meshes blend over
+/// something.
+const _parentColor = Color(0xff202020);
+
+/// The meshes to compare with and without dither.
+enum _Sample {
+  opaque('Opaque, dark'),
+  lab('Translucent lab'),
+  xyY('Translucent xyY');
+
+  const _Sample(this.label);
+
+  final String label;
+
+  OMeshRect get mesh => switch (this) {
+        _Sample.opaque => ditherExampleMesh,
+        _Sample.lab => _translucentLab,
+        _Sample.xyY => _translucentXyY,
+      };
+}
+
+/// Half-transparent colors. Mixed in lab or xyY, they give values that
+/// dither must leave as they are.
+OMeshRect _translucentMesh(OMeshColorSpace colorSpace) => OMeshRect(
+      width: 2,
+      height: 2,
+      colorSpace: colorSpace,
+      vertices: [
+        (0.0, 0.0).v, (1.0, 0.0).v, // Row 1
+
+        (0.0, 1.0).v, (1.0, 1.0).v, // Row 2
+      ],
+      colors: const [
+        Color(0x80ff0000), Color(0x80ffffff), // Row 1
+
+        Color(0x80ff8000), Color(0x80ffff00), // Row 2
+      ],
+    );
+
+final OMeshRect _translucentLab = _translucentMesh(OMeshColorSpace.lab);
+final OMeshRect _translucentXyY = _translucentMesh(OMeshColorSpace.xyY);
 
 /// Clips to the part of the box right of [fraction] of its width.
 class _RightOf extends CustomClipper<Rect> {
