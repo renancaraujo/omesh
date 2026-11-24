@@ -229,14 +229,14 @@ class AnimatedOMeshGradient extends StatelessWidget {
           'tessellation must be at least 1',
         );
 
+  /// The mesh that will be rendered.
+  final OMeshRect mesh;
+
   /// Whether to add a plus or minus one color step dither that removes
   /// banding.
   ///
   /// {@macro omesh-dither}
   final bool dither;
-
-  /// The mesh that will be rendered.
-  final OMeshRect mesh;
 
   /// The duration of the animation.
   final Duration duration;
@@ -411,8 +411,8 @@ class _OMeshGradient extends StatefulWidget {
     required this.tessellation,
     required this.debugMode,
     required this.shaderProvider,
+    required this.dither,
     this.size,
-    this.dither = false,
   });
 
   final OMeshShaderProvider shaderProvider;

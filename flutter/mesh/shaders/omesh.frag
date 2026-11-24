@@ -306,7 +306,12 @@ void main() {
     if(uDitherLsb > 0.0) {
         // Last, and not scaled by alpha: it targets the 8-bit premultiplied store.
         float d = toTriangular(ditherIgn(mod(floor(pos), 4096.0)));
-        color.rgb = clamp(color.rgb + d * uDitherLsb / 255.0, vec3(0.0), vec3(color.a));
+        // Keep the noise inside [0, alpha], but never pull a channel past its
+        // own value: lab and xyY can give translucent rgb above alpha, and
+        // that must stay as it is with dither off.
+        vec3 lo = min(color.rgb, vec3(0.0));
+        vec3 hi = max(color.rgb, vec3(color.a));
+        color.rgb = clamp(color.rgb + d * uDitherLsb / 255.0, lo, hi);
     }
     fragColor = color;
 }
