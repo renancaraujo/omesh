@@ -459,6 +459,39 @@ void main() {
     });
   });
 
+  group('grain pattern', () {
+    testWidgets('does not repeat along a diagonal', (t) async {
+      await load(t);
+      const size = 320;
+      final pixels = await _paint(
+        t,
+        provider,
+        _flat(_mid),
+        grain: _even,
+        rect: const Rect.fromLTWH(0, 0, 320, 320),
+      );
+      double correlationAt(int dx, int dy) {
+        final a = <double>[];
+        final b = <double>[];
+        for (var y = math.max(0, -dy); y < size - math.max(0, dy); y++) {
+          for (var x = math.max(0, -dx); x < size - math.max(0, dx); x++) {
+            a.add(pixels.red(x, y).toDouble());
+            b.add(pixels.red(x + dx, y + dy).toDouble());
+          }
+        }
+        return _correlation(a, b);
+      }
+
+      for (final (dx, dy) in const [(97, -97), (194, -194), (97, 97)]) {
+        expect(
+          correlationAt(dx, dy).abs(),
+          lessThan(0.05),
+          reason: 'shift ($dx, $dy)',
+        );
+      }
+    });
+  });
+
   group('scatter', () {
     testWidgets('moves colour lookups by up to scatter pixels', (t) async {
       await load(t);
