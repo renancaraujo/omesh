@@ -1,3 +1,8 @@
+# v0.5.3
+
+- fix(hash): generate identical hashes on VM and web [#64](https://github.com/renancaraujo/omesh/pull/64)
+- fix: paint the right colors when the rect is away from the origin [#68](https://github.com/renancaraujo/omesh/pull/68)
+
 # v0.5.2
 
 - fix: render xyY meshes with black or transparent corners [#61](https://github.com/renancaraujo/omesh/pull/61)
