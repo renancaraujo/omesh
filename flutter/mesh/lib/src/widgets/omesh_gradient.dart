@@ -53,6 +53,13 @@ import 'package:mesh/mesh.dart';
 /// Use [debugMode] to enable visual cues to assist the visualization of a
 /// mesh gradient.
 ///
+/// The mesh is dithered by default, which removes the bands of slow, dark
+/// gradients. Set [dither] to false to turn it off:
+///
+/// ```dart
+/// OMeshGradient(mesh: mesh, dither: false)
+/// ```
+///
 /// As for sizing, the widget has a default expanding behavior, meaning that if
 /// no size is provided via the [size] parameter, the widget will expand to the
 /// maximum size of the parent constraints. To change to a growing behavior,
@@ -73,6 +80,7 @@ class OMeshGradient extends StatelessWidget {
     this.tessellation,
     this.size,
     this.addRepaintBoundary,
+    this.dither = true,
   }) : assert(
           tessellation == null || tessellation >= 1,
           'tessellation must be at least 1',
@@ -80,6 +88,23 @@ class OMeshGradient extends StatelessWidget {
 
   /// The mesh that will be rendered.
   final OMeshRect mesh;
+
+  /// Whether to add a plus or minus one color step dither that removes
+  /// banding.
+  ///
+  /// {@template omesh-dither}
+  /// Defaults to true. Set it to false to draw the mesh as without dither.
+  ///
+  /// The dither is added in the mesh shader before colors are rounded to
+  /// 8 bits, so it is invisible at normal contrast but breaks up the
+  /// stair-steps of slow, dark gradients. While it is on, the background
+  /// color is drawn inside the mesh layer.
+  ///
+  /// On Impeller it removes banding on opaque meshes but not on translucent
+  /// ones: Impeller rounds each translucent patch to 8 bits before blending
+  /// it over the background.
+  /// {@endtemplate}
+  final bool dither;
 
   /// The number of vertices that will be interpolated between each
   /// passed vertex.
@@ -113,6 +138,7 @@ class OMeshGradient extends StatelessWidget {
           debugMode: debugMode,
           tessellation: tessellation ?? 12,
           size: size,
+          dither: dither,
         );
 
         if (addRepaintBoundary ?? true) {
@@ -199,6 +225,7 @@ class AnimatedOMeshGradient extends StatelessWidget {
     this.tessellation,
     this.debugMode,
     this.size,
+    this.dither = true,
     super.key,
   }) : assert(
           tessellation == null || tessellation >= 1,
@@ -207,6 +234,12 @@ class AnimatedOMeshGradient extends StatelessWidget {
 
   /// The mesh that will be rendered.
   final OMeshRect mesh;
+
+  /// Whether to add a plus or minus one color step dither that removes
+  /// banding.
+  ///
+  /// {@macro omesh-dither}
+  final bool dither;
 
   /// The duration of the animation.
   final Duration duration;
@@ -242,6 +275,7 @@ class AnimatedOMeshGradient extends StatelessWidget {
             debugMode: debugMode,
             tessellation: tessellation,
             addRepaintBoundary: false,
+            dither: dither,
           );
         },
       ),
@@ -380,10 +414,12 @@ class _OMeshGradient extends StatefulWidget {
     required this.tessellation,
     required this.debugMode,
     required this.shaderProvider,
+    required this.dither,
     this.size,
   });
 
   final OMeshShaderProvider shaderProvider;
+  final bool dither;
   final OMeshRect mesh;
   final int tessellation;
   final DebugMode? debugMode;
@@ -399,6 +435,7 @@ class _OMeshGradientState extends State<_OMeshGradient> {
     meshRect: widget.mesh,
     debugMode: widget.debugMode,
     tessellation: widget.tessellation,
+    dither: widget.dither,
   );
 
   @override
@@ -415,7 +452,8 @@ class _OMeshGradientState extends State<_OMeshGradient> {
           draw: draw
             ..meshRect = widget.mesh
             ..tessellation = widget.tessellation
-            ..debugMode = widget.debugMode,
+            ..debugMode = widget.debugMode
+            ..dither = widget.dither,
         ),
         isComplex: draw.tessellation > 2,
         willChange: draw.needsRepaint,

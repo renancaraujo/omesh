@@ -21,6 +21,23 @@ import 'package:mesh/mesh.dart';
 /// In release mode it is painted with [minTessellation]. A tessellation above
 /// [maxTessellation] is painted with [maxTessellation], and warns once per
 /// value in debug mode.
+///
+/// As on [OMeshGradient], the mesh is dithered by default. Pass
+/// `dither: false` to turn it off:
+///
+/// ```dart
+/// final provider = await OMeshShaderProvider.load();
+/// final meshPaint = OMeshRectPaint(
+///   shaderProvider: provider,
+///   meshRect: mesh,
+///   tessellation: 12,
+///   debugMode: null,
+///   dither: false,
+/// );
+///
+/// // In a paint method:
+/// meshPaint.paint(canvas, Offset.zero & size);
+/// ```
 class OMeshRectPaint {
   /// Creates a new [OMeshRectPaint] with the given [shaderProvider]
   /// and [meshRect],
@@ -29,13 +46,15 @@ class OMeshRectPaint {
     required OMeshRect meshRect,
     required int tessellation,
     required DebugMode? debugMode,
+    bool dither = true,
   })  : assert(
           tessellation >= minTessellation,
           'tessellation must be at least $minTessellation',
         ),
         _debugMode = debugMode,
         _tessellation = tessellation,
-        _meshRect = meshRect {
+        _meshRect = meshRect,
+        _dither = dither {
     _debugWarnAboveMax(tessellation);
   }
 
@@ -107,6 +126,19 @@ class OMeshRectPaint {
   }
 
   DebugMode? _debugMode;
+
+  /// Whether to add a plus or minus one color step dither that removes
+  /// banding.
+  ///
+  /// {@macro omesh-dither}
+  bool get dither => _dither;
+  set dither(bool value) {
+    if (value == _dither) return;
+    _dither = value;
+    _needsRepaint = true;
+  }
+
+  bool _dither;
 
   /// Whether the mesh needs to be repainted.
   bool get needsRepaint => _needsRepaint;
@@ -235,12 +267,14 @@ class OMeshRectPaint {
     _needsRepaint = false;
     _paintRect = rect;
 
-    // Background color
-    if (meshRect.backgroundColor != null) {
-      canvas.drawRect(
-        rect,
-        Paint()..color = meshRect.backgroundColor!,
-      );
+    // With dither on, the background is drawn inside the layer, so the
+    // dithered patches are blended onto it before the only rounding to
+    // 8 bits. Drawn under the layer, the layer's restore rounds a second
+    // time without dither and the bands come back.
+    final backgroundInLayer = dither;
+    final backgroundColor = meshRect.backgroundColor;
+    if (backgroundColor != null && !backgroundInLayer) {
+      canvas.drawRect(rect, Paint()..color = backgroundColor);
     }
 
     // Extract the current texture vertices, patches and vertex colors
@@ -262,6 +296,9 @@ class OMeshRectPaint {
       rect,
       Paint(),
     );
+    if (backgroundColor != null && backgroundInLayer) {
+      canvas.drawRect(rect, Paint()..color = backgroundColor);
+    }
 
     // Draw each patch one at a time.
     for (final tuple in patches.reversed.indexed) {
@@ -341,7 +378,8 @@ class OMeshRectPaint {
               debugMode?.enableDots ?? false
                   ? _paintedTessellation.toDouble()
                   : 0.0,
-            ),
+            )
+            ..setFloat(dither ? 1.0 : 0.0),
         ));
   }
 }

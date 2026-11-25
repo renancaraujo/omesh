@@ -384,6 +384,27 @@ class _MyWidgetState extends State<MyWidget> with SingleTickerProviderStateMixin
 
 ```
 
+### 5. Dither
+
+Slow, dark gradients can show bands, because each color channel has only 256 levels. Dither adds plus or minus one color level before colors are rounded, which breaks up the bands. At normal brightness you can't see the dither itself.
+
+Dither is on by default in `OMeshGradient`, `AnimatedOMeshGradient` and `OMeshRectPaint`.
+
+Result on a dark, fully opaque mesh. Top: as drawn. Bottom: brightened 4× to show the bands.
+
+<img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/dither_example.png" width="500">
+
+To turn it off:
+
+```dart
+OMeshGradient(
+  mesh: myMesh,
+  dither: false,
+)
+```
+
+On Impeller, dither removes bands on opaque meshes but not on translucent ones.
+
 ## About impeller
 
 O'Mesh has had issues when running on the [Impeller Rendering Engine](https://docs.flutter.dev/perf/impeller) in previous versions.
@@ -427,6 +448,12 @@ See below the differences between different tessellation factors (3 and 30):
     <img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/tess_1.png" width="200"> 
     <img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/tess_2.png" width="200">
 </p>
+
+### I see bands in my dark gradient
+
+Check that `dither` isn't set to `false`. See [Dither](#5-dither).
+
+On Impeller, dither cannot remove bands from translucent meshes, because Impeller rounds each translucent patch to 8 bits before blending it over the background. Use opaque colors (alpha `ff`) where bands show.
 
 ---
 
