@@ -411,7 +411,7 @@ Add film grain with `OMeshGrain`. It works on `OMeshGradient`, `AnimatedOMeshGra
 
 Result:
 
-<img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/grain_example.png" width="500">
+<img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/grain_example.webp" width="500">
 
 Code:
 
