@@ -108,6 +108,7 @@ at most 2^50 for every value v it encodes.
 - color header:1B
   - bits 0-2: color space (0 sRGB, 1 extendedSRGB, 2 displayP3)
 - color value:J for sRGB and extendedSRGB, K for displayP3
+  - an extendedSRGB color decodes as sRGB
 
 (J) 8-bit color value:
 - red:1B
