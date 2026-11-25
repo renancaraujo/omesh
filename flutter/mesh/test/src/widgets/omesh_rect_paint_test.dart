@@ -140,12 +140,16 @@ void main() {
 
   late OMeshShaderProvider provider;
 
-  OMeshRectPaint painter(OMeshRect mesh, {int tessellation = 4}) {
+  OMeshRectPaint painter(
+    OMeshRect mesh, {
+    int tessellation = 4,
+    DebugMode? debugMode,
+  }) {
     return OMeshRectPaint(
       shaderProvider: provider,
       meshRect: mesh,
       tessellation: tessellation,
-      debugMode: null,
+      debugMode: debugMode,
     );
   }
 
@@ -215,6 +219,23 @@ void main() {
       final max = await at(30);
       expect(await at(40), max);
       expect(await at(12), isNot(max));
+    });
+
+    testWidgets('renders debug dots at 40 like 30', (tester) async {
+      const rect = Rect.fromLTWH(0, 0, 200, 200);
+      Future<List<int>> at(int tessellation, {DebugMode? debugMode}) async {
+        final bytes = await _render(
+          tester,
+          painter(_mesh3x3, tessellation: tessellation, debugMode: debugMode),
+          rect,
+          size: rect.size,
+        );
+        return bytes.buffer.asUint8List();
+      }
+
+      final max = await at(30, debugMode: DebugMode.dots);
+      expect(await at(40, debugMode: DebugMode.dots), max);
+      expect(await at(30), isNot(max));
     });
   });
 

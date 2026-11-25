@@ -58,7 +58,7 @@ void main() {
       rect: const Rect.fromLTWH(10, 20, 300, 200),
     );
 
-    for (final tessellation in [1, 2, 7, 12]) {
+    for (final tessellation in [1, 2, 7, 12, 13, 20, 30]) {
       test('matches the reference evaluation at tessellation $tessellation',
           () {
         final tessellated = TessellatedMesh(tessellation: tessellation);
