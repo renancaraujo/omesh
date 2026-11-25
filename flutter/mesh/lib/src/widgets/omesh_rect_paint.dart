@@ -1,7 +1,10 @@
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:cached_value/cached_value.dart';
 
+import 'package:flutter/foundation.dart'
+    show debugPrint, kDebugMode, visibleForTesting;
 import 'package:flutter/rendering.dart'
     show BlendMode, Canvas, Color, Paint, Rect;
 
@@ -13,6 +16,11 @@ import 'package:mesh/mesh.dart';
 ///
 /// Useful to render mesh gradients outside of widget contexts, such as
 /// custom paints, flame engine components, and render objects.
+///
+/// A tessellation below [minTessellation] fails an assertion in debug mode.
+/// In release mode it is painted with [minTessellation]. A tessellation above
+/// [maxTessellation] is painted with [maxTessellation], and warns once per
+/// value in debug mode.
 class OMeshRectPaint {
   /// Creates a new [OMeshRectPaint] with the given [shaderProvider]
   /// and [meshRect],
@@ -21,9 +29,40 @@ class OMeshRectPaint {
     required OMeshRect meshRect,
     required int tessellation,
     required DebugMode? debugMode,
-  })  : _debugMode = debugMode,
+  })  : assert(
+          tessellation >= minTessellation,
+          'tessellation must be at least $minTessellation',
+        ),
+        _debugMode = debugMode,
         _tessellation = tessellation,
-        _meshRect = meshRect;
+        _meshRect = meshRect {
+    _debugWarnAboveMax(tessellation);
+  }
+
+  /// The smallest tessellation a mesh can be painted with.
+  static const minTessellation = 1;
+
+  /// The largest tessellation a mesh is painted with. Higher values are
+  /// painted with this one.
+  static const maxTessellation = 30;
+
+  /// The tessellation a mesh is painted with when given [tessellation].
+  @visibleForTesting
+  static int clampTessellation(int tessellation) =>
+      tessellation.clamp(minTessellation, maxTessellation);
+
+  static final _warnedTessellations = <int>{};
+
+  static void _debugWarnAboveMax(int tessellation) {
+    if (kDebugMode &&
+        tessellation > maxTessellation &&
+        _warnedTessellations.add(tessellation)) {
+      debugPrint(
+        'OMesh: tessellation $tessellation is above the maximum of '
+        '$maxTessellation. Painting with $maxTessellation.',
+      );
+    }
+  }
 
   /// The shader provider instance associated with this paint.
   final OMeshShaderProvider shaderProvider;
@@ -40,15 +79,24 @@ class OMeshRectPaint {
 
   OMeshRect _meshRect;
 
-  /// The tessellation level of the mesh.
+  /// The tessellation level of the mesh, from [minTessellation] up.
+  ///
+  /// Values above [maxTessellation] are painted with [maxTessellation].
   int get tessellation => _tessellation;
   set tessellation(int value) {
+    assert(
+      value >= minTessellation,
+      'tessellation must be at least $minTessellation',
+    );
     if (value == _tessellation) return;
+    _debugWarnAboveMax(value);
     _tessellation = value;
     _needsRepaint = true;
   }
 
   int _tessellation;
+
+  int get _paintedTessellation => clampTessellation(_tessellation);
 
   /// The enabled debug features.
   DebugMode? get debugMode => _debugMode;
@@ -148,13 +196,44 @@ class OMeshRectPaint {
   /// A [CachedValue] that holds the tessellated mesh.
   late final CachedValue<TessellatedMesh> _tessellatedMeshCache = CachedValue(
     () => TessellatedMesh(
-      tessellation: tessellation,
+      tessellation: _paintedTessellation,
     ),
-  ).withDependency(() => tessellation);
+  ).withDependency(() => _paintedTessellation);
+
+  Rect _paintRect = Rect.zero;
+
+  /// How many times the texture grid was built.
+  @visibleForTesting
+  int debugTextureGridBuilds = 0;
+
+  late final CachedValue<Float32List> _textureGridCache = CachedValue(() {
+    debugTextureGridBuilds++;
+    final tessellated = _tessellatedMeshCache.value;
+    final floatsPerPatch = tessellated.floatsPerPatch;
+    final textureMesh = RenderedOMeshRect(
+      mesh: meshRect,
+      normalizedVerticesOverride: _textureVerticesCache.value,
+      rect: Rect.fromLTWH(0, 0, _paintRect.width, _paintRect.height),
+    );
+    final patches = _patchesCache.value;
+    final grid = Float32List(patches.length * floatsPerPatch);
+    for (final (index, cornerIndices) in patches.indexed) {
+      tessellated.writePatchGrid(
+        cornerIndices: cornerIndices,
+        mesh: textureMesh,
+        output: grid,
+        offset: index * floatsPerPatch,
+      );
+    }
+    return grid;
+  }).withDependency(
+    () => (meshRect.width, meshRect.height, _paintRect, _paintedTessellation),
+  );
 
   /// Paints the mesh into the given [canvas] and [rect].
   void paint(Canvas canvas, Rect rect) {
     _needsRepaint = false;
+    _paintRect = rect;
 
     // Background color
     if (meshRect.backgroundColor != null) {
@@ -175,11 +254,9 @@ class OMeshRectPaint {
       mesh: meshRect,
       rect: rect,
     );
-    final textureMesh = RenderedOMeshRect(
-      mesh: meshRect,
-      normalizedVerticesOverride: textureVertices,
-      rect: Rect.fromLTWH(0, 0, rect.width, rect.height),
-    );
+    final tessellated = _tessellatedMeshCache.value;
+    final textureGrid = _textureGridCache.value;
+    final floatsPerPatch = tessellated.floatsPerPatch;
 
     canvas.saveLayer(
       rect,
@@ -209,22 +286,29 @@ class OMeshRectPaint {
         rect: rect,
       );
 
-      final vertices =
-          _tessellatedMeshCache.value.getTessellatedVerticesForPatch(
+      final gridOffset = (patches.length - 1 - patchIndex) * floatsPerPatch;
+      final vertices = tessellated.getVerticesForPatch(
         cornerIndices: [
           index00, index01, //
           index10, index11, //
         ],
         verticesMesh: verticesMesh,
-        textureMesh: textureMesh,
-        tessellation: tessellation,
+        textureCoordinates: Float32List.sublistView(
+          textureGrid,
+          gridOffset,
+          gridOffset + floatsPerPatch,
+        ),
       );
 
-      canvas.drawVertices(
-        vertices,
-        BlendMode.srcOver,
-        gradientPaint,
-      );
+      try {
+        canvas.drawVertices(
+          vertices,
+          BlendMode.srcOver,
+          gradientPaint,
+        );
+      } finally {
+        vertices.dispose();
+      }
     }
     canvas.restore();
   }
@@ -254,7 +338,9 @@ class OMeshRectPaint {
             ..setBools(patchBiases)
             ..setColorSpace(meshRect.colorSpace)
             ..setFloat(
-              debugMode?.enableDots ?? false ? tessellation.toDouble() : 0.0,
+              debugMode?.enableDots ?? false
+                  ? _paintedTessellation.toDouble()
+                  : 0.0,
             ),
         ));
   }

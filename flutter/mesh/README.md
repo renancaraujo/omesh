@@ -410,7 +410,7 @@ This may be caused by too many triangles in your mesh
 The number of triangles in a mesh can be described by `(width-1) * (height-1) * (tessellationFactor ^ 2) * 2`.
 
 The default tessellation factor is 12, consider lowering that value for small-sized containers or
-meshes with too many vertices. See below the visual impacts of a change in the tessellation factor.
+meshes with too many vertices. It must be at least 1, and values above 30 are painted with 30. See below the visual impacts of a change in the tessellation factor.
 
 ### I see some artifacts when the mesh is distorted
 
