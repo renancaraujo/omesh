@@ -405,6 +405,35 @@ OMeshGradient(
 
 On Impeller, dither removes bands on opaque meshes but not on translucent ones.
 
+### 6. Grain
+
+Add film grain with `OMeshGrain`. It works on `OMeshGradient`, `AnimatedOMeshGradient` and `OMeshRectPaint`.
+
+Result:
+
+<img src="https://raw.githubusercontent.com/renancaraujo/omesh/main/flutter/mesh/doc/assets/grain_example.webp" width="500">
+
+Code:
+
+```dart
+OMeshGradient(
+  mesh: myMesh,
+  grain: const OMeshGrain(
+    amount: 0.05, // visible grain; 0 turns it off
+    scatter: 12, // random lookup offset in logical pixels; 0 turns it off
+  ),
+)
+```
+
+| Parameter | Default | What it does |
+| --- | --- | --- |
+| `amount` | `0.05` | Visible grain, as a fraction of full scale. Around 0.05 is subtle, 0.2 is heavy. The mesh is first drawn into an offscreen image, so grain costs one extra image, and one extra pass each paint. |
+| `scatter` | `12` | Moves each pixel's color lookup by up to this many logical pixels, for a sandy edge between colors. Runs in the mesh shader and costs almost nothing. |
+| `shadows`, `midtones`, `highlights` | `0.6`, `1`, `0.5` | How strong the grain is in dark, middle and bright areas. |
+| `seed` | `0` | Picks a different random pattern. |
+
+`OMeshGrain.none`, or a null `grain`, draws the mesh with no grain.
+
 ## About impeller
 
 O'Mesh has had issues when running on the [Impeller Rendering Engine](https://docs.flutter.dev/perf/impeller) in previous versions.
@@ -432,6 +461,8 @@ The number of triangles in a mesh can be described by `(width-1) * (height-1) * 
 
 The default tessellation factor is 12, consider lowering that value for small-sized containers or
 meshes with too many vertices. It must be at least 1, and values above 30 are painted with 30. See below the visual impacts of a change in the tessellation factor.
+
+A grain `amount` above 0 also draws the mesh into an offscreen image on every paint. For animated meshes on slow devices, try `amount: 0` and keep only `scatter`.
 
 ### I see some artifacts when the mesh is distorted
 
