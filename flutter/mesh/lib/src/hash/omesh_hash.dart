@@ -42,6 +42,10 @@ const _kSpecVersionMask = 0x3F;
 ///   outside 0 to 9.
 /// * [codec] writes the v2 format and [mesh] has a width or height outside
 ///   2 to 255, or fewer vertices or colors than its width times its height.
+///
+/// Throws a [FormatException] when [codec] is [OMeshBinaryFormatCodec.v1] and
+/// [mesh] has an sRGB or extended sRGB color with a component that is not
+/// finite once multiplied by 255.
 String getHashFromMesh(
   OMeshRect mesh, {
   OMeshBinaryFormatCodec codec = OMeshBinaryFormatCodec.v2,

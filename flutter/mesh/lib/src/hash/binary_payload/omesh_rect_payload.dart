@@ -21,6 +21,9 @@ class OMeshRectPayloadType extends PayloadType<OMeshRect> {
     final widthHeight = reader.uint8();
     final width = widthHeight >> 4;
     final height = widthHeight & 0xF;
+    if (width < 2 || height < 2) {
+      throw FormatException('Invalid mesh size ${width}x$height');
+    }
 
     final verticesLength = width * height;
     final vertices = List<OVertex>.generate(

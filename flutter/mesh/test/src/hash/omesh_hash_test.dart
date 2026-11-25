@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui';
 
-import 'package:binarize/binarize.dart' show Payload, binarize;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mesh/hash.dart';
 import 'package:mesh/mesh.dart';
@@ -656,8 +655,19 @@ OM:ggMDCQIAAAAAAAQMAAgOBAoABgoCBhACDAwICAkIFxVdCC4qughFQBcIXFV0CHNq0QiKgC4IoZWLC
     });
 
     test('throw a FormatException when too short for a checksum', () {
-      for (final hash in ['OM:', 'OM:gg', 'OM:ggI']) {
-        expect(() => getMeshFromHash(hash), throwsFormatException);
+      // One byte, and two bytes that are the checksum of no bytes.
+      for (final hash in ['OM:gg', 'OM:ggI', 'OM:__8']) {
+        expect(
+          () => getMeshFromHash(hash),
+          throwsA(
+            isA<FormatException>().having(
+              (e) => e.message,
+              'message',
+              "O'Mesh hash is too short",
+            ),
+          ),
+          reason: hash,
+        );
       }
     });
 
@@ -684,7 +694,7 @@ OM:ggMDCQIAAAAAAAQMAAgOBAoABgoCBhACDAwICAkIFxVdCC4qughFQBcIXFV0CHNq0QiKgC4IoZWLC
       final content = bytes.sublist(1, bytes.length - 2);
 
       expect(getMeshFromHash(_v2Hash([0xC2, ...content])), _verySimpleOMesh);
-      for (var version = 3; version < 64; version++) {
+      for (final version in [0, for (var i = 3; i < 64; i++) i]) {
         expect(
           () => getMeshFromHash(_v2Hash([0xC0 | version, ...content])),
           throwsA(
@@ -778,13 +788,13 @@ OM:ggMDCQIAAAAAAAQMAAgOBAoABgoCBhACDAwICAkIFxVdCC4qughFQBcIXFV0CHNq0QiKgC4IoZWLC
 
       expect(
         () => OMeshBinaryFormatCodec.v2.decode(bytes),
-        throwsFormatException,
-      );
-      expect(
-        () => getMeshFromHash(
-          getHashFromMesh(_simpleOMesh).replaceRange(3, 4, 'Y'),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            endsWith('format version 99'),
+          ),
         ),
-        throwsFormatException,
       );
     });
 
@@ -833,6 +843,70 @@ OM:ggMDCQIAAAAAAAQMAAgOBAoABgoCBhACDAwICAkIFxVdCC4qughFQBcIXFV0CHNq0QiKgC4IoZWLC
 
         expect(_roundTrip(withExtras, OMeshBinaryFormatCodec.v1), mesh);
       });
+
+      test('throws a FormatException on a width or height below 2', () {
+        // The spec version, then the width and the height in one byte.
+        for (final (size, name) in [
+          (0x00, '0x0'),
+          (0x12, '1x2'),
+          (0x21, '2x1'),
+        ]) {
+          expect(
+            () => OMeshBinaryFormatCodec.v1.decode(
+              Uint8List.fromList([1, size]),
+            ),
+            throwsA(
+              isA<FormatException>().having(
+                (e) => e.message,
+                'message',
+                'Invalid mesh size $name',
+              ),
+            ),
+          );
+        }
+        // A v1 hash of a 0x0 mesh.
+        expect(
+          () => getMeshFromHash('OM:eAEBBAD7_wEAACAAKAAi'),
+          throwsFormatException,
+        );
+      });
+
+      test('throws a FormatException on NaN, infinite and huge colors', () {
+        for (final component in [
+          double.nan,
+          double.infinity,
+          double.negativeInfinity,
+          1e308,
+        ]) {
+          final mesh = _grid(
+            2,
+            2,
+            colors: [
+              Color.from(
+                alpha: 1,
+                red: component,
+                green: 0,
+                blue: 0,
+                colorSpace: ColorSpace.extendedSRGB,
+              ),
+              null,
+              null,
+              null,
+            ],
+          );
+
+          expect(
+            () => OMeshBinaryFormatCodec.v1.encode(mesh),
+            throwsFormatException,
+            reason: '$component',
+          );
+          expect(
+            () => getHashFromMesh(mesh, codec: OMeshBinaryFormatCodec.v1),
+            throwsFormatException,
+            reason: '$component',
+          );
+        }
+      });
     });
 
     group('v2', () {
@@ -857,6 +931,13 @@ OM:ggMDCQIAAAAAAAQMAAgOBAoABgoCBhACDAwICAkIFxVdCC4qughFQBcIXFV0CHNq0QiKgC4IoZWLC
         );
 
         expect(_roundTrip(withExtras, OMeshBinaryFormatCodec.v2), mesh);
+        // An extra vertex that has no exact decimal form changes no byte.
+        expect(
+          OMeshBinaryFormatCodec.v2.encode(
+            mesh.copyWith(vertices: [...mesh.vertices, (1 / 3, 0.5).v]),
+          ),
+          OMeshBinaryFormatCodec.v2.encode(mesh),
+        );
       });
 
       test('keeps full precision coordinates exactly', () {
@@ -1036,6 +1117,31 @@ OM:ggMDCQIAAAAAAAQMAAgOBAoABgoCBhACDAwICAkIFxVdCC4qughFQBcIXFV0CHNq0QiKgC4IoZWLC
         expect(getMeshFromHash(getHashFromMesh(mesh)), mesh);
       });
 
+      test('writes decimals only for coordinates up to 2^50', () {
+        OMeshRect withFirst(OVertex vertex) {
+          return _grid(2, 2, colors: List.filled(4, null)).copyWith(
+            vertices: [vertex, (1.0, 0.0).v, (0.0, 1.0).v, (1.0, 1.0).v],
+          );
+        }
+
+        // 2^50.
+        const limit = 1125899906842624.0;
+        final atLimit = withFirst((limit, 0.0).v);
+        final overLimit = withFirst((limit + 2, 0.0).v);
+        // 2^52 and -2^52, which are 2^53 apart.
+        final farApart = withFirst(
+          (4 * limit, 0.0).v.bezier(north: (-4 * limit, 0.0).v),
+        );
+
+        expect(OMeshBinaryFormatCodec.v2.encode(atLimit)[4], 0);
+        expect(OMeshBinaryFormatCodec.v2.encode(overLimit)[4], 0xFF);
+        expect(OMeshBinaryFormatCodec.v2.encode(farApart)[4], 0xFF);
+        for (final mesh in [atLimit, overLimit, farApart]) {
+          expect(_roundTrip(mesh, OMeshBinaryFormatCodec.v2), mesh);
+          expect(getMeshFromHash(getHashFromMesh(mesh)), mesh);
+        }
+      });
+
       test('keeps coordinates next to a short decimal exactly', () {
         final mesh = _grid(2, 2).copyWith(
           vertices: [
@@ -1133,6 +1239,31 @@ OM:ggMDCQIAAAAAAAQMAAgOBAoABgoCBhACDAwICAkIFxVdCC4qughFQBcIXFV0CHNq0QiKgC4IoZWLC
           ),
           [(3 + 3) << 3, 0xE8, 0x07, 0xF4, 0x03, 0xFA, 0x01, 0xD0, 0x0F],
         );
+        // No fractional digits: 2, 0, 0 and 1, zigzag encoded.
+        expect(
+          colorData(
+            const Color.from(
+              alpha: 1,
+              red: 2,
+              green: 0,
+              blue: 0,
+              colorSpace: ColorSpace.extendedSRGB,
+            ),
+          ),
+          [3 << 3 | 1, 0x04, 0x00, 0x00, 0x02],
+        );
+        // Nine fractional digits, the most: 123456789, 0, 0 and 10^9.
+        expect(
+          colorData(
+            const Color.from(alpha: 1, red: 0.123456789, green: 0, blue: 0),
+          ),
+          [
+            (3 + 9) << 3,
+            0xAA, 0xB4, 0xDE, 0x75, //
+            0x00, 0x00,
+            0x80, 0xA8, 0xD6, 0xB9, 0x07,
+          ],
+        );
         expect(
           colorData(
             const Color.from(
@@ -1199,22 +1330,25 @@ OM:ggMDCQIAAAAAAAQMAAgOBAoABgoCBhACDAwICAkIFxVdCC4qughFQBcIXFV0CHNq0QiKgC4IoZWLC
           );
         }
 
+        // Invalid data, by the message of the exception it throws.
         final invalid = {
-          'a width below 2': withByte(1, 1),
-          'a height below 2': withByte(2, 1),
-          'an unknown mesh color space': withByte(3, 0x08 | 3),
-          'the last unknown mesh color space': withByte(3, 0x08 | 7),
-          'a number mode above 9 digits': withByte(4, 10),
-          'a number mode below float64': withByte(4, 0xFE),
-          'a color index beyond an empty palette': withByte(16, 1),
-          'a color index beyond the palette':
+          'Invalid mesh size 1x2': withByte(1, 1),
+          'Invalid mesh size 2x1': withByte(2, 1),
+          'Unknown mesh color space 3': withByte(3, 0x08 | 3),
+          'Unknown mesh color space 4': withByte(3, 0x08 | 4),
+          'Unknown mesh color space 7': withByte(3, 0x08 | 7),
+          'Unknown number mode 10': withByte(4, 10),
+          'Unknown number mode 254': withByte(4, 0xFE),
+          'Color index 1 out of range': withByte(16, 1),
+          'Color index 2 out of range':
               withPalette([1, 1 << 3, 0, 0, 0], firstIndex: 2),
-          'an unknown color encoding': withPalette([1, 13 << 3, 0, 0, 0, 0]),
-          'the last unknown color encoding':
-              withPalette([1, 31 << 3, 0, 0, 0, 0]),
-          'an unknown color space': withPalette([1, 1 << 3 | 3, 0, 0, 0]),
-          'the last unknown color space': withPalette([1, 1 << 3 | 7, 0, 0, 0]),
-          'a varint over 8 bytes': withPalette(
+          'Unknown color encoding 13': withPalette([1, 13 << 3, 0, 0, 0, 0]),
+          'Unknown color encoding 16': withPalette([1, 16 << 3, 0, 0, 0, 0]),
+          'Unknown color encoding 31': withPalette([1, 31 << 3, 0, 0, 0, 0]),
+          'Unknown color space 3': withPalette([1, 1 << 3 | 3, 0, 0, 0]),
+          'Unknown color space 4': withPalette([1, 1 << 3 | 4, 0, 0, 0]),
+          'Unknown color space 7': withPalette([1, 1 << 3 | 7, 0, 0, 0]),
+          'varint is too long': withPalette(
             [0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x00],
           ),
         };
@@ -1225,11 +1359,16 @@ OM:ggMDCQIAAAAAAAQMAAgOBAoABgoCBhACDAwICAkIFxVdCC4qughFQBcIXFV0CHNq0QiKgC4IoZWLC
           ),
           _grid(2, 2, colors: const [Color(0xff000000), null, null, null]),
         );
-        for (final MapEntry(key: name, value: data) in invalid.entries) {
+        for (final MapEntry(key: message, value: data) in invalid.entries) {
           expect(
             () => OMeshBinaryFormatCodec.v2.decode(data),
-            throwsFormatException,
-            reason: name,
+            throwsA(
+              isA<FormatException>().having(
+                (e) => e.message,
+                'message',
+                message,
+              ),
+            ),
           );
         }
       });
@@ -1388,20 +1527,24 @@ OM:ggMDCQIAAAAAAAQMAAgOBAoABgoCBhACDAwICAkIFxVdCC4qughFQBcIXFV0CHNq0QiKgC4IoZWLC
       });
 
       test('throws an ArgumentError for decimal places out of range', () {
-        Uint8List write(int decimalPlaces) {
-          return binarize(
-            Payload.write()
-              ..set<OMeshBinaryFormat>(
-                OMeshBinaryFormatPayloadType(maxDecimalPlaces: decimalPlaces),
-                (specVersion: 2, mesh: _verySimpleOMesh),
-              ),
+        final exact = OMeshBinaryFormatCodec.v2.encode(_verySimpleOMesh);
+
+        for (final decimalPlaces in [0, 9]) {
+          final codec =
+              OMeshBinaryFormatCodec.v2Rounded(decimalPlaces: decimalPlaces);
+
+          expect(codec.encode(_verySimpleOMesh), exact);
+        }
+        for (final decimalPlaces in [-1, 10]) {
+          final codec =
+              OMeshBinaryFormatCodec.v2Rounded(decimalPlaces: decimalPlaces);
+
+          expect(() => codec.encode(_verySimpleOMesh), throwsArgumentError);
+          expect(
+            () => getHashFromMesh(_verySimpleOMesh, codec: codec),
+            throwsArgumentError,
           );
         }
-
-        expect(write(0), OMeshBinaryFormatCodec.v2.encode(_verySimpleOMesh));
-        expect(write(9), OMeshBinaryFormatCodec.v2.encode(_verySimpleOMesh));
-        expect(() => write(-1), throwsArgumentError);
-        expect(() => write(10), throwsArgumentError);
       });
 
       test('rounds coordinates that need more decimal places', () {

@@ -75,8 +75,8 @@ at most 2^50 for every value v it encodes.
 - mesh:R
 
 (R) Rectangular mesh:
-- (w)width:4b (high nibble)
-- (h)height:4b (low nibble)
+- (w)width:4b (high nibble, 2..15)
+- (h)height:4b (low nibble, 2..15)
 - positions & control points:w*h*V
 - colors:O
 - metadata:1B

@@ -183,7 +183,13 @@ class _DisplayP3ColorPayloadType extends PayloadType<Color> {
 }
 
 extension on double {
-  int get toUint8 => (this * 255).round().clamp(0, 255);
+  int get toUint8 {
+    final scaled = this * 255;
+    if (!scaled.isFinite) {
+      throw FormatException('Invalid color component $this');
+    }
+    return scaled.round().clamp(0, 255);
+  }
 }
 
 extension on List<Color?> {
