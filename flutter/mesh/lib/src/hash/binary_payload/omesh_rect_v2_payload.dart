@@ -13,6 +13,9 @@ import 'package:mesh/src/hash/binary_payload/number_encoding.dart';
 /// varints with that amount of fractional digits.
 const int _kNumberModeFloat64 = 0xFF;
 
+/// The bits of the flags byte that hold the mesh color space.
+const int _kColorSpaceMask = 0x07;
+
 const int _kFlagSmoothColors = 0x08;
 const int _kFlagFallbackColor = 0x10;
 const int _kFlagBackgroundColor = 0x20;
@@ -21,6 +24,9 @@ const int _kNorth = 0x1;
 const int _kEast = 0x2;
 const int _kSouth = 0x4;
 const int _kWest = 0x8;
+
+/// The bits of a control point presence byte that hold its first vertex.
+const int _kPresenceMask = 0x0F;
 
 /// {@template omesh_rect_v2_payload_type}
 /// A [PayloadType] for [OMeshRect] in the v2 binary format.
@@ -58,7 +64,7 @@ class OMeshRectV2PayloadType extends PayloadType<OMeshRect> {
     }
 
     final flags = reader.uint8();
-    final colorSpaceIndex = flags & 0x07;
+    final colorSpaceIndex = flags & _kColorSpaceMask;
     if (colorSpaceIndex >= OMeshColorSpace.values.length) {
       throw FormatException('Unknown mesh color space $colorSpaceIndex');
     }
@@ -72,7 +78,7 @@ class OMeshRectV2PayloadType extends PayloadType<OMeshRect> {
     final presence = Uint8List(count);
     for (var i = 0; i < count; i += 2) {
       final byte = reader.uint8();
-      presence[i] = byte & 0x0F;
+      presence[i] = byte & _kPresenceMask;
       if (i + 1 < count) {
         presence[i + 1] = byte >> 4;
       }

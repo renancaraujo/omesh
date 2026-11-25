@@ -4,6 +4,9 @@ import 'package:binarize/binarize.dart'
     show ByteReader, ByteWriter, Endian, PayloadType;
 import 'package:mesh/src/hash/binary_payload/number_encoding.dart';
 
+/// The bits of the color header that hold the color space.
+const int _kColorSpaceMask = 0x07;
+
 /// Components stored as `n / 255`, red, green, blue and alpha.
 const int _kEncodingUint8 = 0;
 
@@ -36,7 +39,7 @@ class ColorV2PayloadType extends PayloadType<Color> {
   @override
   Color get(ByteReader reader, [Endian? endian]) {
     final header = reader.uint8();
-    final colorSpace = _colorSpaceFromCode(header & 0x07);
+    final colorSpace = _colorSpaceFromCode(header & _kColorSpaceMask);
     final encoding = header >> 3;
 
     final double red;
