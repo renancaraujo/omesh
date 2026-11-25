@@ -46,7 +46,8 @@ Widget _gradient(OMeshGrain? grain) => Center(
         key: _boundaryKey,
         child: SizedBox.square(
           dimension: 32,
-          child: OMeshGradient(mesh: _grey, grain: grain),
+          // Dither off, so the noise measured is grain alone.
+          child: OMeshGradient(mesh: _grey, grain: grain, dither: false),
         ),
       ),
     );

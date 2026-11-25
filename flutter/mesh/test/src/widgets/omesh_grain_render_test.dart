@@ -419,8 +419,15 @@ void main() {
   });
 
   group('grain weights', () {
+    // Dither off, so the noise measured is grain alone.
     Future<double> noise(WidgetTester t, Color color, OMeshGrain grain) async {
-      final pixels = await _paint(t, provider, _flat(color), grain: grain);
+      final pixels = await _paint(
+        t,
+        provider,
+        _flat(color),
+        grain: grain,
+        dither: false,
+      );
       return _std(pixels.redOffsets((color.r * 255).round()));
     }
 
