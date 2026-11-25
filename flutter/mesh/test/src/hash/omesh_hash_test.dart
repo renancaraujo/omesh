@@ -1,8 +1,84 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mesh/hash.dart';
 import 'package:mesh/mesh.dart';
+
+/// A regular [width] x [height] mesh with coordinates offset by [offset]
+/// and a different color on every vertex, unless [color] is given.
+OMeshRect _grid(
+  int width,
+  int height, {
+  double Function(int index)? offset,
+  Color? color,
+}) {
+  final count = width * height;
+  return OMeshRect(
+    width: width,
+    height: height,
+    vertices: [
+      for (var i = 0; i < count; i++)
+        (
+          (i % width) / (width - 1) + (offset?.call(i) ?? 0),
+          (i ~/ width) / (height - 1) - (offset?.call(i) ?? 0),
+        ).v,
+    ],
+    colors: [
+      for (var i = 0; i < count; i++)
+        color ?? Color(0xff000000 | (i * 0x9e3779) & 0xffffff),
+    ],
+  );
+}
+
+/// A large mesh with irregular coordinates, built only out of operations
+/// that are exact on every platform.
+OMeshRect _largeMesh(int size) {
+  return _grid(size, size, offset: (i) => ((i * 37) % 101 - 50) / 1000);
+}
+
+/// A short digest of [hash] that is the same on every platform, to pin
+/// long hashes.
+int _digest(String hash) {
+  var digest = 0;
+  for (final unit in hash.codeUnits) {
+    digest = (digest * 31 + unit) % 1000000007;
+  }
+  return digest;
+}
+
+/// Applies [change] to the bytes encoded in [hash].
+String _mapHashBytes(String hash, Uint8List Function(Uint8List) change) {
+  final bytes = base64Url.decode(base64Url.normalize(hash.substring(3)));
+  final changed = base64Url.encode(change(bytes)).replaceAll('=', '');
+  return 'OM:$changed';
+}
+
+/// [hash] with every bit of its last byte flipped, which is part of the
+/// checksum of a zlib stream.
+String _corruptLastByte(String hash) {
+  return _mapHashBytes(hash, (bytes) => bytes..last ^= 0xFF);
+}
+
+/// [hash] without the last 4 bytes, the checksum of a zlib stream.
+String _truncate(String hash) {
+  return _mapHashBytes(
+    hash,
+    (bytes) => Uint8List.sublistView(bytes, 0, bytes.length - 4),
+  );
+}
+
+/// [hash] without the byte in the middle of its compressed data.
+String _removeMiddleByte(String hash) {
+  return _mapHashBytes(hash, (bytes) {
+    final middle = bytes.length ~/ 2;
+    return Uint8List.fromList([
+      ...bytes.take(middle),
+      ...bytes.skip(middle + 1),
+    ]);
+  });
+}
 
 void main() {
   test('encodes and decodes a very simple mesh', () {
@@ -25,7 +101,7 @@ void main() {
       hash,
       equals(
         '''
-OM:eJxjVGJAB_YfMITQJGAMuAAjg9vklf8ZGBkYDQDHZweU''',
+OM:eAFjVGJAB_YfMITQJGAMuAAjg9vklf-BFKMBAMdnB5Q''',
       ),
     );
 
@@ -72,7 +148,7 @@ OM:eJxjVGJAB_YfMITQJGAMuAAjg9vklf8ZGBkYDQDHZweU''',
       hash,
       equals(
         '''
-OM:eJxjNGaAgv1bqh66rxOpZrB_1B-j8fVQ__6VM0FgFoP910MgkcP2S6AqYMD-8nUu24LF1xns74A0xGjaP4HQDPYfoVpuQs2Aa_kAU_EBJsCAyrB_DrY9hoGVYal2xn8Gt8kr_zMs1V7wn-HFrSv_GaaLrvzPyMTEzMLEysRkAAA5OUWE''',
+OM:eAFjNGaAgv1bqh66rxOpZrB_1B-j8fVQ__6VM0FgFoM9kAMUOWy_BKoCBuwvX-eyLVh8ncH-DkhDjKb9EwjNYP8RquUm1Ay4lg8wFR9gAgyoDPvnYNtjGFgZlmpn_Gdwm7zyP5C14D_Di1tX_jNMF135n5GJiZmFiZWJyQAAOTlFhA''',
       ),
     );
 
@@ -135,7 +211,7 @@ OM:eJxjNGaAgv1bqh66rxOpZrB_1B-j8fVQ__6VM0FgFoP910MgkcP2S6AqYMD-8nUu24LF1xns74A0x
       hash,
       equals(
         '''
-OM:eJxdUDtMAkEQHTz8nCaEgsJKEyt6a_JKbFELCwora2yxNNQ0FnqFhdBoQaKxoLuIjYUkIjEgJuROhECwOEywHbM3uyTykrvdzL7PzET23dtxYaOa-XbLeT9dSZwQGulKIu_vmAeCV2qtpnJl994wRvOMiS4YhnsmF3RSOSW23MtqRpHR3A6BR31-KIdxwWSgKzwbvljiRT-0w_ou2tNaMZv8xac4oydGa-iHRpvoiBKDRNgDvp4V6rMEX5rGkELgTXRRjC4UHHg6IfhPIAP0w-RjwrtW6B6ieC1mk9NaET0VVWrB000PZCqahc4sgrmCaxYzMYy6XMyOCZ6WTCSdMNST_chKCIGZQE6y6eHmiolpXf32mPjuiKnJh0yce2I6P71m2orHmbqOw5EFK7poWUuWfMsrtm0fUCwW4z8wNfJn''',
+OM:eAFdUS1Mw0AUfqPlp5A0ExMoSFB49PJJsAMEAoFCFzskmcYgoALBZkCQQBBzDWAQLGEsZGMkS8vYwjLESgL2uOu7a8Je0nsv776fd6-ZzeBqWFqoFr6CSjFavcztE-oyFaM1c0EIy83ZvFcJbgxiMI6IdcMggiMu0M57imwFp9WCAqOxkgTudX5TCsOS8UCHcQ4ilsSTvmgl_XW0fu4Ot5d_8c7K6LLQHHqJ0CLazEQ_l8yAj0cVtdQh4qHxSUnghXk2BicqfITaYfQfQCbQS5z3CK-aoWew8SyJko2usio3Eeqh-_wqSk1TidFYIzCLiQ2ixoXZsfwdmhKzuxTVL_vmlUhR8wLO5NDtxZkgQfPq2JDH9a6ghtiRlfcg6PjgXNBSNiuo4_siM2HZk5Y1ZfE3PeM4zha5riv-ADA18mc''',
       ),
     );
 
@@ -237,7 +313,7 @@ OM:eJxdUDtMAkEQHTz8nCaEgsJKEyt6a_JKbFELCwora2yxNNQ0FnqFhdBoQaKxoLuIjYUkIjEgJuROh
       hash,
       equals(
         '''
-OM:eJxlkDFMwkAUhl-hKlbYYMUVR-IqvhFcTECdYHbGuOkqM4uLDi6yOEjixmByCcTFqBENGqMh1gpioIoD1ricubt3ZfAN1177v_997zfWWLWW7ZfiNbazZaer0W3AK_pwIs7sAPBZ3nPsNDGqlwtzgG_VqBCzoz1R-4BD1ct2yYNV1Au26uVCYtQAvAZZeCPu9bJvimda0SMFKX1TbKbFuAzocfikORrzstARoP2S5U95SRUP760U6o7XC1GX2FaraQcLO7JxFh-VA96SY1suGMV3lYGmtXBAUBq_o_B9Zw39QNHoeLEjiTbG0MQ0hqYtkHL_Z22rHCzsEpxN2zWpwaanq0bpkYb_waHRGrK7LgvYgaYXumIF8E79waFaE_wEhyK4xDegS3S-4ouiJHOIwMcP59Dqcw7uiHP47PFNcawCLGY4wFKeAyznORjhsAdGLOaBEY97YCSTHgRWclzGYgSCwaBpTpjm5FQoFJq2ZsKRBTh2fjmcOwP-ByMVREc''',
+OM:eAFlkD9MwlAQxq9QFStssOKKI3EVbwQXE1AnnZ0xbrrKzOKig4ssDpK4MZg0gbgYNaJBYzTEWosYQHFAjEt9f-49Bm_4aMvdd7_7jBW7XMl2CvGKvbPlpMvRbcAr-nDCNdsFfBbvOfs0MagW12YA38pR3mwf7fHaB-zLWXuXPOySfMAGG0gMaoDXIApv-Hu1qE3xTHW0qYM6tSnW03xdBtQ6fFIctVlR6HLQTsHSW15S-cN7K4Vq4vWC1yU25WnKwUJPDE7jo3TAW3JsigOj-C4zULQWdglK4XsSXzsr6AeKRsWLniDaGEET0wiarkDK_Z-1I3OwsEVwDl1XpwGHfntylVpp6A8urVaQrXVRYB8oet6XLwHeyX-wL88EnWCfB5f4BuwRne74oijJHCLw8eP70Ogw6Q2YfLb9TS7LAPMZH2BhlckiEyMcHoIRizGJx5kkk0MILOV8EYsRCAaDpjlmmuMToVBo0poKR-bg2P314dzt-n8jFURH''',
       ),
     );
 
@@ -305,12 +381,62 @@ OM:eJxlkDFMwkAUhl-hKlbYYMUVR-IqvhFcTECdYHbGuOkqM4uLDi6yOEjixmByCcTFqBENGqMh1gpio
       hash,
       equals(
         '''
-OM:eJxjNGaAgv1bqh66rxOpZrB_1B-j8fVQ__6VM0FgFoP910MgkcP2S6AqYMD-8nUu24LF1xns74A0xGjaP4HQDPYfoVpuQs2Aa_kAU_EBJsCAyrB_DrY9hoGVYal2xn8mmBH2j0CWVz20f3IGBM7CNbpNXvmfYan2gv8M00VX_mdkYmZhYGJlYIpg4OPj-w8Ap0BTbg''',
+OM:eAFjNGaAgv1bqh66rxOpZrB_1B-j8fVQ__6VM0FgFoM9kAMUOWy_BKoCBuwvX-eyLVh8ncH-DkhDjKb9EwjNYP8RquUm1Ay4lg8wFR9gAgyoDPvnYNtjGFgZlmpn_GeCGWH_CGR51UP7J2dA4Cxco9vklf-BShf8Z5guuvI_IxMzCwMTKwNTBAMfH99_AKdAU24''',
       ),
     );
 
     final mesh = getMeshFromHash(hash);
 
     expect(mesh, meshRect);
+  });
+
+  test('encodes a large mesh to the same hash on every platform', () {
+    final mesh = _largeMesh(15);
+    final hash = getHashFromMesh(mesh);
+
+    expect((hash.length, _digest(hash)), (5117, 532470858));
+    expect(getMeshFromHash(hash), mesh);
+  });
+
+  test('encodes meshes that compress well to the same hash on every platform',
+      () {
+    // Repetitive data is where a compression level other than 6 writes
+    // different bytes. Small, medium and large payloads.
+    const pinned = {
+      4: (97, 671319480),
+      10: (402, 497707824),
+      15: (797, 271513937),
+    };
+
+    for (final MapEntry(key: size, value: expected) in pinned.entries) {
+      final mesh = _grid(size, size, color: const Color(0xff4693a9));
+      final hash = getHashFromMesh(mesh);
+
+      expect((hash.length, _digest(hash)), expected, reason: 'size $size');
+      expect(getMeshFromHash(hash), mesh);
+    }
+  });
+
+  test('throws a FormatException when the hash is damaged', () {
+    final hashes = [
+      getHashFromMesh(_grid(2, 2)),
+      getHashFromMesh(_grid(4, 4, color: const Color(0xff4693a9))),
+      getHashFromMesh(_largeMesh(15)),
+    ];
+
+    for (final hash in hashes) {
+      expect(
+        () => getMeshFromHash(_corruptLastByte(hash)),
+        throwsFormatException,
+      );
+      expect(
+        () => getMeshFromHash(_truncate(hash)),
+        throwsFormatException,
+      );
+      expect(
+        () => getMeshFromHash(_removeMiddleByte(hash)),
+        throwsFormatException,
+      );
+    }
   });
 }

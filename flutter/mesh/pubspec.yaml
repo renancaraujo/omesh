@@ -15,7 +15,7 @@ environment:
   flutter: ">=3.27.0"
 
 dependencies:
-  archive: ^4.0.6
+  archive: ^4.6.0
   binarize: ^2.0.0
   cached_value: ^1.0.0
   flutter:
