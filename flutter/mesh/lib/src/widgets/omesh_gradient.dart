@@ -324,47 +324,53 @@ class AnimatedOMeshGradient extends StatelessWidget {
 /// Avoid sharing instances of this class between different
 /// mesh gradient areas.
 class OMeshShaderProvider {
-  OMeshShaderProvider._(this._program, this._grainProgram);
+  OMeshShaderProvider._(this._program);
 
   /// Loads the shader provider. It will resolve after
   /// the [FragmentProgram] is loaded.
+  ///
+  /// The shader that draws [OMeshGrain.amount] grain is loaded separately,
+  /// the first time grain is drawn. See [loadGrainShader].
   static Future<OMeshShaderProvider> load() async {
     final program = await _loadProgram();
-    final grainProgram = await _loadGrainProgram();
-    return OMeshShaderProvider._(program, grainProgram);
+    return OMeshShaderProvider._(program);
   }
 
   static FragmentProgram? _programCache;
 
-  static FragmentProgram? _grainProgramCache;
-  static bool _grainProgramLoaded = false;
-
   static OMeshShaderProvider? _loadFromCache() {
     final program = _programCache;
-    if (program == null || !_grainProgramLoaded) {
+    if (program == null) {
       return null;
     }
-    return OMeshShaderProvider._(program, _grainProgramCache);
+    return OMeshShaderProvider._(program);
   }
+
+  static FragmentProgram? _grainProgramCache;
+  static Future<FragmentProgram?>? _grainProgramLoad;
+  static bool _grainProgramSettled = false;
+
+  /// Whether loading the grain shader has started.
+  @visibleForTesting
+  static bool get debugGrainShaderLoadStarted => _grainProgramLoad != null;
 
   static const _grainAssetKeys = [
     'packages/mesh/shaders/omesh_grain_post.frag',
     'shaders/omesh_grain_post.frag',
   ];
 
-  /// Loads the grain shader. A failure is reported once and disables
-  /// visible grain; the mesh itself still draws.
-  static Future<FragmentProgram?> _loadGrainProgram() async {
-    if (_grainProgramLoaded) {
-      return _grainProgramCache;
-    }
+  static Future<FragmentProgram?> _loadGrainProgram() =>
+      _grainProgramLoad ??= _fetchGrainProgram();
 
+  /// Fetches the grain shader. A failure is reported once and disables
+  /// visible grain; the mesh itself still draws.
+  static Future<FragmentProgram?> _fetchGrainProgram() async {
     Object? firstError;
     StackTrace? firstStackTrace;
     for (final assetKey in _grainAssetKeys) {
       try {
         _grainProgramCache = await FragmentProgram.fromAsset(assetKey);
-        _grainProgramLoaded = true;
+        _grainProgramSettled = true;
         return _grainProgramCache;
       } catch (error, stackTrace) {
         firstError ??= error;
@@ -372,7 +378,7 @@ class OMeshShaderProvider {
       }
     }
 
-    _grainProgramLoaded = true;
+    _grainProgramSettled = true;
     FlutterError.reportError(
       FlutterErrorDetails(
         exception: firstError!,
@@ -385,6 +391,14 @@ class OMeshShaderProvider {
     );
     return null;
   }
+
+  /// Loads the shader that draws [OMeshGrain.amount] grain.
+  ///
+  /// Grain is drawn once this shader has loaded; until then the mesh is
+  /// drawn without it. [OMeshGradient] and [AnimatedOMeshGradient] load it
+  /// on their own when given visible grain. Code that paints with
+  /// [OMeshRectPaint] can await this before its first paint.
+  Future<void> loadGrainShader() => _loadGrainProgram();
 
   static const _assetKeys = [
     'packages/mesh/shaders/omesh.frag',
@@ -416,16 +430,22 @@ class OMeshShaderProvider {
 
   final FragmentProgram _program;
 
-  final FragmentProgram? _grainProgram;
-
   final Map<int, FragmentShader> _shaders = {};
 
   FragmentShader? _grainShader;
 
-  /// The shader that draws grain over the finished mesh, or null if it
-  /// could not be loaded.
-  FragmentShader? get grainShader =>
-      _grainShader ??= _grainProgram?.fragmentShader();
+  /// The shader that draws grain over the finished mesh.
+  ///
+  /// Null until the shader has loaded, or if it could not be loaded. The
+  /// first read starts loading it.
+  FragmentShader? get grainShader {
+    final program = _grainProgramCache;
+    if (program == null) {
+      unawaited(_loadGrainProgram());
+      return null;
+    }
+    return _grainShader ??= program.fragmentShader();
+  }
 
   /// Returns the shader for the given patch index.
   FragmentShader getShaderFor(int index) {
@@ -522,6 +542,39 @@ class _OMeshGradientState extends State<_OMeshGradient> {
     dither: widget.dither,
     grain: widget.grain,
   );
+
+  bool _loadingGrainShader = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadGrainShaderIfNeeded();
+  }
+
+  @override
+  void didUpdateWidget(_OMeshGradient oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _loadGrainShaderIfNeeded();
+  }
+
+  /// Loads the grain shader the first time visible grain is asked for,
+  /// then repaints with it.
+  void _loadGrainShaderIfNeeded() {
+    final grain = widget.grain;
+    if (grain == null ||
+        grain.amount <= 0 ||
+        _loadingGrainShader ||
+        OMeshShaderProvider._grainProgramSettled) {
+      return;
+    }
+    _loadingGrainShader = true;
+    unawaited(
+      widget.shaderProvider.loadGrainShader().then((_) {
+        _loadingGrainShader = false;
+        if (mounted) setState(draw.markNeedsRepaint);
+      }),
+    );
+  }
 
   @override
   void reassemble() {

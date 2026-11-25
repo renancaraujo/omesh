@@ -312,15 +312,15 @@ class OMeshRectPaint {
   /// Paints the mesh into the given [canvas] and [rect].
   void paint(Canvas canvas, Rect rect) {
     final grain = this.grain;
+    if (grain == null || grain.amount <= 0) {
+      _paintMesh(canvas, rect);
+      return;
+    }
     final grainShader = shaderProvider.grainShader;
     final dpr = devicePixelRatio;
     final width = (rect.width * dpr).ceil();
     final height = (rect.height * dpr).ceil();
-    if (grain == null ||
-        grain.amount <= 0 ||
-        grainShader == null ||
-        width <= 0 ||
-        height <= 0) {
+    if (grainShader == null || width <= 0 || height <= 0) {
       _paintMesh(canvas, rect);
       return;
     }

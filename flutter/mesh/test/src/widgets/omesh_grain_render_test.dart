@@ -238,6 +238,7 @@ void main() {
   Future<void> load(WidgetTester tester) async {
     provider = (await tester.runAsync(OMeshShaderProvider.load))!;
     addTearDown(provider.dispose);
+    await tester.runAsync(provider.loadGrainShader);
     expect(provider.grainShader, isNotNull);
   }
 
