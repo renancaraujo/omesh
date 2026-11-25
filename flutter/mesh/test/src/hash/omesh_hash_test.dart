@@ -634,6 +634,27 @@ OM:ggMDCQIAAAAAAAQMAAgOBAoABgoCBhACDAwICAkIFxVdCC4qughFQBcIXFV0CHNq0QiKgC4IoZWLC
       }
     });
 
+    test('throw a FormatException when empty', () {
+      for (final hash in ['', 'OM:']) {
+        expect(
+          () => getMeshFromHash(hash),
+          throwsA(
+            isA<FormatException>().having(
+              (e) => e.message,
+              'message',
+              "O'Mesh hash is empty",
+            ),
+          ),
+        );
+      }
+    });
+
+    test('throw a FormatException on a part of the prefix', () {
+      for (final hash in ['O', 'OM', ':']) {
+        expect(() => getMeshFromHash(hash), throwsFormatException);
+      }
+    });
+
     test('throw a FormatException when too short for a checksum', () {
       for (final hash in ['OM:', 'OM:gg', 'OM:ggI']) {
         expect(() => getMeshFromHash(hash), throwsFormatException);
@@ -697,6 +718,23 @@ OM:ggMDCQIAAAAAAAQMAAgOBAoABgoCBhACDAwICAkIFxVdCC4qughFQBcIXFV0CHNq0QiKgC4IoZWLC
         OMeshRect.fromHash(hash: _complexOMesh.getHash()),
         _complexOMesh,
       );
+    });
+  });
+
+  group('getMeshFromHash', () {
+    test('decodes hashes without the prefix', () {
+      for (final fixture in _fixtures) {
+        expect(
+          getMeshFromHash(fixture.v1Hash.substring(3)),
+          fixture.mesh,
+          reason: fixture.name,
+        );
+        expect(
+          getMeshFromHash(fixture.v2Hash.substring(3)),
+          fixture.mesh,
+          reason: fixture.name,
+        );
+      }
     });
   });
 
