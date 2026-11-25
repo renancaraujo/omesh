@@ -66,8 +66,8 @@ String getHashFromMesh(
 ///
 /// The prefix is optional.
 ///
-/// Throws a [FormatException] when the hash is empty or when its checksum
-/// does not match.
+/// Throws a [FormatException] when the hash is empty, when its checksum does
+/// not match or when its data is truncated or invalid.
 OMeshRect getMeshFromHash(String hash) {
   var unprefixed = hash;
   if (hash.startsWith(_kPrefix)) {

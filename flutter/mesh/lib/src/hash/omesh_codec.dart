@@ -94,8 +94,15 @@ class _OMeshBinaryFormatDecoder extends Converter<Uint8List, OMeshRect> {
   @override
   OMeshRect convert(Uint8List input) {
     final reader = Payload.read(input);
-    final format = reader.get(OMeshBinaryFormatPayloadType.instance);
-    return format.mesh;
+    try {
+      final format = reader.get(OMeshBinaryFormatPayloadType.instance);
+      return format.mesh;
+      // Reading past the end of the data throws a different error on each
+      // platform, each of them an ArgumentError.
+      // ignore: avoid_catching_errors
+    } on ArgumentError catch (error) {
+      throw FormatException("O'Mesh data is truncated or invalid: $error");
+    }
   }
 }
 

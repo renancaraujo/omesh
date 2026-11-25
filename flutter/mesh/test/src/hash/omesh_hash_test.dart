@@ -661,6 +661,24 @@ OM:ggMDCQIAAAAAAAQMAAgOBAoABgoCBhACDAwICAkIFxVdCC4qughFQBcIXFV0CHNq0QiKgC4IoZWLC
       }
     });
 
+    test('throw a FormatException when the content is cut short', () {
+      // The content without its spec version byte, behind an uncompressed
+      // header.
+      final content = _plainV2Data().sublist(1);
+
+      expect(
+        getMeshFromHash(_v2Hash([0x80 | 2, ...content])),
+        _grid(2, 2, colors: List.filled(4, null)),
+      );
+      for (var length = 0; length < content.length; length++) {
+        expect(
+          () => getMeshFromHash(_v2Hash([0x80 | 2, ...content.take(length)])),
+          throwsFormatException,
+          reason: '$length of ${content.length} bytes',
+        );
+      }
+    });
+
     test('throw a FormatException on an unknown spec version', () {
       final bytes = _hashBytes(_fixtures.first.v2Hash);
       final content = bytes.sublist(1, bytes.length - 2);
@@ -1313,15 +1331,27 @@ OM:ggMDCQIAAAAAAAQMAAgOBAoABgoCBhACDAwICAkIFxVdCC4qughFQBcIXFV0CHNq0QiKgC4IoZWLC
         }
       });
 
-      test('throws on truncated data', () {
-        final bytes = OMeshBinaryFormatCodec.v2.encode(_complexOMesh);
+      test('throws a FormatException on truncated data', () {
+        for (final codec in [
+          OMeshBinaryFormatCodec.v1,
+          OMeshBinaryFormatCodec.v2,
+        ]) {
+          final bytes = codec.encode(_complexOMesh);
 
-        expect(
-          () => OMeshBinaryFormatCodec.v2.decode(
-            Uint8List.sublistView(bytes, 0, bytes.length - 1),
-          ),
-          throwsA(anything),
-        );
+          for (var length = 0; length < bytes.length; length++) {
+            expect(
+              () => codec.decode(Uint8List.sublistView(bytes, 0, length)),
+              throwsA(
+                isA<FormatException>().having(
+                  (e) => e.message,
+                  'message',
+                  startsWith("O'Mesh data is truncated or invalid: "),
+                ),
+              ),
+              reason: '$length of ${bytes.length} bytes',
+            );
+          }
+        }
       });
     });
 
