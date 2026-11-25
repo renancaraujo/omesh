@@ -661,6 +661,266 @@ void main() {
     });
   });
 
+  group('large gradients', () {
+    const zeroWeights = OMeshGrain(
+      amount: 0.2,
+      scatter: 0,
+      shadows: 0,
+      midtones: 0,
+      highlights: 0,
+    );
+
+    /// Black at the top to white at the bottom.
+    final verticalRamp = _mesh(
+      smoothColors: false,
+      colors: const [_black, _black, _white, _white],
+    );
+
+    Future<(_Pixels, List<ui.Image>)> paintWith(
+      WidgetTester t,
+      OMeshRect mesh, {
+      required Rect rect,
+      required Size imageSize,
+      required void Function(Canvas) setUp,
+      OMeshGrain? grain,
+    }) async {
+      final painter = OMeshRectPaint(
+        shaderProvider: provider,
+        meshRect: mesh,
+        tessellation: 8,
+        debugMode: null,
+        grain: grain,
+        devicePixelRatio: 3,
+      );
+      final recorder = ui.PictureRecorder();
+      final canvas = Canvas(recorder);
+      setUp(canvas);
+      final created = <ui.Image>[];
+      await _trackImages((alive, all) async {
+        painter.paint(canvas, rect);
+        created.addAll(all);
+      });
+      final picture = recorder.endRecording();
+      final image = (await t.runAsync(
+        () => picture.toImage(
+          imageSize.width.round(),
+          imageSize.height.round(),
+        ),
+      ))!;
+      picture.dispose();
+      final pixels = await _toPixels(t, image);
+      painter.dispose();
+      return (pixels, created);
+    }
+
+    testWidgets('draw a gradient taller than the GPU limit', (t) async {
+      await load(t);
+      // A 6000-tall gradient at ratio 3, seen through a 100×200 window.
+      const rect = Rect.fromLTWH(0, 0, 100, 6000);
+      void window(Canvas canvas) => canvas
+        ..scale(3)
+        ..clipRect(const Rect.fromLTWH(0, 0, 100, 200))
+        ..translate(0, -2900);
+      final (plain, _) = await paintWith(
+        t,
+        verticalRamp,
+        rect: rect,
+        imageSize: const Size(300, 600),
+        setUp: window,
+      );
+      final (grained, created) = await paintWith(
+        t,
+        verticalRamp,
+        rect: rect,
+        imageSize: const Size(300, 600),
+        setUp: window,
+        grain: zeroWeights,
+      );
+      expect(plain.red(150, 300), inInclusiveRange(100, 155));
+      expect(grained.maxDifference(plain), lessThanOrEqualTo(1));
+      expect(created.single.height, lessThanOrEqualTo(600 + 1));
+    });
+
+    testWidgets('render only the part inside the clip', (t) async {
+      await load(t);
+      final (_, created) = await paintWith(
+        t,
+        _asymmetric,
+        rect: const Rect.fromLTWH(0, 0, 64, 64),
+        imageSize: const Size(192, 192),
+        setUp: (canvas) => canvas
+          ..scale(3)
+          ..clipRect(const Rect.fromLTWH(10, 20, 30, 10)),
+        grain: _even,
+      );
+      final image = created.single;
+      expect(image.width, inInclusiveRange(90, 91));
+      expect(image.height, inInclusiveRange(30, 31));
+    });
+
+    testWidgets('keep the grain fixed to the mesh when the clip moves',
+        (t) async {
+      await load(t);
+      Future<_Pixels> clipped(Rect clip) async {
+        final (pixels, _) = await paintWith(
+          t,
+          _flat(_mid),
+          rect: const Rect.fromLTWH(0, 0, 64, 64),
+          imageSize: const Size(192, 192),
+          setUp: (canvas) => canvas
+            ..scale(3)
+            ..clipRect(clip),
+          grain: _even,
+        );
+        return pixels;
+      }
+
+      final full = await clipped(const Rect.fromLTWH(0, 0, 64, 64));
+      final part = await clipped(const Rect.fromLTWH(16, 8, 32, 40));
+      for (var y = 8 * 3; y < 48 * 3; y++) {
+        for (var x = 16 * 3; x < 48 * 3; x++) {
+          expect(part.red(x, y), full.red(x, y), reason: '($x, $y)');
+        }
+      }
+    });
+
+    testWidgets('redraw the image when the clip changes, and only then',
+        (t) async {
+      await load(t);
+      const rect = Rect.fromLTWH(0, 0, 64, 64);
+      OMeshRectPaint painter() => OMeshRectPaint(
+            shaderProvider: provider,
+            meshRect: _asymmetric,
+            tessellation: 8,
+            debugMode: null,
+            grain: _even,
+            devicePixelRatio: 3,
+          );
+      final kept = painter();
+      addTearDown(kept.dispose);
+      const steps = [
+        (Rect.fromLTWH(0, 0, 64, 64), true),
+        (Rect.fromLTWH(0, 0, 64, 64), false),
+        (Rect.fromLTWH(16, 8, 32, 40), true),
+        (Rect.fromLTWH(20, 8, 32, 40), true),
+        (Rect.fromLTWH(20, 8, 32, 40), false),
+        (Rect.fromLTWH(20, 8, 40, 40), true),
+        (Rect.fromLTWH(20, 12, 40, 40), true),
+        (Rect.fromLTWH(20, 12, 40, 32), true),
+      ];
+      await _trackImages((alive, created) async {
+        for (final (clip, redraws) in steps) {
+          var drawn = 0;
+          final pixels = await _record(t, rect.size, 3, (canvas) {
+            canvas.clipRect(clip);
+            final before = created.length;
+            kept.paint(canvas, rect);
+            drawn = created.length - before;
+          });
+          expect(drawn, redraws ? 1 : 0, reason: '$clip');
+          final fresh = painter();
+          final expected = await _record(t, rect.size, 3, (canvas) {
+            canvas.clipRect(clip);
+            fresh.paint(canvas, rect);
+          });
+          fresh.dispose();
+          expect(pixels.maxDifference(expected), 0, reason: '$clip');
+        }
+      });
+    });
+
+    testWidgets('cap the image and stretch it smoothly', (t) async {
+      await load(t);
+      const rect = Rect.fromLTWH(0, 0, 4, 4000);
+      // Alternating black and white rows, steep enough that sampling the
+      // stretched image without blending shows steps.
+      const rows = 40;
+      final stripes = OMeshRect(
+        width: 2,
+        height: rows,
+        colorSpace: OMeshColorSpace.linear,
+        smoothColors: false,
+        vertices: [
+          for (var i = 0; i < rows; i++) ...[
+            (0.0, i / (rows - 1)).v,
+            (1.0, i / (rows - 1)).v,
+          ],
+        ],
+        colors: [
+          for (var i = 0; i < rows; i++) ...[
+            if (i.isEven) _black else _white,
+            if (i.isEven) _black else _white,
+          ],
+        ],
+      );
+      final (plain, _) = await paintWith(
+        t,
+        stripes,
+        rect: rect,
+        imageSize: const Size(12, 12000),
+        setUp: (canvas) => canvas.scale(3),
+      );
+      final (grained, created) = await paintWith(
+        t,
+        stripes,
+        rect: rect,
+        imageSize: const Size(12, 12000),
+        setUp: (canvas) => canvas.scale(3),
+        grain: zeroWeights,
+      );
+      expect(plain.red(6, 6000), isNot(plain.red(6, 6030)));
+      expect(created.single.height, lessThanOrEqualTo(4096));
+      var total = 0;
+      for (var i = 0; i < plain.bytes.length; i += 4) {
+        total += (grained.bytes[i] - plain.bytes[i]).abs();
+      }
+      final meanDifference = total / (plain.bytes.length / 4);
+      expect(grained.maxDifference(plain), lessThanOrEqualTo(2));
+      expect(meanDifference, lessThan(0.3));
+    });
+
+    // One logical pixel less keeps the capped image at the same size and
+    // position, and only changes how far it is stretched.
+    for (final (rect, clip) in const [
+      (Rect.fromLTWH(0, 0, 4, 4000), Rect.fromLTWH(0, 0, 4, 3999)),
+      (Rect.fromLTWH(0, 0, 4000, 4), Rect.fromLTWH(0, 0, 3999, 4)),
+    ]) {
+      testWidgets('redraw a capped image when its stretch changes, $rect',
+          (t) async {
+        await load(t);
+        OMeshRectPaint painter() => OMeshRectPaint(
+              shaderProvider: provider,
+              meshRect: _asymmetric,
+              tessellation: 8,
+              debugMode: null,
+              grain: _even,
+              devicePixelRatio: 3,
+            );
+        final kept = painter();
+        addTearDown(kept.dispose);
+        await _trackImages((alive, created) async {
+          for (final (clip, redraws) in [(rect, true), (clip, true)]) {
+            var drawn = 0;
+            final pixels = await _record(t, rect.size, 3, (canvas) {
+              canvas.clipRect(clip);
+              final before = created.length;
+              kept.paint(canvas, rect);
+              drawn = created.length - before;
+            });
+            expect(drawn, redraws ? 1 : 0, reason: '$clip');
+            final fresh = painter();
+            final expected = await _record(t, rect.size, 3, (canvas) {
+              canvas.clipRect(clip);
+              fresh.paint(canvas, rect);
+            });
+            fresh.dispose();
+            expect(pixels.maxDifference(expected), 0, reason: '$clip');
+          }
+        });
+      });
+    }
+  });
+
   group('$OMeshRectPaint', () {
     testWidgets('a grain or ratio change asks for a repaint', (t) async {
       await load(t);

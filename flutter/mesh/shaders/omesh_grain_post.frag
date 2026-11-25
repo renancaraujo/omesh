@@ -5,14 +5,16 @@
 precision highp float;
 #include <flutter/runtime_effect.glsl>
 
-uniform vec2 uImageSize;   // offscreen image size, physical px
 uniform vec2 uOrigin;      // rect top-left, logical px
-uniform float uDpr;        // image px per logical px
+uniform float uDpr;        // physical px per logical px
 uniform float uAmount;     // grain peak, fraction of full scale (0 = off)
 uniform float uShadows;    // grain weight in shadows
 uniform float uMidtones;   // grain weight in midtones
 uniform float uHighlights; // grain weight in highlights
 uniform float uSeed;       // [0, 1000)
+uniform vec2 uImageOrigin; // image top-left, logical px from the rect top-left
+uniform vec2 uImageSize;   // image size, image px
+uniform vec2 uImageScale;  // image px per logical px, at most uDpr
 uniform sampler2D uInput;
 
 out vec4 fragColor;
@@ -31,9 +33,29 @@ float response3(float y, vec3 w) {
     return mix(lo, w.z, smoothstep(0.5, 1.0, y));
 }
 
+// Blends the four image pixels around px, for an image drawn larger than
+// its own resolution.
+vec4 sampleBetweenPixels(vec2 px) {
+    vec2 p = px - 0.5;
+    vec2 i = floor(p);
+    vec2 f = p - i;
+    vec2 texel = 1.0 / uImageSize;
+    vec4 a = texture(uInput, (i + vec2(0.5, 0.5)) * texel);
+    vec4 b = texture(uInput, (i + vec2(1.5, 0.5)) * texel);
+    vec4 c = texture(uInput, (i + vec2(0.5, 1.5)) * texel);
+    vec4 d = texture(uInput, (i + vec2(1.5, 1.5)) * texel);
+    return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+}
+
 void main() {
     vec2 local = FlutterFragCoord().xy - uOrigin;
-    vec4 base = texture(uInput, local * uDpr / uImageSize);
+    vec2 px = (local - uImageOrigin) * uImageScale;
+    vec4 base;
+    if (uImageScale.x < uDpr || uImageScale.y < uDpr) {
+        base = sampleBetweenPixels(clamp(px, vec2(0.5), uImageSize - 0.5));
+    } else {
+        base = texture(uInput, px / uImageSize);
+    }
     if (uAmount > 0.0 && base.a > 0.0) {
         // Grain on the straight (un-premultiplied) color, weighted by brightness.
         // Each channel moves at most its distance to 0 or 1, so nothing is

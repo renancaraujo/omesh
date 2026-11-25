@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui';
 
@@ -336,18 +337,57 @@ class OMeshRectPaint {
       return;
     }
     final grainShader = shaderProvider.grainShader;
-    final dpr = devicePixelRatio;
-    final width = (rect.width * dpr).ceil();
-    final height = (rect.height * dpr).ceil();
-    if (grainShader == null || width <= 0 || height <= 0) {
+    if (grainShader == null) {
       _disposeGrainImage();
       _paintMesh(canvas, rect);
       return;
     }
 
-    // Visible grain: render the mesh into an image at physical resolution,
-    // then draw that image through the grain shader. The image is kept
-    // until something that goes into it changes.
+    // Visible grain: render the mesh into an image, then draw that image
+    // through the grain shader. Only the part inside the canvas clip is
+    // rendered.
+    final visible = rect.intersect(canvas.getLocalClipBounds());
+    if (visible.isEmpty) {
+      _disposeGrainImage();
+      _needsRepaint = false;
+      return;
+    }
+    final dpr = devicePixelRatio;
+    final double imageLeft;
+    final double imageTop;
+    final int width;
+    final int height;
+    final double scaleX;
+    final double scaleY;
+    final fullWidth = (visible.width * dpr).ceil() + 1;
+    final fullHeight = (visible.height * dpr).ceil() + 1;
+    if (math.max(fullWidth, fullHeight) <= _maxGrainImageSide) {
+      // At physical resolution, on the physical pixel grid of the rect.
+      final left = ((visible.left - rect.left) * dpr).floor();
+      final top = ((visible.top - rect.top) * dpr).floor();
+      width = ((visible.right - rect.left) * dpr).ceil() - left;
+      height = ((visible.bottom - rect.top) * dpr).ceil() - top;
+      imageLeft = left / dpr;
+      imageTop = top / dpr;
+      scaleX = scaleY = dpr;
+    } else {
+      // Smaller, fitted exactly to the visible part, and stretched; grain
+      // stays at one cell per physical pixel.
+      final fit = _maxGrainImageSide / math.max(visible.width, visible.height);
+      width = math.max(1, (visible.width * fit).floor());
+      height = math.max(1, (visible.height * fit).floor());
+      imageLeft = visible.left - rect.left;
+      imageTop = visible.top - rect.top;
+      scaleX = width / visible.width;
+      scaleY = height / visible.height;
+    }
+    if (width <= 0 || height <= 0) {
+      _disposeGrainImage();
+      _paintMesh(canvas, rect);
+      return;
+    }
+
+    // The image is kept until something that goes into it changes.
     final source = (
       meshRect,
       _paintedTessellation,
@@ -356,12 +396,22 @@ class OMeshRectPaint {
       grain.scatter,
       grain.seed,
       rect.size,
-      dpr,
+      imageLeft,
+      imageTop,
+      width,
+      height,
+      scaleX,
+      scaleY,
     );
     var image = _grainImage;
     if (image == null || source != _grainImageSource) {
       final recorder = PictureRecorder();
-      _paintMesh(Canvas(recorder)..scale(dpr), Offset.zero & rect.size);
+      _paintMesh(
+        Canvas(recorder)
+          ..scale(scaleX, scaleY)
+          ..translate(-imageLeft, -imageTop),
+        Offset.zero & rect.size,
+      );
       final picture = recorder.endRecording();
       image = picture.toImageSync(width, height);
       picture.dispose();
@@ -371,27 +421,35 @@ class OMeshRectPaint {
     }
     _needsRepaint = false;
 
-    // The image is rounded up to whole pixels, so the mesh covers only
-    // part of its last column and row. The shader samples it by pixel.
     grainShader
-      ..setFloat(0, width.toDouble())
-      ..setFloat(1, height.toDouble())
-      ..setFloat(2, rect.left)
-      ..setFloat(3, rect.top)
-      ..setFloat(4, dpr)
-      ..setFloat(5, grain.amount)
-      ..setFloat(6, grain.shadows)
-      ..setFloat(7, grain.midtones)
-      ..setFloat(8, grain.highlights)
-      ..setFloat(9, (grain.seed % 997).toDouble())
+      ..setFloat(0, rect.left)
+      ..setFloat(1, rect.top)
+      ..setFloat(2, dpr)
+      ..setFloat(3, grain.amount)
+      ..setFloat(4, grain.shadows)
+      ..setFloat(5, grain.midtones)
+      ..setFloat(6, grain.highlights)
+      ..setFloat(7, (grain.seed % 997).toDouble())
+      ..setFloat(8, imageLeft)
+      ..setFloat(9, imageTop)
+      ..setFloat(10, width.toDouble())
+      ..setFloat(11, height.toDouble())
+      ..setFloat(12, scaleX)
+      ..setFloat(13, scaleY)
       ..setImageSampler(0, image);
     canvas.drawRect(
-      rect,
+      visible,
       Paint()
         ..shader = grainShader
         ..isAntiAlias = false,
     );
   }
+
+  /// The largest side, in pixels, of the image grain is drawn from.
+  ///
+  /// GPUs refuse larger images; 4096 is within the limit of nearly all of
+  /// them.
+  static const _maxGrainImageSide = 4096;
 
   /// Paints the mesh itself, without visible grain, into [canvas] at [rect].
   void _paintMesh(Canvas canvas, Rect rect) {
