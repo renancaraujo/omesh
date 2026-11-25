@@ -535,6 +535,30 @@ void main() {
       });
     });
 
+    testWidgets('paints an infinite rect without grain', (t) async {
+      await load(t);
+      for (final grain in const [null, OMeshGrain()]) {
+        final painter = OMeshRectPaint(
+          shaderProvider: provider,
+          meshRect: _flat(_mid),
+          tessellation: 4,
+          debugMode: null,
+          grain: grain,
+        );
+        final recorder = ui.PictureRecorder();
+        expect(
+          () => painter.paint(
+            Canvas(recorder),
+            const Rect.fromLTWH(0, 0, double.infinity, 10),
+          ),
+          returnsNormally,
+          reason: '$grain',
+        );
+        recorder.endRecording().dispose();
+        painter.dispose();
+      }
+    });
+
     testWidgets('dispose works without painting', (t) async {
       await load(t);
       final painter = OMeshRectPaint(

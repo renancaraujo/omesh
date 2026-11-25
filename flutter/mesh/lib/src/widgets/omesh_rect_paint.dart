@@ -312,7 +312,7 @@ class OMeshRectPaint {
   /// Paints the mesh into the given [canvas] and [rect].
   void paint(Canvas canvas, Rect rect) {
     final grain = this.grain;
-    if (grain == null || grain.amount <= 0) {
+    if (grain == null || grain.amount <= 0 || !rect.isFinite) {
       _paintMesh(canvas, rect);
       return;
     }
