@@ -36,15 +36,17 @@ void main() {
     vec4 base = texture(uInput, local * uDpr / uImageSize);
     if (uAmount > 0.0 && base.a > 0.0) {
         // Grain on the straight (un-premultiplied) color, weighted by brightness.
-        // A channel outside 0..1, as translucent lab and xyY meshes give,
-        // keeps its value and only moves back toward that range.
+        // Each channel moves at most its distance to 0 or 1, so nothing is
+        // clipped and the average color stays where it was. A channel outside
+        // 0..1, as translucent lab and xyY meshes give, keeps its value.
         vec3 c = base.rgb / base.a;
         vec3 lo = min(c, vec3(0.0));
         vec3 hi = max(c, vec3(1.0));
         vec2 cell = mod(floor(local * uDpr), 4096.0);
         float n = toTriangular(hash13(vec3(cell, uSeed)));
         float y = dot(clamp(c, 0.0, 1.0), vec3(0.2126, 0.7152, 0.0722));
-        c = clamp(c + uAmount * response3(y, vec3(uShadows, uMidtones, uHighlights)) * n, lo, hi);
+        float s = uAmount * response3(y, vec3(uShadows, uMidtones, uHighlights));
+        c += min(vec3(s), min(c - lo, hi - c)) * n;
         base.rgb = c * base.a;
     }
     fragColor = base;
