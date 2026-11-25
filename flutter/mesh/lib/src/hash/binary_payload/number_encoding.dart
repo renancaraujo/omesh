@@ -33,7 +33,7 @@ const int _kVarintLimit = 9007199254740992;
 /// Whether [value] can be scaled by 10^[digits] and still be represented as
 /// an integer that is safe on every platform.
 bool fitsDecimal(double value, int digits) =>
-    value.isFinite && (value * kPow10[digits]).abs() <= _kMaxScaledMagnitude;
+    (value * kPow10[digits]).abs() <= _kMaxScaledMagnitude;
 
 /// Whether [value] is exactly `n / 10^digits` for some integer `n`, that is,
 /// whether encoding it with [digits] fractional digits is lossless.

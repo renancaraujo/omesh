@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:binarize/binarize.dart';
 import 'package:mesh/mesh.dart';
+import 'package:mesh/src/hash/binary_payload/number_encoding.dart'
+    show kMaxDecimalDigits;
 import 'package:mesh/src/hash/binary_payload/omesh_binary_format_payload.dart'
     show OMeshBinaryFormat, OMeshBinaryFormatPayloadType;
 
@@ -42,8 +44,8 @@ class OMeshBinaryFormatCodec extends Codec<OMeshRect, Uint8List> {
   /// 0 and 9.
   const OMeshBinaryFormatCodec.v2Rounded({int decimalPlaces = 3})
       : assert(
-          decimalPlaces >= 0 && decimalPlaces <= 9,
-          'decimalPlaces must be between 0 and 9',
+          decimalPlaces >= 0 && decimalPlaces <= kMaxDecimalDigits,
+          'decimalPlaces must be between 0 and $kMaxDecimalDigits',
         ),
         specVersion = 2,
         maxDecimalPlaces = decimalPlaces;
