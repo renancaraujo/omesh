@@ -237,7 +237,7 @@ final List<_Fixture> _fixtures = [
     name: 'a very simple mesh',
     mesh: _verySimpleOMesh,
     v1Hash: 'OM:eAFjVGJAB_YfMITQJGAMuAAjg9vklf-BFKMBAMdnB5Q',
-    v2Hash: 'OM:gmNi4mRAAEYOt8krGRgZGAGmow',
+    v2Hash: 'OM:wmNi4mRAAEYOt8krGRgZGAHepw',
   ),
   (
     name: 'a simple mesh',
@@ -245,7 +245,7 @@ final List<_Fixture> _fixtures = [
     v1Hash: '''
 OM:eAFjNGaAgv1bqh66rxOpZrB_1B-j8fVQ__6VM0FgFoM9kAMUOWy_BKoCBuwvX-eyLVh8ncH-DkhDjKb9EwjNYP8RquUm1Ay4lg8wFR9gAgyoDPvnYNtjGFgZlmpn_Gdwm7zyP5C14D_Di1tX_jNMF135n5GJiZmFiZWJyQAAOTlFhA''',
     v2Hash: '''
-OM:gmNm5mRiAAN-AU4PDgZVbikxYQamFAYGU1aOpdoZHG6TVwLpBRwvbl3hmC66kpGJiZmFiZWJCQDdrg''',
+OM:wmNm5mRiAAN-AU4PDgZVbikxYQamFAYGU1aOpdoZHG6TVwLpBRwvbl3hmC66kpGJiZmFiZWJCQC-Xw''',
   ),
   (
     name: 'a custom mesh',
@@ -253,7 +253,7 @@ OM:gmNm5mRiAAN-AU4PDgZVbikxYQamFAYGU1aOpdoZHG6TVwLpBRwvbl3hmC66kpGJiZmFiZWJCQDdr
     v1Hash: '''
 OM:eAFdUS1Mw0AUfqPlp5A0ExMoSFB49PJJsAMEAoFCFzskmcYgoALBZkCQQBBzDWAQLGEsZGMkS8vYwjLESgL2uOu7a8Je0nsv776fd6-ZzeBqWFqoFr6CSjFavcztE-oyFaM1c0EIy83ZvFcJbgxiMI6IdcMggiMu0M57imwFp9WCAqOxkgTudX5TCsOS8UCHcQ4ilsSTvmgl_XW0fu4Ot5d_8c7K6LLQHHqJ0CLazEQ_l8yAj0cVtdQh4qHxSUnghXk2BicqfITaYfQfQCbQS5z3CK-aoWew8SyJko2usio3Eeqh-_wqSk1TidFYIzCLiQ2ixoXZsfwdmhKzuxTVL_vmlUhR8wLO5NDtxZkgQfPq2JDH9a6ghtiRlfcg6PjgXNBSNiuo4_siM2HZk5Y1ZfE3PeM4zha5riv-ADA18mc''',
     v2Hash: '''
-OM:gmNlkWJiYDDYyeLAAAS87Cy8LPwcvAL8zAKMokosZnIs2tKCfGZCyhJcnOwMDFwaIFVyvKIsTBwglqwQswCDCIsMDw8nx8FVizj-M0gAcTDH_01pHJf_J3D8LzjBMaN5JYeSgADHvVmzGJmYWViZmdmYIZidg5OTk4OPjw8AYnc''',
+OM:wmNlkWJiYDDYyeLAAAS87Cy8LPwcvAL8zAKMokosZnIs2tKCfGZCyhJcnOwMDFwaIFVyvKIsTBwglqwQswCDCIsMDw8nx8FVizj-M0gAcTDH_01pHJf_J3D8LzjBMaN5JYeSgADHvVmzGJmYWViZmdmYIZidg5OTk4OPjw8Ab8Y''',
   ),
   (
     name: 'a complex mesh',
@@ -261,7 +261,7 @@ OM:gmNlkWJiYDDYyeLAAAS87Cy8LPwcvAL8zAKMokosZnIs2tKCfGZCyhJcnOwMDFwaIFVyvKIsTBwgl
     v1Hash: '''
 OM:eAFlkD9MwlAQxq9QFStssOKKI3EVbwQXE1AnnZ0xbrrKzOKig4ssDpK4MZg0gbgYNaJBYzTEWosYQHFAjEt9f-49Bm_4aMvdd7_7jBW7XMl2CvGKvbPlpMvRbcAr-nDCNdsFfBbvOfs0MagW12YA38pR3mwf7fHaB-zLWXuXPOySfMAGG0gMaoDXIApv-Hu1qE3xTHW0qYM6tSnW03xdBtQ6fFIctVlR6HLQTsHSW15S-cN7K4Vq4vWC1yU25WnKwUJPDE7jo3TAW3JsigOj-C4zULQWdglK4XsSXzsr6AeKRsWLniDaGEET0wiarkDK_Z-1I3OwsEVwDl1XpwGHfntylVpp6A8urVaQrXVRYB8oet6XLwHeyX-wL88EnWCfB5f4BuwRne74oijJHCLw8eP70Ogw6Q2YfLb9TS7LAPMZH2BhlckiEyMcHoIRizGJx5kkk0MILOV8EYsRCAaDpjlmmuMToVBo0poKR-bg2P314dzt-n8jFURH''',
     v2Hash: '''
-OM:gh3OKw7CQBSF4TvvO8wMQ5iWBFMBTQg4JAYNBgG4LoMNoZuwETwrqCHhpUgJZmg54jv2F2JBod2xhJI0bwhxNCVaMtUHpB5Acm3CIFEBmcnJWFrag6GQwfgQEuUlm87ohI88OKkFJjyzOe9Kh89PxMst4uMd4XWNh5Y9wnKFsC4QNgUQa2sgadqQZQ3zeY10t_33EMoY41xwLhUi6o6xDk_VF8_V_Qfnjg''',
+OM:wh3OKw7CQBSF4TvvO8wMQ5iWBFMBTQg4JAYNBgG4LoMNoZuwETwrqCHhpUgJZmg54jv2F2JBod2xhJI0bwhxNCVaMtUHpB5Acm3CIFEBmcnJWFrag6GQwfgQEuUlm87ohI88OKkFJjyzOe9Kh89PxMst4uMd4XWNh5Y9wnKFsC4QNgUQa2sgadqQZQ3zeY10t_33EMoY41xwLhUi6o6xDk_VF8_V_QelTw''',
   ),
   (
     name: 'a mesh with colors with different color spaces',
@@ -269,7 +269,7 @@ OM:gh3OKw7CQBSF4TvvO8wMQ5iWBFMBTQg4JAYNBgG4LoMNoZuwETwrqCHhpUgJZmg54jv2F2JBod2xh
     v1Hash: '''
 OM:eAFjNGaAgv1bqh66rxOpZrB_1B-j8fVQ__6VM0FgFoM9kAMUOWy_BKoCBuwvX-eyLVh8ncH-DkhDjKb9EwjNYP8RquUm1Ay4lg8wFR9gAgyoDPvnYNtjGFgZlmpn_GeCGWH_CGR51UP7J2dA4Cxco9vklf-BShf8Z5guuvI_IxMzCwMTKwNTBAMfH99_AKdAU24''',
     v2Hash: '''
-OM:gmNmlmJiAAN-AU4PDgZVbikxYQamFAYGU1aOpdoZWgFlTYwnGDncJq8EchdwTBddycjEzMLAxMrAxMHHxwcAvKY''',
+OM:wmNmlmJiAAN-AU4PDgZVbikxYQamFAYGU1aOpdoZWgFlTYwnGDncJq8EchdwTBddycjEzMLAxMrAxMHHxwcAAyI''',
   ),
 ];
 
@@ -491,7 +491,7 @@ void main() {
       final mesh = _largeMesh(40);
       final hash = getHashFromMesh(mesh);
 
-      expect((hash.length, _digest(hash)), (33243, 968027679));
+      expect((hash.length, _digest(hash)), (33243, 355232422));
       expect(getMeshFromHash(hash), mesh);
     });
 
@@ -512,7 +512,7 @@ void main() {
 
       // Three fractional digits, not float64.
       expect(OMeshBinaryFormatCodec.v2.encode(mesh)[4], 3);
-      expect((hash.length, _digest(hash)), (14427, 865043414));
+      expect((hash.length, _digest(hash)), (14427, 899092499));
       expect(getMeshFromHash(hash), mesh);
     });
 
@@ -525,7 +525,7 @@ void main() {
       );
       final hash = getHashFromMesh(mesh);
 
-      expect((hash.length, _digest(hash)), (722, 805285942));
+      expect((hash.length, _digest(hash)), (722, 559580250));
       expect(getMeshFromHash(hash), mesh);
     });
 
@@ -555,16 +555,16 @@ void main() {
 
       expect(
         longer,
-        'OM:AgICCQIAAAAAVQoKXV1hBAjapmsItUzWCI_zQQhqmawBAgMEwBM',
+        'OM:ggICCQIAAAAAVQoKXV1hBAjapmsItUzWCI_zQQhqmawBAgMEMiY',
       );
       expect(
         same,
         '''
-OM:AgMDCQIAAAAAAAQMAAgOBAoABgoCBhACDAwICAkIFxVdCC4qughFQBcIXFV0CHNq0QiKgC4IoZWLCLiq6AjPwEUBAgMEBQYHCAlckA''',
+OM:ggMDCQIAAAAAAAQMAAgOBAoABgoCBhACDAwICAkIFxVdCC4qughFQBcIXFV0CHNq0QiKgC4IoZWLCLiq6AjPwEUBAgMEBQYHCAklDw''',
       );
-      // The header is the spec version alone, without the compression flag.
-      expect(_hashBytes(longer).first, 2);
-      expect(_hashBytes(same).first, 2);
+      // The header is the spec version without the compression flag.
+      expect(_hashBytes(longer).first, 0x80 | 2);
+      expect(_hashBytes(same).first, 0x80 | 2);
       expect(getMeshFromHash(longer), mesh(2, 0));
       expect(getMeshFromHash(same), mesh(3, 2));
     });
@@ -634,7 +634,7 @@ OM:AgMDCQIAAAAAAAQMAAgOBAoABgoCBhACDAwICAkIFxVdCC4qughFQBcIXFV0CHNq0QiKgC4IoZWLC
     });
 
     test('throw a FormatException when too short for a checksum', () {
-      for (final hash in ['OM:', 'OM:Ag', 'OM:AgI']) {
+      for (final hash in ['OM:', 'OM:gg', 'OM:ggI']) {
         expect(() => getMeshFromHash(hash), throwsFormatException);
       }
     });
@@ -643,11 +643,47 @@ OM:AgMDCQIAAAAAAAQMAAgOBAoABgoCBhACDAwICAkIFxVdCC4qughFQBcIXFV0CHNq0QiKgC4IoZWLC
       final bytes = _hashBytes(_fixtures.first.v2Hash);
       final content = bytes.sublist(1, bytes.length - 2);
 
-      expect(getMeshFromHash(_v2Hash([0x82, ...content])), _verySimpleOMesh);
-      expect(
-        () => getMeshFromHash(_v2Hash([0x83, ...content])),
-        throwsFormatException,
-      );
+      expect(getMeshFromHash(_v2Hash([0xC2, ...content])), _verySimpleOMesh);
+      for (var version = 3; version < 64; version++) {
+        expect(
+          () => getMeshFromHash(_v2Hash([0xC0 | version, ...content])),
+          throwsA(
+            isA<FormatException>().having(
+              (e) => e.message,
+              'message',
+              endsWith('format version $version'),
+            ),
+          ),
+        );
+      }
+    });
+
+    test('start with a byte that no v1 hash starts with', () {
+      for (final fixture in _fixtures) {
+        expect(
+          _hashBytes(fixture.v1Hash).first,
+          lessThan(0x80),
+          reason: fixture.name,
+        );
+        expect(
+          _hashBytes(fixture.v2Hash).first,
+          0x80 | 0x40 | 2,
+          reason: fixture.name,
+        );
+      }
+    });
+
+    test('throw a FormatException when the first byte is below 0x80', () {
+      final bytes = _hashBytes(_fixtures.first.v2Hash);
+      final content = bytes.sublist(1, bytes.length - 2);
+
+      for (var header = 0; header < 0x80; header++) {
+        expect(
+          () => getMeshFromHash(_v2Hash([header, ...content])),
+          throwsFormatException,
+          reason: '$header',
+        );
+      }
     });
 
     test('are the default of OMeshRect.getHash', () {

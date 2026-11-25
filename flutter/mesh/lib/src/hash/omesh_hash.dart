@@ -7,8 +7,14 @@ import 'package:mesh/mesh.dart';
 
 const _kPrefix = 'OM:';
 
+/// Bit set on the header byte of every v2 and later hash.
+const _kEnvelopeFlag = 0x80;
+
 /// Bit set on the header byte of a hash when its body is DEFLATE compressed.
-const _kDeflatedFlag = 0x80;
+const _kDeflatedFlag = 0x40;
+
+/// The bits of the header byte that hold the spec version.
+const _kSpecVersionMask = 0x3F;
 
 /// A function that encodes a mesh gradient into a hash string.
 ///
@@ -55,7 +61,7 @@ OMeshRect getMeshFromHash(String hash) {
   final unprefixied = hash.substring(_kPrefix.length);
   final paddedHash = _addPadding(unprefixied);
   final packed = base64Url.decode(paddedHash);
-  final bytes = _isZlibStream(packed) ? _unpackV1(packed) : _unpack(packed);
+  final bytes = _isV1(packed) ? _unpackV1(packed) : _unpack(packed);
   final layers = OMeshBinaryFormatCodec.v2.decoder.convert(bytes);
   return layers;
 }
@@ -96,13 +102,12 @@ Uint8List _unpackV1(Uint8List packed) {
 const _kChecksumLength = 2;
 
 /// v2 and later hashes have a header byte with the spec version in the
-/// lowest 7 bits and [_kDeflatedFlag] in the highest bit, followed by the
-/// binary format minus its leading spec version byte, raw DEFLATE compressed
-/// only when that makes it smaller, and by the big-endian [_crc16] of every
-/// byte before it.
+/// lowest 6 bits, [_kDeflatedFlag] in bit 6 and [_kEnvelopeFlag] in the
+/// highest bit, followed by the binary format minus its leading spec version
+/// byte, raw DEFLATE compressed only when that makes it smaller, and by the
+/// big-endian [_crc16] of every byte before it.
 ///
-/// The header byte never looks like the start of a zlib stream, which is how
-/// v1 hashes are told apart.
+/// [_kEnvelopeFlag] is how they are told apart from v1 hashes.
 Uint8List _pack(Uint8List bytes) {
   final specVersion = bytes[0];
   final body = Uint8List.sublistView(bytes, 1);
@@ -113,7 +118,7 @@ Uint8List _pack(Uint8List bytes) {
 
   final end = content.length + 1;
   final packed = Uint8List(end + _kChecksumLength)
-    ..[0] = specVersion | (useDeflate ? _kDeflatedFlag : 0)
+    ..[0] = _kEnvelopeFlag | (useDeflate ? _kDeflatedFlag : 0) | specVersion
     ..setRange(1, end, content);
   final checksum = _crc16(packed, end);
   return packed
@@ -136,7 +141,7 @@ Uint8List _unpack(Uint8List packed) {
       header & _kDeflatedFlag != 0 ? Inflate(content).getBytes() : content;
 
   return Uint8List(body.length + 1)
-    ..[0] = header & 0x7F
+    ..[0] = header & _kSpecVersionMask
     ..setRange(1, body.length + 1, body);
 }
 
@@ -157,12 +162,10 @@ int _crc16(Uint8List bytes, int length) {
   return crc;
 }
 
-/// Whether [bytes] start with a zlib header (RFC 1950): compression method 8
-/// and a header checksum that is a multiple of 31.
-bool _isZlibStream(Uint8List bytes) {
-  return bytes.length >= 2 &&
-      bytes[0] & 0x0F == 8 &&
-      (bytes[0] * 256 + bytes[1]) % 31 == 0;
+/// Whether [bytes] are a v1 hash, a zlib stream. The first byte of a zlib
+/// stream (RFC 1950) has its highest bit clear.
+bool _isV1(Uint8List bytes) {
+  return bytes.isNotEmpty && bytes[0] & _kEnvelopeFlag == 0;
 }
 
 String _removePadding(String base64String) {
