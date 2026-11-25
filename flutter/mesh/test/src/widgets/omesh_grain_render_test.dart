@@ -149,7 +149,28 @@ Future<_Pixels> _toPixels(WidgetTester tester, ui.Image image) async {
   return pixels;
 }
 
-/// Paints [mesh] with an [OMeshRectPaint] into [rect] of a canvas of
+/// Runs [paint] on a canvas of [size] logical pixels, scaled by [dpr], and
+/// reads it back at physical resolution.
+Future<_Pixels> _record(
+  WidgetTester tester,
+  Size size,
+  double dpr,
+  void Function(Canvas canvas) paint,
+) async {
+  final recorder = ui.PictureRecorder();
+  paint(Canvas(recorder)..scale(dpr));
+  final picture = recorder.endRecording();
+  final image = (await tester.runAsync(
+    () => picture.toImage(
+      (size.width * dpr).round(),
+      (size.height * dpr).round(),
+    ),
+  ))!;
+  picture.dispose();
+  return await _toPixels(tester, image);
+}
+
+/// Paints [mesh] with a new [OMeshRectPaint] into [rect] of a canvas of
 /// [canvasSize] logical pixels, scaled by [dpr], and reads it back at
 /// physical resolution.
 Future<_Pixels> _paint(
@@ -160,28 +181,27 @@ Future<_Pixels> _paint(
   double dpr = 1,
   Rect rect = const Rect.fromLTWH(0, 0, 64, 64),
   Size? canvasSize,
+  int tessellation = 8,
+  DebugMode? debugMode,
+  bool dither = true,
 }) async {
-  final size = canvasSize ?? Size(rect.right, rect.bottom);
   final painter = OMeshRectPaint(
     shaderProvider: provider,
     meshRect: mesh,
-    tessellation: 8,
-    debugMode: null,
+    tessellation: tessellation,
+    debugMode: debugMode,
+    dither: dither,
     grain: grain,
     devicePixelRatio: dpr,
   );
-  final recorder = ui.PictureRecorder();
-  painter.paint(Canvas(recorder)..scale(dpr), rect);
-  final picture = recorder.endRecording();
-  final image = (await tester.runAsync(
-    () => picture.toImage(
-      (size.width * dpr).round(),
-      (size.height * dpr).round(),
-    ),
-  ))!;
-  picture.dispose();
+  final pixels = await _record(
+    tester,
+    canvasSize ?? Size(rect.right, rect.bottom),
+    dpr,
+    (canvas) => painter.paint(canvas, rect),
+  );
   painter.dispose();
-  return await _toPixels(tester, image);
+  return pixels;
 }
 
 final GlobalKey _boundaryKey = GlobalKey();
@@ -594,7 +614,8 @@ void main() {
       painter.dispose();
     });
 
-    testWidgets('frees the previous offscreen image on each paint', (t) async {
+    testWidgets('frees the previous offscreen image when it draws a new one',
+        (t) async {
       await load(t);
       await _trackImages((alive, created) async {
         final painter = OMeshRectPaint(
@@ -606,7 +627,7 @@ void main() {
         );
         for (var i = 0; i < 3; i++) {
           final recorder = ui.PictureRecorder();
-          painter.paint(Canvas(recorder), const Rect.fromLTWH(0, 0, 16, 16));
+          painter.paint(Canvas(recorder), Rect.fromLTWH(0, 0, 16.0 + i, 16));
           recorder.endRecording().dispose();
         }
         expect(created, hasLength(3));
@@ -614,6 +635,99 @@ void main() {
 
         painter.dispose();
         expect(alive, isEmpty);
+      });
+    });
+
+    testWidgets('keeps the offscreen image until something in it changes',
+        (t) async {
+      await load(t);
+      const canvasSize = Size(80, 80);
+      var mesh = _asymmetric;
+      var tessellation = 8;
+      DebugMode? debugMode;
+      var dither = true;
+      var grain = const OMeshGrain(
+        amount: 0.1,
+        scatter: 2,
+        shadows: 1,
+        highlights: 1,
+      );
+      var rect = const Rect.fromLTWH(0, 0, 64, 64);
+      var dpr = 1.0;
+      final painter = OMeshRectPaint(
+        shaderProvider: provider,
+        meshRect: mesh,
+        tessellation: tessellation,
+        debugMode: debugMode,
+        grain: grain,
+      );
+      addTearDown(painter.dispose);
+
+      // Each step changes the painter, then checks whether the next paint
+      // draws a new offscreen image, and that it paints the same as a new
+      // painter with the same settings.
+      final steps = <(String, void Function(), bool)>[
+        ('first paint', () {}, true),
+        ('no change', () {}, false),
+        (
+          'amount',
+          () => painter.grain = grain = grain.copyWith(amount: 0.2),
+          false
+        ),
+        (
+          'weights',
+          () => painter.grain = grain = grain.copyWith(
+                shadows: 0.5,
+                midtones: 0.3,
+                highlights: 0.8,
+              ),
+          false,
+        ),
+        ('position', () => rect = rect.shift(const Offset(8, 8)), false),
+        ('same grain again', () => painter.grain = grain.copyWith(), false),
+        (
+          'scatter',
+          () => painter.grain = grain = grain.copyWith(scatter: 4),
+          true
+        ),
+        ('seed', () => painter.grain = grain = grain.copyWith(seed: 7), true),
+        ('mesh', () => painter.meshRect = mesh = _ramp, true),
+        ('tessellation', () => painter.tessellation = tessellation = 3, true),
+        (
+          'debug mode',
+          () => painter.debugMode = debugMode = DebugMode.dots,
+          true,
+        ),
+        ('size', () => rect = const Rect.fromLTWH(8, 8, 48, 40), true),
+        ('pixel ratio', () => painter.devicePixelRatio = dpr = 2, true),
+        ('dither', () => painter.dither = dither = false, true),
+        ('markNeedsRepaint', painter.markNeedsRepaint, true),
+      ];
+
+      await _trackImages((alive, created) async {
+        for (final (name, change, redraws) in steps) {
+          change();
+          var drawn = 0;
+          final pixels = await _record(t, canvasSize, dpr, (canvas) {
+            final before = created.length;
+            painter.paint(canvas, rect);
+            drawn = created.length - before;
+          });
+          expect(drawn, redraws ? 1 : 0, reason: name);
+          final fresh = await _paint(
+            t,
+            provider,
+            mesh,
+            grain: grain,
+            dpr: dpr,
+            rect: rect,
+            canvasSize: canvasSize,
+            tessellation: tessellation,
+            debugMode: debugMode,
+            dither: dither,
+          );
+          expect(pixels.maxDifference(fresh), 0, reason: name);
+        }
       });
     });
 

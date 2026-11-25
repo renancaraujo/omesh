@@ -179,11 +179,17 @@ class OMeshRectPaint {
   /// The offscreen image of the mesh used to draw grain over it.
   Image? _grainImage;
 
+  /// What [_grainImage] was drawn from. Grain amount, weights and the rect
+  /// position are applied when the image is drawn, so they are not part of
+  /// it.
+  Object? _grainImageSource;
+
   bool _disposed = false;
 
   void _disposeGrainImage() {
     _grainImage?.dispose();
     _grainImage = null;
+    _grainImageSource = null;
   }
 
   /// Releases the offscreen image used for grain.
@@ -200,8 +206,11 @@ class OMeshRectPaint {
   bool _needsRepaint = true;
 
   /// Marks the mesh as needing to be repainted.
+  ///
+  /// The next [paint] also redraws the offscreen image used for grain.
   void markNeedsRepaint() {
     _needsRepaint = true;
+    _grainImageSource = null;
   }
 
   /// A [CachedValue] that holds the undistorted vertices of the mesh.
@@ -337,14 +346,30 @@ class OMeshRectPaint {
     }
 
     // Visible grain: render the mesh into an image at physical resolution,
-    // then draw that image through the grain shader.
-    final recorder = PictureRecorder();
-    _paintMesh(Canvas(recorder)..scale(dpr), Offset.zero & rect.size);
-    final picture = recorder.endRecording();
-    final image = picture.toImageSync(width, height);
-    picture.dispose();
-    _grainImage?.dispose();
-    _grainImage = image;
+    // then draw that image through the grain shader. The image is kept
+    // until something that goes into it changes.
+    final source = (
+      meshRect,
+      _paintedTessellation,
+      debugMode,
+      dither,
+      grain.scatter,
+      grain.seed,
+      rect.size,
+      dpr,
+    );
+    var image = _grainImage;
+    if (image == null || source != _grainImageSource) {
+      final recorder = PictureRecorder();
+      _paintMesh(Canvas(recorder)..scale(dpr), Offset.zero & rect.size);
+      final picture = recorder.endRecording();
+      image = picture.toImageSync(width, height);
+      picture.dispose();
+      _grainImage?.dispose();
+      _grainImage = image;
+      _grainImageSource = source;
+    }
+    _needsRepaint = false;
 
     // The image is rounded up to whole pixels, so the mesh covers only
     // part of its last column and row. The shader samples it by pixel.
