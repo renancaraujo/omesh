@@ -115,9 +115,10 @@ class ColorV2PayloadType extends PayloadType<Color> {
 /// Whether [value] is exactly `n / 255` with `n` in `0..255`, which is how
 /// [Color] stores 8-bit sRGB components.
 bool _isUint8Fraction(double value) {
-  if (!value.isFinite) return false;
-  final n = (value * 255).round();
-  return n >= 0 && n <= 255 && n / 255 == value;
+  // Checked before multiplying, which overflows for very large values. Also
+  // false for NaN.
+  if (!(value >= 0 && value <= 1)) return false;
+  return (value * 255).round() / 255 == value;
 }
 
 int _colorSpaceToCode(ColorSpace colorSpace) {

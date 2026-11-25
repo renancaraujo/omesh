@@ -591,6 +591,35 @@ void main() {
         expect(getMeshFromHash(getHashFromMesh(mesh)), mesh);
       });
 
+      test('keeps extended range colors exactly', () {
+        const components = [
+          [1.5, 4.0, -0.25],
+          [12.75, 1000.123456789, 1.0000001],
+          [1e308, -1e308, double.maxFinite],
+        ];
+        final mesh = _grid(
+          3,
+          2,
+          colors: [
+            for (final colorSpace in [
+              ColorSpace.extendedSRGB,
+              ColorSpace.displayP3,
+            ])
+              for (final [red, green, blue] in components)
+                Color.from(
+                  alpha: 1,
+                  red: red,
+                  green: green,
+                  blue: blue,
+                  colorSpace: colorSpace,
+                ),
+          ],
+        );
+
+        expect(_roundTrip(mesh, OMeshBinaryFormatCodec.v2), mesh);
+        expect(getMeshFromHash(getHashFromMesh(mesh)), mesh);
+      });
+
       test('keeps metadata', () {
         final mesh = _grid(2, 2).copyWith(
           colorSpace: OMeshColorSpace.linear,
