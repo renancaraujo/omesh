@@ -4,7 +4,8 @@ Notation:
 - B: bytes, b: bits.
 - Multi-byte numbers are big-endian. Floats are IEEE 754.
 - varint: unsigned LEB128, 7 bits per byte, least significant group first,
-  highest bit set on every byte but the last.
+  highest bit set on every byte but the last. At most 8 bytes, with a value
+  below 2^53.
 - zz: signed integer, zigzag mapped (0, -1, 1, -2, 2 => 0, 1, 2, 3, 4) and
   written as a varint.
 - Vertices are listed row by row, from the top-left corner.
@@ -65,6 +66,8 @@ Encoders are lossless by default: they pick the smallest k for which every
 coordinate decodes to the exact same value, or float64 when there is none.
 Each color uses the first lossless encoding out of 1/0, decimal and float64.
 A rounding encoder may pick a k that is not exact for coordinates.
+A decimal encoding with k fractional digits is used only when |v * 10^k| is
+at most 2^50 for every value v it encodes.
 
 # Binary format v1 (legacy)
 

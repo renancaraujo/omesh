@@ -1143,6 +1143,49 @@ OM:AgMDCQIAAAAAAAQMAAgOBAoABgoCBhACDAwICAkIFxVdCC4qughFQBcIXFV0CHNq0QiKgC4IoZWLC
         }
       });
 
+      test('reads varints up to 2^53 - 1 and throws on larger ones', () {
+        // The data with [varint] as the x coordinate of the first vertex.
+        Uint8List withFirstX(List<int> varint) {
+          final data = _plainV2Data();
+          return Uint8List.fromList(
+            [...data.take(7), ...varint, ...data.skip(8)],
+          );
+        }
+
+        final tooLarge = throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            'varint is too large',
+          ),
+        );
+
+        // 2^53 - 1, which is -2^52 once zigzag decoded.
+        expect(
+          OMeshBinaryFormatCodec.v2
+              .decode(
+                withFirstX([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x0F]),
+              )
+              .vertices
+              .first,
+          (-4503599627370496.0, 0.0).v,
+        );
+        // 2^53.
+        expect(
+          () => OMeshBinaryFormatCodec.v2.decode(
+            withFirstX([0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x10]),
+          ),
+          tooLarge,
+        );
+        // 2^56 - 1, the largest value that fits in 8 bytes.
+        expect(
+          () => OMeshBinaryFormatCodec.v2.decode(
+            withFirstX([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F]),
+          ),
+          tooLarge,
+        );
+      });
+
       test('throws on a palette longer than the vertex count', () {
         final bytes = OMeshBinaryFormatCodec.v2.encode(
           _grid(2, 2, colors: List.filled(4, null)),

@@ -26,6 +26,10 @@ const int _kMaxScaledMagnitude = 1125899906842624;
 /// The maximum amount of bytes a varint may take (7 bits each, 56 bits).
 const int _kMaxVarintBytes = 8;
 
+/// The exclusive upper bound of a varint, 2^53. Integers below it are exact
+/// on every platform.
+const int _kVarintLimit = 9007199254740992;
+
 /// Whether [value] can be scaled by 10^[digits] and still be represented as
 /// an integer that is safe on every platform.
 bool fitsDecimal(double value, int digits) =>
@@ -77,6 +81,9 @@ extension VarintReader on ByteReader {
       final byte = uint8();
       result += (byte % 0x80) * multiplier;
       if (byte < 0x80) {
+        if (result >= _kVarintLimit) {
+          throw const FormatException('varint is too large');
+        }
         return result;
       }
       multiplier *= 0x80;
