@@ -34,6 +34,14 @@ const _kSpecVersionMask = 0x3F;
 ///   [OMeshBinaryFormatCodec.v2].
 ///
 /// [getMeshFromHash] reads hashes generated with any of these codecs.
+///
+/// Throws an [ArgumentError] when:
+/// * [codec] is [OMeshBinaryFormatCodec.v1] and [mesh] has more than 15
+///   vertices in a dimension.
+/// * [codec] is an [OMeshBinaryFormatCodec.v2Rounded] with decimal places
+///   outside 0 to 9.
+/// * [codec] writes the v2 format and [mesh] has a width or height outside
+///   2 to 255, or fewer vertices or colors than its width times its height.
 String getHashFromMesh(
   OMeshRect mesh, {
   OMeshBinaryFormatCodec codec = OMeshBinaryFormatCodec.v2,
