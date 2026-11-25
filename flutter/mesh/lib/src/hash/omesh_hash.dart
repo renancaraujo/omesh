@@ -4,7 +4,6 @@ import 'dart:typed_data';
 import 'package:archive/archive.dart'
     show Deflate, DeflateLevel, Inflate, ZLibDecoderWeb, ZLibEncoderWeb;
 import 'package:mesh/mesh.dart';
-import 'package:mesh/src/hash/omesh_codec.dart';
 
 const _kPrefix = 'OM:';
 
