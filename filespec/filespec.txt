@@ -16,8 +16,8 @@ Notation:
 - mesh:R2
 
 (R2) Rectangular mesh:
-- (w)width:1B (2..40)
-- (h)height:1B (2..40)
+- (w)width:1B (2..255)
+- (h)height:1B (2..255)
 - flags:1B
   - bits 0-2: mesh color space (0 linear, 1 lab, 2 xyY)
   - bit 3: smoothColors

@@ -152,7 +152,7 @@ class OMeshRectV2PayloadType extends PayloadType<OMeshRect> {
       throw ArgumentError.value(
         '${width}x$height',
         'mesh',
-        'width and height must be between 2 and $kMaxOMeshRectDimension',
+        'width and height must be between 2 and $_kMaxDimension',
       );
     }
 
@@ -269,8 +269,10 @@ class OMeshRectV2PayloadType extends PayloadType<OMeshRect> {
   }
 }
 
-bool _isValidDimension(int value) =>
-    value >= 2 && value <= kMaxOMeshRectDimension;
+/// The largest width or height that fits in the byte that stores it.
+const _kMaxDimension = 0xFF;
+
+bool _isValidDimension(int value) => value >= 2 && value <= _kMaxDimension;
 
 /// The position of the regular grid point at [index] along an axis with
 /// [size] vertices, scaled by 10^[digits] and rounded half up.

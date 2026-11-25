@@ -1145,9 +1145,7 @@ OM:ggMDCQIAAAAAAAQMAAgOBAoABgoCBhACDAwICAkIFxVdCC4qughFQBcIXFV0CHNq0QiKgC4IoZWLC
 
         final invalid = {
           'a width below 2': withByte(1, 1),
-          'a width above the maximum': withByte(1, kMaxOMeshRectDimension + 1),
           'a height below 2': withByte(2, 1),
-          'a height above the maximum': withByte(2, kMaxOMeshRectDimension + 1),
           'an unknown mesh color space': withByte(3, 0x08 | 3),
           'the last unknown mesh color space': withByte(3, 0x08 | 7),
           'a number mode above 9 digits': withByte(4, 10),
@@ -1178,6 +1176,36 @@ OM:ggMDCQIAAAAAAAQMAAgOBAoABgoCBhACDAwICAkIFxVdCC4qughFQBcIXFV0CHNq0QiKgC4IoZWLC
             reason: name,
           );
         }
+      });
+
+      test('leaves the maximum size of a mesh to OMeshRect', () {
+        // A regular mesh without colors, as listed field by field above.
+        Uint8List data(int width, int height) {
+          final count = width * height;
+          return Uint8List.fromList([
+            2, width, height, 9, 0, //
+            ...List.filled((count + 1) ~/ 2, 0),
+            ...List.filled(count * 2, 0),
+            0,
+            ...List.filled(count, 0),
+          ]);
+        }
+
+        const max = kMaxOMeshRectDimension;
+
+        final largest = OMeshBinaryFormatCodec.v2.decode(data(max, 2));
+
+        expect((largest.width, largest.height), (max, 2));
+        expect(largest.vertices.last, (1.0, 1.0).v);
+        // The assert of the OMeshRect constructor.
+        expect(
+          () => OMeshBinaryFormatCodec.v2.decode(data(max + 1, 2)),
+          throwsAssertionError,
+        );
+        expect(
+          () => OMeshBinaryFormatCodec.v2.decode(data(255, 255)),
+          throwsAssertionError,
+        );
       });
 
       test('reads varints up to 2^53 - 1 and throws on larger ones', () {

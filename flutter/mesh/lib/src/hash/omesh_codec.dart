@@ -61,9 +61,9 @@ class OMeshBinaryFormatCodec extends Codec<OMeshRect, Uint8List> {
 
   /// A compact and lossless binary format.
   ///
-  /// Supports meshes up to [kMaxOMeshRectDimension] vertices in each
-  /// dimension and preserves every coordinate and color exactly, including
-  /// the color space of each color.
+  /// Supports meshes up to 255 vertices in each dimension and preserves
+  /// every coordinate and color exactly, including the color space of each
+  /// color.
   static const v2 = OMeshBinaryFormatCodec._(
     specVersion: 2,
   );
