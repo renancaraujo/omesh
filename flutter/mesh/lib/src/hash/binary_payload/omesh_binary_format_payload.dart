@@ -1,6 +1,7 @@
 import 'package:binarize/binarize.dart'
     show ByteReader, ByteWriter, Endian, PayloadType;
 import 'package:mesh/mesh.dart';
+import 'package:mesh/src/hash/binary_payload/number_encoding.dart';
 import 'package:mesh/src/hash/binary_payload/omesh_rect_payload.dart';
 import 'package:mesh/src/hash/binary_payload/omesh_rect_v2_payload.dart';
 
@@ -18,7 +19,8 @@ class OMeshBinaryFormatPayloadType extends PayloadType<OMeshBinaryFormat> {
   /// Creates a [PayloadType] for [OMeshBinaryFormat].
   ///
   /// [maxDecimalPlaces] only affects writing spec version 2 and above,
-  /// see [OMeshRectV2PayloadType.maxDecimalPlaces].
+  /// see [OMeshRectV2PayloadType.maxDecimalPlaces]. Writing throws an
+  /// [ArgumentError] when it is not between 0 and [kMaxDecimalDigits].
   const OMeshBinaryFormatPayloadType({this.maxDecimalPlaces});
 
   /// The singleton instance
@@ -48,6 +50,16 @@ class OMeshBinaryFormatPayloadType extends PayloadType<OMeshBinaryFormat> {
 
   @override
   void set(ByteWriter writer, OMeshBinaryFormat value, [Endian? endian]) {
+    final maxDecimalPlaces = this.maxDecimalPlaces;
+    if (maxDecimalPlaces != null &&
+        (maxDecimalPlaces < 0 || maxDecimalPlaces > kMaxDecimalDigits)) {
+      throw ArgumentError.value(
+        maxDecimalPlaces,
+        'maxDecimalPlaces',
+        'must be between 0 and $kMaxDecimalDigits',
+      );
+    }
+
     final meshPayloadType = switch (value.specVersion) {
       1 => OMeshRectPayloadType.instance,
       2 => OMeshRectV2PayloadType(maxDecimalPlaces: maxDecimalPlaces),

@@ -37,6 +37,9 @@ class OMeshBinaryFormatCodec extends Codec<OMeshRect, Uint8List> {
   ///
   /// This is lossy: a mesh with coordinates that need more precision is not
   /// equal to itself after encoding and decoding.
+  ///
+  /// Encoding throws an [ArgumentError] when [decimalPlaces] is not between
+  /// 0 and 9.
   const OMeshBinaryFormatCodec.v2Rounded({int decimalPlaces = 3})
       : assert(
           decimalPlaces >= 0 && decimalPlaces <= 9,

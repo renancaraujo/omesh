@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui';
 
+import 'package:binarize/binarize.dart' show Payload, binarize;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mesh/hash.dart';
 import 'package:mesh/mesh.dart';
@@ -1288,6 +1289,23 @@ OM:ggMDCQIAAAAAAAQMAAgOBAoABgoCBhACDAwICAkIFxVdCC4qughFQBcIXFV0CHNq0QiKgC4IoZWLC
           expect(codec.encode(mesh)[4], decimalPlaces);
           expect(_roundTrip(mesh, codec).vertices.first, (x, 0.0).v);
         }
+      });
+
+      test('throws an ArgumentError for decimal places out of range', () {
+        Uint8List write(int decimalPlaces) {
+          return binarize(
+            Payload.write()
+              ..set<OMeshBinaryFormat>(
+                OMeshBinaryFormatPayloadType(maxDecimalPlaces: decimalPlaces),
+                (specVersion: 2, mesh: _verySimpleOMesh),
+              ),
+          );
+        }
+
+        expect(write(0), OMeshBinaryFormatCodec.v2.encode(_verySimpleOMesh));
+        expect(write(9), OMeshBinaryFormatCodec.v2.encode(_verySimpleOMesh));
+        expect(() => write(-1), throwsArgumentError);
+        expect(() => write(10), throwsArgumentError);
       });
 
       test('rounds coordinates that need more decimal places', () {
