@@ -429,7 +429,7 @@ OMeshGradient(
 | --- | --- | --- |
 | `amount` | `0.05` | Visible grain, as a fraction of full scale. Around 0.05 is subtle, 0.2 is heavy. The mesh is first drawn into an offscreen image, so grain costs one extra image, and one extra pass each paint. |
 | `scatter` | `12` | Moves each pixel's color lookup by up to this many logical pixels, for a sandy edge between colors. Runs in the mesh shader and costs almost nothing. |
-| `shadows`, `midtones`, `highlights` | `0.6`, `1`, `0.5` | How strong the grain is in dark, middle and bright areas. |
+| `shadows`, `midtones`, `highlights` | `0.6`, `1`, `0.5` | How strong the grain is in dark, middle and bright areas. Near black and white each color channel gets less grain, and none at pure black or white, so the grain never shifts the average color. |
 | `seed` | `0` | Picks a different random pattern. |
 
 `OMeshGrain.none`, or a null `grain`, draws the mesh with no grain.

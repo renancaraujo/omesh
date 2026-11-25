@@ -11,7 +11,9 @@ import 'package:flutter/foundation.dart';
 ///   new colors.
 /// * [amount] adds visible, brightness-weighted grain over the finished
 ///   mesh, one grain cell per physical pixel. [shadows], [midtones] and
-///   [highlights] weight the grain by the brightness of each pixel.
+///   [highlights] weight the grain by the brightness of each pixel. Near
+///   black and white each color channel gets less grain, and none at 0 or
+///   1, so the grain never changes the average color.
 ///
 /// The grain ([amount] above zero) is drawn by rendering the mesh into an
 /// offscreen image first, so it costs one offscreen image and one extra
@@ -73,13 +75,17 @@ class OMeshGrain {
   /// 0 turns scatter off.
   final double scatter;
 
-  /// Grain weight in the shadows (brightness 0).
+  /// Grain weight in the shadows, toward brightness 0.
+  ///
+  /// Pure black gets no grain whatever this weight.
   final double shadows;
 
   /// Grain weight in the midtones (brightness 0.5).
   final double midtones;
 
-  /// Grain weight in the highlights (brightness 1).
+  /// Grain weight in the highlights, toward brightness 1.
+  ///
+  /// Pure white gets no grain whatever this weight.
   final double highlights;
 
   /// Picks a different random pattern. Seeds 997 apart give the same

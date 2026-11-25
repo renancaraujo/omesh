@@ -463,6 +463,79 @@ void main() {
     });
   });
 
+  group('grain at black and white', () {
+    const heavy = OMeshGrain(
+      amount: 0.2,
+      scatter: 0,
+      shadows: 1,
+      highlights: 1,
+    );
+
+    // Dither off, so what is measured is grain alone.
+    Future<_Pixels> tile(WidgetTester t, Color color) => _paint(
+          t,
+          provider,
+          _flat(color),
+          grain: heavy,
+          dither: false,
+          rect: const Rect.fromLTWH(0, 0, 128, 128),
+        );
+
+    List<double> channel(_Pixels pixels, int c, int input) => [
+          for (var y = 0; y < pixels.height; y++)
+            for (var x = 0; x < pixels.width; x++)
+              (pixels.channel(x, y, c) - input).toDouble(),
+        ];
+
+    int level(Color color, int c) =>
+        ([color.r, color.g, color.b][c] * 255).round();
+
+    testWidgets('keeps the average colour', (t) async {
+      await load(t);
+      for (final color in const [
+        _black,
+        _white,
+        Color(0xffff0000),
+        Color(0xffff3b30),
+        Color(0xff0a0c28),
+        Color(0xffffd1dc),
+      ]) {
+        final pixels = await tile(t, color);
+        for (var c = 0; c < 3; c++) {
+          expect(
+            _mean(channel(pixels, c, level(color, c))).abs(),
+            lessThan(0.25),
+            reason: '$color, channel $c',
+          );
+        }
+      }
+    });
+
+    testWidgets('leaves pure black, white and red without grain', (t) async {
+      await load(t);
+      for (final color in const [_black, _white, Color(0xffff0000)]) {
+        final pixels = await tile(t, color);
+        for (var c = 0; c < 3; c++) {
+          expect(
+            _std(channel(pixels, c, level(color, c))),
+            0,
+            reason: '$color, channel $c',
+          );
+        }
+      }
+    });
+
+    testWidgets('limits the grain to the distance from black', (t) async {
+      await load(t);
+      // Level 16 is closer to black than the grain peak (51 levels), so the
+      // grain peaks at 16 levels; level 64 is further, so it keeps all 51.
+      final near = await tile(t, const Color(0xff101010));
+      final far = await tile(t, const Color(0xff404040));
+      expect(_std(channel(near, 0, 16)), closeTo(16 / math.sqrt(6), 1));
+      expect(_std(channel(far, 0, 64)), closeTo(51 / math.sqrt(6), 1.2));
+    });
+  });
+
   group('grain seed', () {
     testWidgets('the same seed repeats the pattern', (t) async {
       await load(t);
