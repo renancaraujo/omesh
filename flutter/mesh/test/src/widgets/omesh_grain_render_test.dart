@@ -9,13 +9,14 @@ import 'package:mesh/mesh.dart';
 
 OMeshRect _mesh({
   required List<Color> colors,
+  OMeshColorSpace colorSpace = OMeshColorSpace.linear,
   bool smoothColors = true,
   Color? backgroundColor,
 }) {
   return OMeshRect(
     width: 2,
     height: 2,
-    colorSpace: OMeshColorSpace.linear,
+    colorSpace: colorSpace,
     smoothColors: smoothColors,
     backgroundColor: backgroundColor,
     vertices: [
@@ -312,6 +313,27 @@ void main() {
         expect(noisy.bytes[i], plain.bytes[i]);
       }
     });
+    for (final colorSpace in [OMeshColorSpace.lab, OMeshColorSpace.xyY]) {
+      testWidgets('keeps the colours of translucent $colorSpace', (t) async {
+        await load(t);
+        // Mixing these in lab and xyY gives premultiplied red above alpha.
+        final mesh = _mesh(
+          colorSpace: colorSpace,
+          colors: const [
+            Color(0x80ff0000), Color(0x80ffffff), //
+            Color(0x80ff8000), Color(0x80ffff00), //
+          ],
+        );
+        final plain = await _paint(t, provider, mesh);
+        final overAlpha = [
+          for (var i = 0; i < plain.bytes.length; i += 4)
+            if (plain.bytes[i] > plain.bytes[i + 3]) i,
+        ];
+        expect(overAlpha, isNotEmpty);
+        final grained = await _paint(t, provider, mesh, grain: zeroWeights);
+        expect(grained.maxDifference(plain), lessThanOrEqualTo(1));
+      });
+    }
   });
 
   group('grain amount', () {
