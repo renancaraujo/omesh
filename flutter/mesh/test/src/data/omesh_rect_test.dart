@@ -511,5 +511,33 @@ void main() {
         expect(changed.smoothColors, true);
       });
     });
+
+    group('getHash', () {
+      test('takes a codec with only mesh.dart imported', () {
+        final mesh = OMeshRect(
+          width: 2,
+          height: 2,
+          vertices: [
+            OVertex(0, 0),
+            OVertex(1, 0),
+            OVertex(0, 1),
+            OVertex(1, 1),
+          ],
+          colors: const [
+            Color(0xFF000000),
+            Color(0xFF000000),
+            Color(0xFF000000),
+            Color(0xFF000000),
+          ],
+        );
+
+        final v1 = mesh.getHash(codec: OMeshBinaryFormatCodec.v1);
+        final v2 = mesh.getHash();
+
+        expect(v1, isNot(v2));
+        expect(OMeshRect.fromHash(hash: v1), mesh);
+        expect(OMeshRect.fromHash(hash: v2), mesh);
+      });
+    });
   });
 }
