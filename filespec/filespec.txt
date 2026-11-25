@@ -30,7 +30,7 @@ Notation:
   - 4b per vertex: bit 0 north, bit 1 east, bit 2 south, bit 3 west
   - vertex 2i in the low nibble, vertex 2i+1 in the high nibble
 - positions & control points:w*h*V2
-- (p)palette length:varint
+- (p)palette length:varint (0..w*h)
 - palette:p*C2
 - color indices:w*h*varint (0 for no color, i for palette[i-1])
 - fallback color:C2 (if present)

@@ -109,6 +109,9 @@ class OMeshRectV2PayloadType extends PayloadType<OMeshRect> {
     }
 
     final paletteLength = reader.varint();
+    if (paletteLength > count) {
+      throw FormatException('Palette length $paletteLength out of range');
+    }
     final palette = List<Color>.generate(
       paletteLength,
       (_) => ColorV2PayloadType.instance.get(reader, endian),

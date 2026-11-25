@@ -601,6 +601,30 @@ void main() {
         expect(_roundTrip(mesh, OMeshBinaryFormatCodec.v2), mesh);
       });
 
+      test('throws on a palette longer than the vertex count', () {
+        final bytes = OMeshBinaryFormatCodec.v2.encode(
+          _grid(2, 2, colors: List.filled(4, null)),
+        );
+        // Without colors, the data ends with an empty palette and one color
+        // index per vertex.
+        expect(bytes.sublist(bytes.length - 5), [0, 0, 0, 0, 0]);
+        final beforePalette = bytes.sublist(0, bytes.length - 5);
+
+        for (final paletteLength in [
+          [5],
+          [0xFF, 0xFF, 0xFF, 0xFF, 0x07],
+        ]) {
+          final data = Uint8List.fromList(
+            [...beforePalette, ...paletteLength, 0, 0, 0, 0],
+          );
+
+          expect(
+            () => OMeshBinaryFormatCodec.v2.decode(data),
+            throwsFormatException,
+          );
+        }
+      });
+
       test('throws on truncated data', () {
         final bytes = OMeshBinaryFormatCodec.v2.encode(_complexOMesh);
 
