@@ -16,22 +16,63 @@ void main() {
       expect(OMeshGrain.none.scatter, 0);
     });
 
+    const base = OMeshGrain(
+      amount: 0.1,
+      scatter: 4,
+      shadows: 0.2,
+      midtones: 0.3,
+      highlights: 0.4,
+      seed: 5,
+    );
+    final changes = <String, OMeshGrain>{
+      'amount': base.copyWith(amount: 0.2),
+      'scatter': base.copyWith(scatter: 8),
+      'shadows': base.copyWith(shadows: 0.9),
+      'midtones': base.copyWith(midtones: 0.9),
+      'highlights': base.copyWith(highlights: 0.9),
+      'seed': base.copyWith(seed: 6),
+    };
+
     test('equality and hashCode', () {
-      const a = OMeshGrain(amount: 0.1, seed: 3);
-      const b = OMeshGrain(amount: 0.1, seed: 3);
-      const c = OMeshGrain(amount: 0.1, seed: 4);
-      expect(a, b);
-      expect(a.hashCode, b.hashCode);
-      expect(a, isNot(c));
+      const same = OMeshGrain(
+        amount: 0.1,
+        scatter: 4,
+        shadows: 0.2,
+        midtones: 0.3,
+        highlights: 0.4,
+        seed: 5,
+      );
+      expect(base, same);
+      expect(base.hashCode, same.hashCode);
+      for (final MapEntry(:key, :value) in changes.entries) {
+        expect(value, isNot(base), reason: key);
+        expect(value.hashCode, isNot(base.hashCode), reason: key);
+      }
     });
 
-    test('copyWith replaces only the given fields', () {
-      const grain = OMeshGrain();
-      final copy = grain.copyWith(amount: 0.2, shadows: 0.3);
-      expect(copy.amount, 0.2);
-      expect(copy.shadows, 0.3);
-      expect(copy.scatter, grain.scatter);
-      expect(copy.seed, grain.seed);
+    test('copyWith replaces only the given field', () {
+      double field(OMeshGrain grain, String name) => switch (name) {
+            'amount' => grain.amount,
+            'scatter' => grain.scatter,
+            'shadows' => grain.shadows,
+            'midtones' => grain.midtones,
+            'highlights' => grain.highlights,
+            _ => grain.seed.toDouble(),
+          };
+      for (final MapEntry(key: changed, value: copy) in changes.entries) {
+        for (final name in changes.keys) {
+          if (name == changed) {
+            expect(field(copy, name), isNot(field(base, name)), reason: name);
+          } else {
+            expect(
+              field(copy, name),
+              field(base, name),
+              reason: '$name after copyWith($changed)',
+            );
+          }
+        }
+      }
+      expect(base.copyWith(), base);
     });
 
     group('lerp', () {
