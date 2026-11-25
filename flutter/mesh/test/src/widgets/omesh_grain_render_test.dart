@@ -641,6 +641,56 @@ void main() {
       }
     });
 
+    testWidgets('frees the offscreen image when grain is turned off',
+        (t) async {
+      await load(t);
+      await _trackImages((alive, created) async {
+        final painter = OMeshRectPaint(
+          shaderProvider: provider,
+          meshRect: _flat(_mid),
+          tessellation: 4,
+          debugMode: null,
+          grain: _even,
+        );
+        void paint() {
+          final recorder = ui.PictureRecorder();
+          painter.paint(Canvas(recorder), const Rect.fromLTWH(0, 0, 16, 16));
+          recorder.endRecording().dispose();
+        }
+
+        paint();
+        expect(alive, hasLength(1));
+
+        painter.grain = null;
+        paint();
+        expect(alive, isEmpty);
+
+        painter
+          ..grain = _even
+          ..dispose();
+      });
+    });
+
+    testWidgets('paint after dispose fails an assertion', (t) async {
+      await load(t);
+      final painter = OMeshRectPaint(
+        shaderProvider: provider,
+        meshRect: _flat(_mid),
+        tessellation: 4,
+        debugMode: null,
+        grain: _even,
+      )..dispose();
+      final recorder = ui.PictureRecorder();
+      expect(
+        () => painter.paint(
+          Canvas(recorder),
+          const Rect.fromLTWH(0, 0, 16, 16),
+        ),
+        throwsAssertionError,
+      );
+      recorder.endRecording().dispose();
+    });
+
     testWidgets('dispose works without painting', (t) async {
       await load(t);
       final painter = OMeshRectPaint(

@@ -179,12 +179,20 @@ class OMeshRectPaint {
   /// The offscreen image of the mesh used to draw grain over it.
   Image? _grainImage;
 
-  /// Releases the offscreen image used for grain.
-  ///
-  /// Call it when this paint is no longer used.
-  void dispose() {
+  bool _disposed = false;
+
+  void _disposeGrainImage() {
     _grainImage?.dispose();
     _grainImage = null;
+  }
+
+  /// Releases the offscreen image used for grain.
+  ///
+  /// Call it when this paint is no longer used. Do not call [paint] after
+  /// this.
+  void dispose() {
+    _disposed = true;
+    _disposeGrainImage();
   }
 
   /// Whether the mesh needs to be repainted.
@@ -311,8 +319,10 @@ class OMeshRectPaint {
 
   /// Paints the mesh into the given [canvas] and [rect].
   void paint(Canvas canvas, Rect rect) {
+    assert(!_disposed, 'OMeshRectPaint.paint was called after dispose.');
     final grain = this.grain;
-    if (grain == null || grain.amount <= 0 || !rect.isFinite) {
+    if (_disposed || grain == null || grain.amount <= 0 || !rect.isFinite) {
+      _disposeGrainImage();
       _paintMesh(canvas, rect);
       return;
     }
@@ -321,6 +331,7 @@ class OMeshRectPaint {
     final width = (rect.width * dpr).ceil();
     final height = (rect.height * dpr).ceil();
     if (grainShader == null || width <= 0 || height <= 0) {
+      _disposeGrainImage();
       _paintMesh(canvas, rect);
       return;
     }
