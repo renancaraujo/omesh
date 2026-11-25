@@ -5,7 +5,7 @@
 precision highp float;
 #include <flutter/runtime_effect.glsl>
 
-uniform vec2 uSize;        // rect size, logical px
+uniform vec2 uImageSize;   // offscreen image size, physical px
 uniform vec2 uOrigin;      // rect top-left, logical px
 uniform float uDpr;        // image px per logical px
 uniform float uAmount;     // grain peak, fraction of full scale (0 = off)
@@ -33,7 +33,7 @@ float response3(float y, vec3 w) {
 
 void main() {
     vec2 local = FlutterFragCoord().xy - uOrigin;
-    vec4 base = texture(uInput, local / uSize);
+    vec4 base = texture(uInput, local * uDpr / uImageSize);
     if (uAmount > 0.0 && base.a > 0.0) {
         // Grain on the straight (un-premultiplied) color, weighted by brightness.
         // A channel outside 0..1, as translucent lab and xyY meshes give,

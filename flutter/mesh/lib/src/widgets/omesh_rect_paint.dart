@@ -335,9 +335,11 @@ class OMeshRectPaint {
     _grainImage?.dispose();
     _grainImage = image;
 
+    // The image is rounded up to whole pixels, so the mesh covers only
+    // part of its last column and row. The shader samples it by pixel.
     grainShader
-      ..setFloat(0, rect.width)
-      ..setFloat(1, rect.height)
+      ..setFloat(0, width.toDouble())
+      ..setFloat(1, height.toDouble())
       ..setFloat(2, rect.left)
       ..setFloat(3, rect.top)
       ..setFloat(4, dpr)

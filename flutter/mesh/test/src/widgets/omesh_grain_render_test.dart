@@ -296,6 +296,33 @@ void main() {
       });
     }
 
+    for (final (size, dpr) in const [(40.25, 1.0), (61.0, 2.625)]) {
+      testWidgets('keeps the last column and row at size $size, ratio $dpr',
+          (t) async {
+        await load(t);
+        final rect = Rect.fromLTWH(0, 0, size, size);
+        final canvasSize = Size.square(size.ceilToDouble() + 2);
+        final plain = await _paint(
+          t,
+          provider,
+          _flat(_white),
+          dpr: dpr,
+          rect: rect,
+          canvasSize: canvasSize,
+        );
+        final grained = await _paint(
+          t,
+          provider,
+          _flat(_white),
+          grain: zeroWeights,
+          dpr: dpr,
+          rect: rect,
+          canvasSize: canvasSize,
+        );
+        expect(grained.maxDifference(plain), lessThanOrEqualTo(1));
+      });
+    }
+
     testWidgets('keeps alpha and translucent colours', (t) async {
       await load(t);
       final mesh = _mesh(
